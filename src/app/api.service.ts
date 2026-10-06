@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import type { AuthUser, Product, Store } from './models';
 
@@ -11,6 +11,18 @@ export class ApiService {
   private get headers(): Record<string, string> {
     const token = localStorage.getItem('stockbarrios-token');
     return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+
+  private async authRequest<T>(path: 'login' | 'register', payload: Record<string, unknown>, fallback: string): Promise<T> {
+    try {
+      return await firstValueFrom(this.http.post<T>(`${this.baseUrl}/auth/${path}`, payload));
+    } catch (error) {
+      if (error instanceof HttpErrorResponse) {
+        const message = typeof error.error?.message === 'string' ? error.error.message : undefined;
+        throw new Error(message ?? (error.status === 0 ? 'No se pudo conectar con el servidor.' : fallback));
+      }
+      throw error;
+    }
   }
 
   async getStores(neighborhood?: string): Promise<Store[]> {
@@ -26,11 +38,11 @@ export class ApiService {
   }
 
   async register(payload: Record<string, unknown>): Promise<{ token: string; user: AuthUser }> {
-    return firstValueFrom(this.http.post<{ token: string; user: AuthUser }>(`${this.baseUrl}/auth/register`, payload));
+    return this.authRequest<{ token: string; user: AuthUser }>('register', payload, 'No se pudo crear la cuenta.');
   }
 
   async login(payload: Record<string, unknown>): Promise<{ token: string; user: AuthUser }> {
-    return firstValueFrom(this.http.post<{ token: string; user: AuthUser }>(`${this.baseUrl}/auth/login`, payload));
+    return this.authRequest<{ token: string; user: AuthUser }>('login', payload, 'No se pudo iniciar sesión.');
   }
 
   async getStoreProducts(storeId: string): Promise<Product[]> {
