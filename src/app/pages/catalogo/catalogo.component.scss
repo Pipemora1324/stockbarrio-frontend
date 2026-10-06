@@ -1,0 +1,24 @@
+.catalogo { padding: 0 clamp(1.25rem, 7vw, 8rem) 6rem; }
+.page-hero { padding: 5rem 0 2rem; }
+.eyebrow { color: #119e71; font-size: .75rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+h1 { margin: .5rem 0; color: #173b32; font-size: clamp(2.4rem, 5vw, 4rem); }
+.page-hero p { color: #64746c; }
+.filters { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: .8rem; align-items: end; padding: 1.2rem; border-radius: 1.2rem; background: #fff; box-shadow: 0 12px 40px #173b3212; }
+.filters label { color: #52645c; font-size: .78rem; font-weight: 700; }
+.filters input { display: block; width: 100%; margin-top: .35rem; padding: .8rem; border: 1px solid #dce4df; border-radius: .65rem; }
+.button { border: 0; border-radius: .7rem; padding: .8rem 1rem; background: #119e71; color: #fff; font-weight: 800; cursor: pointer; }
+.results { padding-top: 3rem; }
+.results-header { display: flex; justify-content: space-between; align-items: center; }
+.results-header h2 { color: #173b32; }
+.results-header a { color: #119e71; font-weight: 800; }
+.cards-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; }
+.card { padding: 1.2rem; border: 1px solid #e4eae6; border-radius: 1.2rem; background: #fff; box-shadow: 0 8px 28px #173b3210; }
+.product-image { display: grid; place-items: center; height: 8rem; border-radius: 1rem; background: #eff7f3; font-size: 3rem; }
+.badge { display: inline-block; margin-top: .8rem; padding: .3rem .6rem; border-radius: 999px; background: #f5b43b; color: #173b32; font-weight: 800; }
+.price-row { display: flex; align-items: baseline; gap: .5rem; }
+.price-row strong { color: #119e71; font-size: 1.3rem; }
+.price-row s { color: #97a29d; }
+.card p,.card small { color: #718078; }
+.empty { padding: 4rem; border-radius: 1rem; background: #f1f6f3; text-align: center; color: #617067; }
+@media (max-width: 800px) { .filters { grid-template-columns: 1fr; } .cards-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .cards-grid { grid-template-columns: 1fr; } .results-header { align-items: start; flex-direction: column; } }

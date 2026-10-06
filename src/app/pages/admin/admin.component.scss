@@ -1,0 +1,24 @@
+.admin { padding: 3rem clamp(1.25rem, 6vw, 7rem) 6rem; background: #f3f7f5; }
+.admin header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+h1 { margin: .3rem 0 0; color: #173b32; }
+.eyebrow { color: #119e71; font-size: .75rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.button { border: 0; border-radius: .7rem; padding: .8rem 1rem; background: #119e71; color: #fff; font-weight: 800; cursor: pointer; }
+.button-light { background: #fff; color: #173b32; border: 1px solid #dce4df; }
+.stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; }
+.stats article { padding: 1.3rem; border-radius: 1rem; background: #fff; }
+.stats span { display: block; color: #718078; }
+.stats strong { display: block; margin-top: .4rem; color: #119e71; font-size: 2rem; }
+.table-card,.form-card { margin-top: 1rem; padding: 1.3rem; border-radius: 1rem; background: #fff; box-shadow: 0 10px 35px #173b3210; }
+.table-toolbar { display: flex; justify-content: space-between; align-items: center; }
+.table-toolbar input { width: 260px; padding: .7rem; border: 1px solid #dce4df; border-radius: .6rem; }
+table { width: 100%; margin-top: 1rem; border-collapse: collapse; }
+th,td { padding: .8rem; border-bottom: 1px solid #e9eeeb; text-align: left; }
+th { color: #718078; font-size: .75rem; text-transform: uppercase; }
+td small { display: block; color: #718078; }
+td button { margin-right: .4rem; border: 0; background: transparent; color: #119e71; font-weight: 700; cursor: pointer; }
+td button.danger { color: #b62f2f; }
+.form-card form { display: grid; grid-template-columns: repeat(2,1fr); gap: 1rem; }
+.form-card label { color: #52645c; font-weight: 700; }
+.form-card input,.form-card textarea { display: block; width: 100%; margin-top: .4rem; padding: .75rem; border: 1px solid #dce4df; border-radius: .6rem; }
+.form-actions { grid-column: 1/-1; display: flex; justify-content: flex-end; gap: .7rem; }
+@media (max-width: 700px) { .stats { grid-template-columns: 1fr; } .form-card form { grid-template-columns: 1fr; } .table-wrap { overflow-x: auto; } table { min-width: 720px; } }

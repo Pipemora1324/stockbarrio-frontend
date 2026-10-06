@@ -1,0 +1,22 @@
+.chat-layout { display: grid; grid-template-columns: 1.25fr .75fr; gap: 1.5rem; min-height: calc(100vh - 80px); padding: 3rem clamp(1.25rem, 6vw, 7rem); background: #f3f7f5; }
+.chat-panel { display: flex; flex-direction: column; min-height: 620px; border-radius: 1.5rem; background: #fff; box-shadow: 0 20px 60px #173b3210; overflow: hidden; }
+.chat-header { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 2rem; border-bottom: 1px solid #e6ebe8; }
+h1 { margin: .3rem 0 0; color: #173b32; font-size: 1.7rem; }
+.eyebrow { color: #119e71; font-size: .7rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.ai-pill { padding: .4rem .7rem; border-radius: 999px; background: #e5f6ef; color: #119e71; font-size: .75rem; font-weight: 800; }
+.messages { display: flex; flex: 1; flex-direction: column; gap: .8rem; padding: 1.5rem; overflow: auto; }
+.message { max-width: 82%; padding: .9rem 1rem; border-radius: 1rem 1rem 1rem .2rem; background: #eef4f1; color: #33473e; }
+.message.user { align-self: flex-end; border-radius: 1rem 1rem .2rem 1rem; background: #119e71; color: #fff; }
+.composer { display: grid; grid-template-columns: .8fr 1fr 1.4fr auto; gap: .5rem; padding: 1rem; border-top: 1px solid #e6ebe8; }
+.composer input,.composer select { padding: .75rem; border: 1px solid #dce4df; border-radius: .65rem; }
+.button { border: 0; border-radius: .65rem; padding: .75rem 1rem; background: #119e71; color: #fff; font-weight: 800; }
+.button:disabled { opacity: .55; cursor: wait; }
+.recommendation { padding: 2rem; border-radius: 1.5rem; background: #173b32; color: #fff; }
+.recommendation h2 { margin: .5rem 0 1rem; font-size: 1.8rem; }
+.recommendation p { color: #c8ddd5; line-height: 1.6; }
+.result-list { display: grid; gap: .7rem; margin: 1.5rem 0; }
+.result-list article { display: flex; justify-content: space-between; padding: .9rem; border-radius: .8rem; background: #244f43; }
+.totals { display: flex; justify-content: space-between; padding-top: 1rem; border-top: 1px solid #3a6458; }
+.empty { padding: 3rem 1rem; border: 1px dashed #4e6f64; border-radius: 1rem; color: #c8ddd5; text-align: center; }
+@media (max-width: 900px) { .chat-layout { grid-template-columns: 1fr; } .composer { grid-template-columns: 1fr 1fr; } .recommendation { min-height: 300px; } }
+@media (max-width: 600px) { .chat-layout { padding: 1rem; } .chat-header { align-items: start; flex-direction: column; gap: 1rem; } .composer { grid-template-columns: 1fr; } }

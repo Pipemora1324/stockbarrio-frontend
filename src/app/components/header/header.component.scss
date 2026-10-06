@@ -1,0 +1,12 @@
+:host { position: sticky; top: 0; z-index: 20; }
+.site-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem clamp(1rem, 4vw, 4rem); background: rgba(255,255,255,.94); border-bottom: 1px solid #e5e9ee; backdrop-filter: blur(12px); }
+.brand { display: flex; align-items: center; gap: .7rem; color: #119e71; font-weight: 800; text-decoration: none; }
+.brand strong { color: #173b32; }
+.brand-mark { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: .8rem; background: #119e71; color: #fff; font-size: .8rem; }
+nav { display: flex; gap: 1.5rem; }
+nav a { color: #40524b; font-weight: 600; text-decoration: none; }
+.header-actions { display: flex; align-items: center; gap: .6rem; }
+.button { border: 0; border-radius: .75rem; padding: .75rem 1rem; background: #119e71; color: #fff; font-weight: 700; cursor: pointer; text-decoration: none; }
+.button-small { padding: .6rem .9rem; }
+.button-outline { background: #fff; color: #119e71; border: 1px solid #119e71; }
+@media (max-width: 760px) { nav { display: none; } .site-header { padding: .8rem 1rem; } }
