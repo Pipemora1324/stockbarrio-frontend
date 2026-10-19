@@ -18,7 +18,7 @@ const storesShown = 8;
     <div class="hero-copy">
       <span class="eyebrow">Menos desperdicio, más barrio</span>
       <h1>Compra inteligente.<br><em>Ahorra en tu barrio.</em></h1>
-      <p>Encuentra en las tiendas cercanas los productos que necesitas, con descuentos en lo que está por vencer. Pregúntale al asistente y te muestra la opción más barata o la más cerca.</p>
+      <p>Encuentra en las tiendas de tu barrio los productos que necesitas, con descuentos en lo que está por vencer. Pregúntale al asistente y te muestra la opción más barata o la de tu barrio.</p>
       <div class="hero-actions">
         <a class="button" routerLink="/ofertas">Ver ofertas de hoy</a>
         <a class="button button-light" routerLink="/chat">Preguntar al asistente</a>
