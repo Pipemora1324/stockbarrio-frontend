@@ -28,7 +28,7 @@ npm install
 npm start
 ```
 
-La app queda en http://localhost:4200. Ten en cuenta que `ng serve` no tiene configurado un proxy para `/api`, así que para probar contra la API conviene usar Docker (abajo) o agregar un `proxy.conf.json`.
+La app queda en http://localhost:4200. `ng serve` usa `proxy.conf.json` para redirigir `/api` a la API local en http://localhost:3000, así que levanta primero el backend.
 
 ## Correr con Docker
 
