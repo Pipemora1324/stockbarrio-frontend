@@ -113,6 +113,9 @@ export const discount = (value: unknown): string => {
 export const expirationDate = (value: string, creating: boolean, now: Date = new Date()): string => {
   if (!value) return 'La fecha de vencimiento es obligatoria.';
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return 'La fecha debe tener el formato AAAA-MM-DD.';
+  // Same check as the API: days like 2026-02-30 do not exist.
+  const [year, month, day] = value.split('-').map(Number);
+  if (new Date(Date.UTC(year, month - 1, day)).toISOString().slice(0, 10) !== value) return 'La fecha no es válida.';
   if (creating && value < todayInBogota(now)) return 'La fecha de vencimiento no puede estar en el pasado.';
   return '';
 };
