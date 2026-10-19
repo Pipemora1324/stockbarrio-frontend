@@ -1,14 +1,11 @@
-.chat-layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, .8fr); gap: 1.5rem; padding: 2.5rem clamp(1rem, 5vw, 6rem); background: var(--color-bg); }
+.chat-layout { display: grid; grid-template-columns: minmax(0, 880px); justify-content: center; padding: 2.5rem clamp(1rem, 5vw, 6rem); background: var(--color-bg); }
 .chat-panel { display: flex; flex-direction: column; min-height: 640px; border-radius: 1.5rem; background: #fff; box-shadow: 0 20px 60px #173b3210; overflow: hidden; }
 .chat-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1.5rem 1.75rem; border-bottom: 1px solid var(--color-border); }
 h1 { margin: .3rem 0 0; color: var(--color-ink); font-size: 1.7rem; }
 .eyebrow { color: var(--color-primary); font-size: .7rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
-.ai-pill { padding: .4rem .7rem; border-radius: 999px; background: var(--color-primary-soft); color: var(--color-primary); font-size: .75rem; font-weight: 800; white-space: nowrap; }
-.location-bar { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; padding: .9rem 1.75rem; border-bottom: 1px solid var(--color-border); background: #fafcfb; }
-.location-bar select { padding: .65rem; border: 1px solid var(--color-border); border-radius: .65rem; font: inherit; }
-.location-status { margin: 0; color: var(--color-success); font-weight: 600; }
-.location-error { margin: 0; padding: .7rem 1.75rem; background: var(--color-danger-soft); color: var(--color-danger); font-weight: 600; }
-.or { color: var(--color-muted); }
+.neighborhood-bar { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; padding: .9rem 1.75rem; border-bottom: 1px solid var(--color-border); background: #fafcfb; }
+.neighborhood-bar label { color: var(--color-ink); font-weight: 700; }
+.neighborhood-bar select { padding: .65rem; border: 1px solid var(--color-border); border-radius: .65rem; font: inherit; }
 .messages { display: flex; flex: 1; flex-direction: column; gap: .8rem; min-height: 320px; max-height: 62vh; padding: 1.5rem 1.75rem; overflow-y: auto; overscroll-behavior: contain; }
 .message { max-width: min(85%, 62ch); overflow-wrap: anywhere; padding: .9rem 1rem; border-radius: 1rem 1rem 1rem .2rem; background: #eef4f1; color: var(--color-text); line-height: 1.5; }
 .message.user { align-self: flex-end; border-radius: 1rem 1rem .2rem 1rem; background: var(--color-primary); color: #fff; }
@@ -28,11 +25,10 @@ small.urgent { color: var(--color-danger); font-weight: 700; }
 .price s { color: var(--color-muted); }
 .composer { display: flex; gap: .5rem; padding: 1rem 1.25rem; border-top: 1px solid var(--color-border); }
 .composer input { flex: 1; min-width: 0; padding: .8rem; border: 1px solid var(--color-border); border-radius: .65rem; font: inherit; }
-@media (max-width: 960px) { .chat-layout { grid-template-columns: 1fr; } }
 @media (max-width: 600px) {
   .chat-layout { padding: 1rem; }
   .chat-header { align-items: start; flex-direction: column; padding: 1.25rem; }
-  .location-bar, .messages { padding-left: 1rem; padding-right: 1rem; }
+  .neighborhood-bar, .messages { padding-left: 1rem; padding-right: 1rem; }
   .message { max-width: 100%; }
   /* One scrollable row of suggestions so the message box stays in view. */
   .chips { flex-wrap: nowrap; overflow-x: auto; padding-bottom: .4rem; scrollbar-width: thin; }
@@ -44,6 +40,8 @@ small.urgent { color: var(--color-danger); font-weight: 700; }
 .chip-link { text-decoration: none; }
 .mode-note { display: block; margin-top: .45rem; color: var(--color-muted); font-size: .78rem; }
 .composer { flex-wrap: wrap; }
-.count { flex-basis: 100%; color: var(--color-muted); font-size: .78rem; text-align: right; }
+.composer-notes { display: flex; flex-basis: 100%; justify-content: space-between; align-items: baseline; gap: .8rem; }
+.privacy { color: var(--color-muted); font-size: .8rem; line-height: 1.4; }
+.count { flex-shrink: 0; color: var(--color-muted); font-size: .78rem; text-align: right; }
 .count.near-limit { color: var(--color-danger); font-weight: 700; }
 .result strong, .result .store { overflow-wrap: anywhere; }
