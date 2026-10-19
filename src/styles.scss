@@ -39,6 +39,11 @@ body {
 
 h1, h2, h3 { color: var(--color-ink); line-height: 1.15; letter-spacing: -.01em; }
 
+// Long product or store names wrap instead of pushing the layout sideways.
+body { overflow-wrap: break-word; }
+p, li { line-height: 1.55; }
+td, th { overflow-wrap: anywhere; }
+
 img { display: block; max-width: 100%; height: auto; }
 
 a { color: var(--color-primary); }
