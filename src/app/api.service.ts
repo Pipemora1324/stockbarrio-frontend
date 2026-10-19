@@ -68,12 +68,9 @@ export class ApiService {
     return (await this.request(this.http.get<{ user: AuthUser }>(`${this.baseUrl}/auth/me`), 'No se pudo validar la sesión.')).user;
   }
 
-  async getMyProducts(): Promise<Product[]> {
-    return (await this.request(this.http.get<{ data: Product[] }>(`${this.baseUrl}/products/mine`), 'No se pudieron cargar los productos de tu tienda.')).data;
-  }
-
-  async getStoreProducts(storeId: string): Promise<Product[]> {
-    return (await this.request(this.http.get<{ data: Product[] }>(`${this.baseUrl}/products/store/${storeId}`), 'No se pudieron cargar los productos.')).data;
+  async getMyInventory(): Promise<{ products: Product[]; store: Store }> {
+    const response = await this.request(this.http.get<{ data: Product[]; store: Store }>(`${this.baseUrl}/products/mine`), 'No se pudieron cargar los productos de tu tienda.');
+    return { products: response.data, store: response.store };
   }
 
   async saveProduct(product: ProductInput): Promise<Product> {

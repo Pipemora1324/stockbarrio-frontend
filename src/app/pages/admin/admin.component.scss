@@ -22,3 +22,10 @@ td button.danger { color: #b62f2f; }
 .form-card input,.form-card textarea { display: block; width: 100%; margin-top: .4rem; padding: .75rem; border: 1px solid #dce4df; border-radius: .6rem; }
 .form-actions { grid-column: 1/-1; display: flex; justify-content: flex-end; gap: .7rem; }
 @media (max-width: 700px) { .stats { grid-template-columns: 1fr; } .form-card form { grid-template-columns: 1fr; } .table-wrap { overflow-x: auto; } table { min-width: 720px; } }
+.store-meta,.muted { color: #718078; }
+.alert { margin: 1rem 0 0; padding: .9rem 1rem; border-radius: .8rem; font-weight: 600; }
+.alert-error { background: #fdf1f1; color: #b23434; }
+.alert-success { background: #e8f6ef; color: #146c4c; }
+.full { grid-column: 1/-1; }
+.button:disabled,td button:disabled { opacity: .6; cursor: not-allowed; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
