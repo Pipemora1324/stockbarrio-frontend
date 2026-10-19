@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, inject, s
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { AuthService } from '../../auth.service';
 import { NotificationsService } from '../../services/notifications.service';
 
@@ -24,10 +25,10 @@ import { NotificationsService } from '../../services/notifications.service';
       <a routerLink="/catalogo" routerLinkActive="active">Catálogo</a>
       <a routerLink="/chat" routerLinkActive="active">Asistente</a>
       @if (auth.isStore()) { <a routerLink="/admin" routerLinkActive="active">Mi tienda</a> }
-      @if (auth.isCustomer()) { <a routerLink="/alertas" routerLinkActive="active">Mis alertas</a> }
+      @if (alertsEnabled && auth.isCustomer()) { <a routerLink="/alertas" routerLinkActive="active">Mis alertas</a> }
     </nav>
     <div class="header-actions">
-      @if (auth.isCustomer()) {
+      @if (alertsEnabled && auth.isCustomer()) {
         <a class="bell" routerLink="/notificaciones" [attr.aria-label]="notifications.unread() ? 'Notificaciones: ' + notifications.unread() + ' sin leer' : 'Notificaciones'">
           <span aria-hidden="true">🔔</span>
           @if (notifications.unread()) { <span class="bell-count" aria-hidden="true">{{ notifications.unread() > 99 ? '99+' : notifications.unread() }}</span> }
@@ -47,6 +48,7 @@ import { NotificationsService } from '../../services/notifications.service';
 export class HeaderComponent {
   protected readonly auth = inject(AuthService);
   protected readonly notifications = inject(NotificationsService);
+  protected readonly alertsEnabled = environment.enableAlerts;
   readonly menuOpen = signal(false);
 
   constructor() {
