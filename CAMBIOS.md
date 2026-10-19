@@ -195,3 +195,30 @@ El backend de la rama `mejoras` (ofertas, chat, cuenta y categorías).
 - **Sin cambios de funcionamiento:** Ofertas, el chat y el panel de la tienda siguen igual. Revisé que no queden botones ni enlaces hacia lo oculto: los únicos enlaces a alertas o notificaciones estaban en el header y dentro de esas mismas páginas.
 - **No se borró código:** los componentes de alertas y notificaciones siguen en el repositorio.
 - **Pruebas:** 67 en verde. Hay tests nuevos de la bandera (sin campana, sin rutas, el cliente va a Ofertas, no se consulta el contador y al encenderla vuelve la campana). Además, `ENABLE_ALERTS=true npm run build` activa todo.
+
+## Ronda de pruebas (rama `pruebas`)
+
+- **Cobertura:** `npm run test:coverage` (Karma con `karma.conf.js`). Pasó de 77,8 % a 94,6 % en líneas y de 63,8 % a 80,6 % en ramas. Las pruebas pasaron de 67 a 147.
+  - La cifra de antes estaba inflada: login, registro, catálogo, panel de la tienda, ubicación de la tienda y confirmación de correo no tenían ninguna prueba, y Karma no los mostraba.
+- **Pruebas nuevas:**
+  - guards y rutas;
+  - interceptor y servicio de sesión;
+  - contrato del servicio de API;
+  - login y registro;
+  - catálogo, con debounce y respuestas tardías;
+  - Ofertas;
+  - ubicación;
+  - chat y armador de combos;
+  - panel de la tienda y ubicación de la tienda;
+  - confirmación de correo y perfil;
+  - bordes de validaciones y pipes.
+- **Bugs corregidos:**
+  - Si una petición hecha con el token anterior respondía 401 después de iniciar sesión de nuevo, el interceptor cerraba la sesión nueva. Ahora solo se cierra la sesión que hizo la petición.
+  - El formulario de producto aceptaba fechas que no existen, como 2026-02-30, y la API después las rechazaba. Ahora el formulario las marca, igual que la API.
+  - Un precio ausente se mostraba como "$ 0", como si el producto fuera gratis. Ahora no se muestra nada.
+  - Entre 975 y 999 m las distancias se mostraban como "a 1000 m". Ahora se muestran como "a 1,0 km".
+- **Scripts nuevos:** `npm run lint` (revisa los tipos de la app y de las pruebas), `npm run test:ci` y `npm run test:coverage`.
+- **Integración continua:** `.github/workflows/ci.yml`. Corre en cada push y pull request con Node 20: `npm ci`, lint, build y pruebas en Chrome headless. La insignia está en el README.
+- **Documentación:** `TESTING.md`.
+- **Variables nuevas:** ninguna.
+- **Cómo probar:** `npm run test:coverage`.
