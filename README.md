@@ -15,12 +15,31 @@ La API (Node.js + Express + PostgreSQL) está en un repositorio aparte: [stockba
 | `/login` | Inicio de sesión | Público |
 | `/register` | Registro de cliente o de tienda (`?tipo=tienda` abre el de tienda) | Público |
 | `/admin` | Panel de la tienda: inventario, descuentos sugeridos y ubicación | Rol `store` |
-| `/alertas` | Alertas de descuento del cliente | Rol `customer` |
-| `/notificaciones` | Bandeja de notificaciones, con enlace a la oferta | Rol `customer` |
+| `/alertas` | Alertas de descuento del cliente (pausada, ver abajo) | Rol `customer` |
+| `/notificaciones` | Bandeja de notificaciones, con enlace a la oferta (pausada, ver abajo) | Rol `customer` |
 | `/perfil` | Cambiar nombre, contraseña y correo | Con sesión |
 | `/forgot-password` · `/reset-password` · `/confirm-email` | Recuperar la contraseña y confirmar un correo nuevo desde el enlace del correo | Público |
 
 Todas las peticiones a la API se hacen a la ruta relativa `/api`, así que quien sirve el frontend tiene que redirigir `/api` hacia el backend.
+
+## Alertas y notificaciones (pausadas)
+
+Por ahora solo se muestra la sección de Ofertas. Las alertas, la bandeja de notificaciones y la campana del header están apagadas con la bandera `enableAlerts` de `src/environments/environment.ts`, que es `false` por defecto.
+
+Con la bandera apagada:
+
+- Las rutas `/alertas` y `/notificaciones` no se registran (llevan al inicio).
+- El header no muestra la campana ni "Mis alertas", y no se consulta el contador.
+- El cliente entra a `/ofertas` al iniciar sesión.
+- Los textos de login y registro no mencionan alertas.
+
+El código no se borró: solo queda oculto.
+
+Para reactivarlas:
+
+1. En Vercel, define `ENABLE_ALERTS=true`. Antes de `npm run build`, `scripts/set-env.mjs` escribe ese valor en `environment.ts`. Sin la variable, el archivo no se toca.
+2. En local, cambia `enableAlerts` a `true` en `src/environments/environment.ts`.
+3. Activa también `ENABLE_ALERTS=true` en el backend, para que se generen notificaciones.
 
 ## Sesión
 
@@ -29,7 +48,7 @@ Todas las peticiones a la API se hacen a la ruta relativa `/api`, así que quien
 - Un interceptor agrega el token a las llamadas a `/api` y, si la API responde 401, cierra la sesión y lleva al login con un aviso.
 - El panel es solo para cuentas de tienda; las alertas y la bandeja, solo para clientes. La API además comprueba los permisos en cada llamada.
 - Al entrar, la tienda va a `/admin` y el cliente a `/alertas`.
-- La campana del header muestra las notificaciones sin leer y se actualiza cada minuto (no consulta con la pestaña oculta).
+- Con las alertas activadas, la campana del header muestra las notificaciones sin leer y se actualiza cada minuto (no consulta con la pestaña oculta).
 
 ## Formatos
 
@@ -104,7 +123,7 @@ docker run -p 4200:80 -e API_URL=http://host.docker.internal:3000 stockbarrio-fr
 | Script | Qué hace |
 | --- | --- |
 | `npm start` | Servidor de desarrollo |
-| `npm run build` | Compila para producción en `dist/frontend/browser` |
+| `npm run build` | Compila para producción en `dist/frontend/browser` (antes aplica `ENABLE_ALERTS` si está definida) |
 | `npm run watch` | Compila en modo desarrollo y vuelve a compilar con cada cambio |
 | `npm test` | Pruebas unitarias con Karma (para una sola pasada sin abrir el navegador: `npx ng test --watch=false --browsers=ChromeHeadless`) |
 
