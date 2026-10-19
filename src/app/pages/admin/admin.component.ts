@@ -1,15 +1,15 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ApiError, ApiService, type ProductInput } from '../../api.service';
+import { ApiError, ApiService } from '../../api.service';
 import type { Product, Store } from '../../models';
 import { CalendarDatePipe } from '../../pipes/calendar-date.pipe';
 import { CopCurrencyPipe } from '../../pipes/cop-currency.pipe';
 import { StoreLocationComponent } from './store-location.component';
+import { ProductFormComponent } from './product-form.component';
 import { SuggestionsPanelComponent } from './suggestions-panel.component';
 
-const emptyForm = (): ProductInput => ({ name: '', category: 'Alimentación', description: '', price: 0, stock: 0, expirationDate: '', discountPercent: 0 });
 
-@Component({ selector: 'app-admin', changeDetection: ChangeDetectionStrategy.OnPush, imports: [FormsModule, CopCurrencyPipe, CalendarDatePipe, SuggestionsPanelComponent, StoreLocationComponent], template: `
+@Component({ selector: 'app-admin', changeDetection: ChangeDetectionStrategy.OnPush, imports: [FormsModule, CopCurrencyPipe, CalendarDatePipe, SuggestionsPanelComponent, StoreLocationComponent, ProductFormComponent], template: `
 <main class="admin"><header><div><span class="eyebrow">Panel privado</span><h1>{{ store()?.name ?? 'Inventario de tu tienda' }}</h1>@if (store(); as current) { <p class="store-meta">{{ current.neighborhood }} · {{ current.address }}</p> }</div>@if (state() === 'ready') { <button class="button" type="button" (click)="startCreate()">+ Nuevo producto</button> }</header>
 @if (notice()) { <p class="alert alert-success" role="status">{{ notice() }}</p> }
 @switch (state()) {
@@ -25,7 +25,7 @@ const emptyForm = (): ProductInput => ({ name: '', category: 'Alimentación', de
 <div class="table-wrap"><table><thead><tr><th scope="col">Producto</th><th scope="col">Precio</th><th scope="col">Stock</th><th scope="col">Vencimiento</th><th scope="col">Oferta</th><th scope="col">Acciones</th></tr></thead><tbody>@for (product of filteredProducts(); track product.id) { <tr><td data-label="Producto"><strong>{{ product.name }}</strong><small>{{ product.category }}</small></td><td data-label="Precio">{{ product.price | cop }}@if (product.discountPercent > 0) { <small>{{ product.offerPrice | cop }} con descuento</small> }</td><td data-label="Stock">{{ product.stock }}</td><td data-label="Vence">{{ product.expirationDate | calendarDate }}</td><td data-label="Oferta">{{ product.discountPercent }}%</td><td class="actions"><button type="button" (click)="edit(product)" [attr.aria-label]="'Editar ' + product.name">Editar</button><button type="button" class="danger" [disabled]="removingId() === product.id" (click)="remove(product)" [attr.aria-label]="'Eliminar ' + product.name">{{ removingId() === product.id ? 'Eliminando…' : 'Eliminar' }}</button></td></tr> }</tbody></table></div> }
 </section>
 <app-store-location [store]="store()" (saved)="store.set($event)" />
-@if (formOpen()) { <section class="form-card"><h2>{{ editing() ? 'Editar producto' : 'Nuevo producto' }}</h2><form #productForm="ngForm" (ngSubmit)="save()"><label>Nombre<input name="name" [(ngModel)]="form.name" required minlength="2" maxlength="120"></label><label>Categoría<input name="category" [(ngModel)]="form.category" required minlength="2" maxlength="80"></label><label>Precio (COP)<input name="price" [(ngModel)]="form.price" type="number" min="1" step="1" required></label><label>Stock<input name="stock" [(ngModel)]="form.stock" type="number" min="0" step="1" required></label><label>Vencimiento<input name="expirationDate" [(ngModel)]="form.expirationDate" type="date" required></label><label>Descuento %<input name="discountPercent" [(ngModel)]="form.discountPercent" type="number" min="0" max="100" required></label><label class="full">Descripción<textarea name="description" [(ngModel)]="form.description" maxlength="500"></textarea></label>@if (formError()) { <p class="alert alert-error full" role="alert">{{ formError() }}</p> }<div class="form-actions"><button type="button" class="button button-light" (click)="closeForm()">Cancelar</button><button class="button" type="submit" [disabled]="saving() || productForm.invalid">{{ saving() ? 'Guardando…' : 'Guardar' }}</button></div></form></section> }
+@if (formOpen()) { @for (key of [formKey()]; track key) { <app-product-form [product]="editing()" (saved)="onSaved($event)" (cancelled)="closeForm()" /> } }
 }
 }
 </main>`, styleUrl: './admin.component.scss' })
@@ -35,15 +35,13 @@ export class AdminComponent implements OnInit {
   readonly products = signal<Product[]>([]);
   readonly store = signal<Store | null>(null);
   readonly search = signal('');
-  readonly saving = signal(false);
   readonly removingId = signal<string | null>(null);
   readonly loadError = signal('');
   readonly actionError = signal('');
-  readonly formError = signal('');
+  readonly formKey = signal(0);
   readonly notice = signal('');
   readonly formOpen = signal(false);
   readonly editing = signal<Product | null>(null);
-  form: ProductInput = emptyForm();
   // Suggestions depend on the inventory, so they are refreshed after every product change.
   private readonly suggestionsPanel = viewChild(SuggestionsPanelComponent);
   readonly filteredProducts = computed(() => {
@@ -85,44 +83,31 @@ export class AdminComponent implements OnInit {
   }
 
   startCreate() {
-    this.editing.set(null);
-    this.form = emptyForm();
-    this.formError.set('');
-    this.formOpen.set(true);
+    this.openForm(null);
   }
 
   edit(product: Product) {
-    this.editing.set(product);
-    this.form = { name: product.name, category: product.category, description: product.description, price: Number(product.price), stock: Number(product.stock), expirationDate: product.expirationDate.slice(0, 10), discountPercent: Number(product.discountPercent) };
-    this.formError.set('');
-    this.formOpen.set(true);
+    this.openForm(product);
   }
 
   closeForm() {
     this.formOpen.set(false);
     this.editing.set(null);
-    this.form = emptyForm();
-    this.formError.set('');
   }
 
-  async save() {
-    this.saving.set(true);
-    this.formError.set('');
+  async onSaved(message: string) {
+    this.notice.set(message);
+    this.closeForm();
+    await this.load();
+    void this.suggestionsPanel()?.load();
+  }
+
+  // A new key recreates the form, so switching from one product to another never keeps old values.
+  private openForm(product: Product | null) {
     this.notice.set('');
-    try {
-      const payload = { ...this.form, price: Number(this.form.price), stock: Number(this.form.stock), discountPercent: Number(this.form.discountPercent) };
-      const current = this.editing();
-      if (current) await this.api.updateProduct(current.id, payload);
-      else await this.api.saveProduct(payload);
-      this.notice.set(current ? 'El producto se actualizó correctamente.' : 'El producto se creó correctamente.');
-      this.closeForm();
-      await this.load();
-      void this.suggestionsPanel()?.load();
-    } catch (caught) {
-      this.formError.set(caught instanceof Error ? caught.message : 'No se pudo guardar el producto.');
-    } finally {
-      this.saving.set(false);
-    }
+    this.editing.set(product);
+    this.formKey.update((key) => key + 1);
+    this.formOpen.set(true);
   }
 
   async remove(product: Product) {
