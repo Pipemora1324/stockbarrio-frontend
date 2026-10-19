@@ -10,3 +10,5 @@ nav a { color: #40524b; font-weight: 600; text-decoration: none; }
 .button-small { padding: .6rem .9rem; }
 .button-outline { background: #fff; color: #119e71; border: 1px solid #119e71; }
 @media (max-width: 760px) { nav { display: none; } .site-header { padding: .8rem 1rem; } }
+.user-name { color: #40524b; font-weight: 600; font-size: .9rem; }
+@media (max-width: 760px) { .user-name { display: none; } }
