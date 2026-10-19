@@ -14,7 +14,8 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   return next(authorized).pipe(
     catchError((error: unknown) => {
       const isCredentialCall = credentialEndpoints.some((path) => request.url.startsWith(path));
-      if (error instanceof HttpErrorResponse && error.status === 401 && token && !isCredentialCall) auth.expireSession();
+      // Only the session that sent the request is closed: a late 401 must not end a newer session.
+      if (error instanceof HttpErrorResponse && error.status === 401 && token && token === auth.token() && !isCredentialCall) auth.expireSession();
       return throwError(() => error);
     }),
   );
