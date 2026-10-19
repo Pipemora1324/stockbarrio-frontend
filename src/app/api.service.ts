@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom, type Observable } from 'rxjs';
-import type { AppliedDiscount, AssistantResponse, AuthUser, Coordinates, DiscountSuggestion, Product, Store } from './models';
+import type { AlertInput, AlertSubscription, AppNotification, AppliedDiscount, AssistantResponse, AuthUser, Coordinates, DiscountSuggestion, Product, Store } from './models';
 
 export interface Recommendation {
   suggestion: string;
@@ -112,6 +112,34 @@ export class ApiService {
 
   approveAllSuggestions(): Promise<{ data: AppliedDiscount[]; message: string }> {
     return this.request(this.http.post<{ data: AppliedDiscount[]; message: string }>(`${this.baseUrl}/suggestions/approve-all`, {}), 'No se pudieron aplicar los descuentos.');
+  }
+
+  async getAlerts(): Promise<AlertSubscription[]> {
+    return (await this.request(this.http.get<{ data: AlertSubscription[] }>(`${this.baseUrl}/alerts`), 'No se pudieron cargar tus alertas.')).data;
+  }
+
+  createAlert(alert: AlertInput): Promise<{ data: AlertSubscription; message: string }> {
+    return this.request(this.http.post<{ data: AlertSubscription; message: string }>(`${this.baseUrl}/alerts`, alert), 'No se pudo crear la alerta.');
+  }
+
+  async deleteAlert(id: string): Promise<void> {
+    await this.request(this.http.delete(`${this.baseUrl}/alerts/${id}`), 'No se pudo eliminar la alerta.');
+  }
+
+  getNotifications(): Promise<{ data: AppNotification[]; unread: number }> {
+    return this.request(this.http.get<{ data: AppNotification[]; unread: number }>(`${this.baseUrl}/notifications`), 'No se pudieron cargar tus notificaciones.');
+  }
+
+  async getUnreadCount(): Promise<number> {
+    return (await this.request(this.http.get<{ unread: number }>(`${this.baseUrl}/notifications/unread-count`), 'No se pudo consultar las notificaciones.')).unread;
+  }
+
+  async markNotificationRead(id: string): Promise<number> {
+    return (await this.request(this.http.post<{ unread: number }>(`${this.baseUrl}/notifications/${id}/read`, {}), 'No se pudo marcar como leída.')).unread;
+  }
+
+  async markAllNotificationsRead(): Promise<number> {
+    return (await this.request(this.http.post<{ unread: number }>(`${this.baseUrl}/notifications/read-all`, {}), 'No se pudieron marcar como leídas.')).unread;
   }
 
   async recommend(payload: { budget: number; neighborhood: string; productIds: string[] }): Promise<Recommendation> {
