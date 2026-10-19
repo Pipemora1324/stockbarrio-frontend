@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom, type Observable } from 'rxjs';
-import type { AppliedDiscount, AuthUser, DiscountSuggestion, Product, Store } from './models';
+import type { AppliedDiscount, AssistantResponse, AuthUser, Coordinates, DiscountSuggestion, Product, Store } from './models';
 
 export interface Recommendation {
   suggestion: string;
@@ -46,6 +46,19 @@ export class ApiService {
   async getStores(neighborhood?: string): Promise<Store[]> {
     const params = neighborhood ? { neighborhood } : undefined;
     return (await this.request(this.http.get<{ data: Store[] }>(`${this.baseUrl}/stores`, { params }), 'No se pudieron cargar las tiendas.')).data;
+  }
+
+  async getNeighborhoods(): Promise<string[]> {
+    return (await this.request(this.http.get<{ data: string[] }>(`${this.baseUrl}/stores/neighborhoods`), 'No se pudieron cargar los barrios.')).data;
+  }
+
+  // The location travels only in this request body; the API does not store it.
+  async searchAssistant(payload: { message: string; neighborhood?: string } & Partial<Coordinates>): Promise<AssistantResponse> {
+    return (await this.request(this.http.post<{ data: AssistantResponse }>(`${this.baseUrl}/assistant/search`, payload), 'El asistente no pudo responder. Inténtalo de nuevo.')).data;
+  }
+
+  updateMyStoreLocation(payload: { latitude: number | null; longitude: number | null }): Promise<{ data: Store; message: string }> {
+    return this.request(this.http.put<{ data: Store; message: string }>(`${this.baseUrl}/stores/me`, payload), 'No se pudo guardar la ubicación de la tienda.');
   }
 
   async getProducts(filters: { neighborhood?: string; category?: string; search?: string } = {}): Promise<Product[]> {
