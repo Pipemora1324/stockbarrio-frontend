@@ -6,6 +6,7 @@ import { HomeComponent } from './pages/home/home.component';
 export const routes: Routes = [
   { path: '', component: HomeComponent, title: 'StockBarrio · Ofertas de tu barrio' },
   { path: 'catalogo', loadComponent: () => import('./pages/catalog/catalog.component').then((m) => m.CatalogComponent), title: 'Catálogo · StockBarrio' },
+  { path: 'ofertas', loadComponent: () => import('./pages/offers/offers.component').then((m) => m.OffersComponent), title: 'Ofertas · StockBarrio' },
   { path: 'chat', loadComponent: () => import('./pages/chat/chat.component').then((m) => m.ChatComponent), title: 'Asistente · StockBarrio' },
   { path: 'login', loadComponent: () => import('./pages/login/login.component').then((m) => m.LoginComponent), title: 'Iniciar sesión · StockBarrio' },
   { path: 'register', loadComponent: () => import('./pages/register/register.component').then((m) => m.RegisterComponent), title: 'Crear cuenta · StockBarrio' },
