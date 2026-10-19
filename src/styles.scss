@@ -87,3 +87,17 @@ input, select, textarea { max-width: 100%; }
 .field-help { display: block; color: var(--color-muted); font-size: .85rem; line-height: 1.35; }
 input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='true'] { border-color: var(--color-danger) !important; background: #fffafa; }
 button:disabled { opacity: .55; cursor: not-allowed; }
+
+// Animated "typing" indicator for chat-like views.
+.dots { display: inline-flex; gap: .2rem; margin-right: .35rem; vertical-align: middle; }
+.dots span { width: .4rem; height: .4rem; border-radius: 50%; background: var(--color-muted); animation: typing 1.2s infinite ease-in-out; }
+.dots span:nth-child(2) { animation-delay: .15s; }
+.dots span:nth-child(3) { animation-delay: .3s; }
+@keyframes typing { 0%, 80%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+
+// Shared buttons. Components may refine them with their own styles.
+.button { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; border: 0; border-radius: .7rem; padding: .75rem 1rem; background: var(--color-primary); color: #fff; font-weight: 800; text-decoration: none; cursor: pointer; }
+.button:hover:not(:disabled) { background: var(--color-primary-strong); }
+.button-light { border: 1px solid #b9dccd; background: #fff; color: var(--color-primary); }
+.button-light:hover:not(:disabled) { background: var(--color-primary-soft); }
+.link-button { border: 0; padding: 0; background: none; color: var(--color-primary); font-weight: 800; text-decoration: underline; cursor: pointer; }
