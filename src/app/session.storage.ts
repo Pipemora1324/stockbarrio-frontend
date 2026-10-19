@@ -2,7 +2,7 @@ import type { AuthUser } from './models';
 
 const tokenKey = 'stockbarrios-token';
 const userKey = 'stockbarrios-user';
-const roles: ReadonlyArray<AuthUser['role']> = ['admin', 'store'];
+const roles: ReadonlyArray<AuthUser['role']> = ['admin', 'store', 'customer'];
 
 export interface StoredSession {
   token: string;
