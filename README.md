@@ -13,9 +13,21 @@ La API (Node.js + Express + PostgreSQL) está en un repositorio aparte: [stockba
 | `/chat` | Recomendaciones de compra según presupuesto y barrio |
 | `/login` | Inicio de sesión |
 | `/register` | Registro de tienda |
-| `/admin` | Gestión de productos (requiere sesión) |
+| `/admin` | Panel de la tienda: gestión de sus propios productos (requiere sesión con rol `store`) |
 
 Todas las peticiones a la API se hacen a la ruta relativa `/api`, así que quien sirve el frontend tiene que redirigir `/api` hacia el backend.
+
+## Sesión
+
+- El token y el usuario se guardan en `localStorage`. Si esos datos están dañados o el navegador bloquea el almacenamiento, la app arranca sin sesión en vez de fallar.
+- Al iniciar, la app valida el token con `GET /api/auth/me` en segundo plano. Si la API no responde (por ejemplo, mientras Render despierta), la sesión se mantiene.
+- Un interceptor agrega el token a las llamadas a `/api` y, si la API responde 401, cierra la sesión y lleva al login con un aviso.
+- El panel solo es accesible para cuentas de tienda. La API además comprueba que cada producto pertenezca a la tienda del usuario.
+
+## Formatos
+
+- Los precios se muestran en pesos colombianos con `Intl.NumberFormat('es-CO')`, sin decimales (pipe `cop`).
+- Las fechas de vencimiento son fechas puras `AAAA-MM-DD`: se muestran y se envían como texto (pipe `calendarDate`), sin pasar por `Date`, para que la zona horaria no corra el día.
 
 ## Requisitos
 
@@ -56,13 +68,14 @@ docker run -p 4200:80 -e API_URL=http://host.docker.internal:3000 stockbarrio-fr
 | `npm start` | Servidor de desarrollo |
 | `npm run build` | Compila para producción en `dist/frontend/browser` |
 | `npm run watch` | Compila en modo desarrollo y vuelve a compilar con cada cambio |
-| `npm test` | Pruebas unitarias con Karma |
+| `npm test` | Pruebas unitarias con Karma (en modo continuo: `npx ng test --watch=false --browsers=ChromeHeadless`) |
 
 ## Estructura
 
 - `src/app/pages`: páginas de la aplicación.
 - `src/app/components`: componentes compartidos (cabecera).
 - `src/app/api.service.ts`: llamadas a la API.
-- `src/app/auth.service.ts` y `auth.guard.ts`: sesión y protección de rutas.
+- `src/app/auth.service.ts`, `auth.guard.ts`, `auth.interceptor.ts` y `session.storage.ts`: sesión, protección de rutas y manejo del 401.
+- `src/app/pipes`: formato de pesos y de fechas.
 - `nginx.conf` y `Dockerfile`: imagen para producción.
 - `vercel.json`: configuración de Vercel.
