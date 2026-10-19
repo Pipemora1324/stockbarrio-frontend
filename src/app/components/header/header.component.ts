@@ -34,7 +34,7 @@ import { NotificationsService } from '../../services/notifications.service';
         </a>
       }
       @if (auth.user(); as user) {
-        <span class="user-name">{{ user.name }}</span>
+        <a class="user-name" routerLink="/perfil" routerLinkActive="active" [attr.aria-label]="'Mi perfil: ' + user.name">{{ user.name }}</a>
         <button class="button button-small button-outline" type="button" (click)="auth.logout()">Salir</button>
       } @else {
         <a class="button button-small button-outline" routerLink="/register">Crear cuenta</a>
