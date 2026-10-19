@@ -18,6 +18,7 @@ import { AuthService } from '../../auth.service';
     <form (ngSubmit)="submit()">
       <label>Correo electrónico<input name="email" [(ngModel)]="email" type="email" autocomplete="email" required></label>
       <label>Contraseña<input name="password" [(ngModel)]="password" type="password" autocomplete="current-password" required></label>
+      <a class="forgot" routerLink="/forgot-password">¿Olvidaste tu contraseña?</a>
       <button class="button" type="submit" [disabled]="loading() || !canSubmit()">{{ loading() ? 'Entrando…' : 'Iniciar sesión' }}</button>
       @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
     </form>
