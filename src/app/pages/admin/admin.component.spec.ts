@@ -5,7 +5,7 @@ import { AuthService } from '../../auth.service';
 import type { Product, Store } from '../../models';
 import { AdminComponent } from './admin.component';
 
-const store: Store = { id: 's1', name: 'Tienda Doña Luz', neighborhood: 'Chapinero', address: 'Calle 57 # 9-20', phone: '', latitude: null, longitude: null, active: true };
+const store: Store = { id: 's1', name: 'Tienda Doña Luz', neighborhood: 'Chapinero', address: 'Calle 57 # 9-20', phone: '3101234567', active: true };
 const product = (overrides: Partial<Product>): Product => ({
   id: 'p1', storeId: 's1', storeName: 'Tienda Doña Luz', neighborhood: 'Chapinero', name: 'Leche entera', category: 'Lácteos', description: '',
   price: 5000, offerPrice: 5000, stock: 10, expirationDate: '2026-10-25', discountPercent: 0, imageUrl: '', active: true, ...overrides,
@@ -26,7 +26,7 @@ describe('AdminComponent (store panel)', () => {
   };
 
   beforeEach(() => {
-    api = jasmine.createSpyObj<ApiService>('ApiService', ['getMyInventory', 'deleteProduct', 'getSuggestions', 'approveSuggestion', 'rejectSuggestion', 'approveAllSuggestions', 'updateMyStoreLocation', 'saveProduct', 'updateProduct']);
+    api = jasmine.createSpyObj<ApiService>('ApiService', ['getMyInventory', 'deleteProduct', 'getSuggestions', 'approveSuggestion', 'rejectSuggestion', 'approveAllSuggestions', 'saveProduct', 'updateProduct']);
     api.getSuggestions.and.resolveTo([]);
     api.getMyInventory.and.resolveTo({
       store,
@@ -34,14 +34,16 @@ describe('AdminComponent (store panel)', () => {
     });
   });
 
-  it('shows the inventory with its totals, the suggestions panel and the store location', async () => {
+  it('shows the inventory with its totals and the suggestions panel, and the store only as text', async () => {
     const { page } = await setup();
     expect(page.querySelector('h1')?.textContent).toBe('Tienda Doña Luz');
     const stats = [...page.querySelectorAll('.stats strong')].map((cell) => cell.textContent);
     expect(stats).toEqual(['3', '15', '1'], 'products, total stock (an empty product counts 0) and offers');
     expect(page.querySelectorAll('tbody tr').length).toBe(3);
     expect(page.querySelector('app-suggestions-panel')).not.toBeNull();
-    expect(page.querySelector('app-store-location')).not.toBeNull();
+    expect(page.querySelector('app-store-location')).toBeNull();
+    expect(page.querySelector('.store-meta')?.textContent).toBe('Chapinero · Calle 57 # 9-20 · Tel. 3101234567');
+    expect(page.textContent).not.toMatch(/ubicación|latitud|longitud|mapa/i);
     expect(page.textContent).toContain('con descuento');
   });
 

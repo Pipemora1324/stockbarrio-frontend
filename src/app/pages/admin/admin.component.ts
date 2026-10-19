@@ -6,13 +6,11 @@ import { ApiError, ApiService } from '../../api.service';
 import type { Product, Store } from '../../models';
 import { CalendarDatePipe } from '../../pipes/calendar-date.pipe';
 import { CopCurrencyPipe } from '../../pipes/cop-currency.pipe';
-import { StoreLocationComponent } from './store-location.component';
 import { ProductFormComponent } from './product-form.component';
 import { SuggestionsPanelComponent } from './suggestions-panel.component';
 
-
-@Component({ selector: 'app-admin', changeDetection: ChangeDetectionStrategy.OnPush, imports: [FormsModule, RouterLink, CopCurrencyPipe, CalendarDatePipe, SuggestionsPanelComponent, StoreLocationComponent, ProductFormComponent], template: `
-<main class="admin"><header><div><span class="eyebrow">Panel privado</span><h1>{{ store()?.name ?? 'Inventario de tu tienda' }}</h1>@if (store(); as current) { <p class="store-meta">{{ current.neighborhood }} · {{ current.address }}</p> }</div>@if (state() === 'ready') { <button class="button" type="button" (click)="startCreate()">+ Nuevo producto</button> }</header>
+@Component({ selector: 'app-admin', changeDetection: ChangeDetectionStrategy.OnPush, imports: [FormsModule, RouterLink, CopCurrencyPipe, CalendarDatePipe, SuggestionsPanelComponent, ProductFormComponent], template: `
+<main class="admin"><header><div><span class="eyebrow">Panel privado</span><h1>{{ store()?.name ?? 'Inventario de tu tienda' }}</h1>@if (store(); as current) { <p class="store-meta">{{ current.neighborhood }} · {{ current.address }}@if (current.phone) { · Tel. {{ current.phone }}}</p> }</div>@if (state() === 'ready') { <button class="button" type="button" (click)="startCreate()">+ Nuevo producto</button> }</header>
 @if (notice()) { <p class="alert alert-success" role="status">{{ notice() }}</p> }
 @switch (state()) {
 @case ('loading') { <section class="table-card"><p class="muted" role="status">Cargando el inventario…</p></section> }
@@ -26,7 +24,6 @@ import { SuggestionsPanelComponent } from './suggestions-panel.component';
 @if (!products().length) { <p class="muted">Todavía no tienes productos. Crea el primero con «Nuevo producto».</p> } @else if (!filteredProducts().length) { <p class="muted">Ningún producto coincide con «{{ search() }}».</p> } @else {
 <div class="table-wrap"><table><thead><tr><th scope="col">Producto</th><th scope="col">Precio</th><th scope="col">Stock</th><th scope="col">Vencimiento</th><th scope="col">Oferta</th><th scope="col">Acciones</th></tr></thead><tbody>@for (product of filteredProducts(); track product.id) { <tr><td data-label="Producto"><strong>{{ product.name }}</strong><small>{{ product.category }}</small></td><td data-label="Precio">{{ product.price | cop }}@if (product.discountPercent > 0) { <small>{{ product.offerPrice | cop }} con descuento</small> }</td><td data-label="Stock">{{ product.stock }}</td><td data-label="Vence">{{ product.expirationDate | calendarDate }}</td><td data-label="Oferta">{{ product.discountPercent }}%</td><td class="actions"><button type="button" (click)="edit(product)" [attr.aria-label]="'Editar ' + product.name">Editar</button><button type="button" class="danger" [disabled]="removingId() === product.id" (click)="remove(product)" [attr.aria-label]="'Eliminar ' + product.name">{{ removingId() === product.id ? 'Eliminando…' : 'Eliminar' }}</button></td></tr> }</tbody></table></div> }
 </section>
-<app-store-location [store]="store()" (saved)="store.set($event)" />
 @if (formOpen()) { @for (key of [formKey()]; track key) { <app-product-form [product]="editing()" (saved)="onSaved($event)" (cancelled)="closeForm()" /> } }
 }
 }
