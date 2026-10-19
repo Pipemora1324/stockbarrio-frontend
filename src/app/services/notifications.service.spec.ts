@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router, UrlTree, type ActivatedRouteSnapshot, type RouterStateSnapshot } from '@angular/router';
+import { environment } from '../../environments/environment';
 import { ApiService } from '../api.service';
 import { customerGuard } from '../auth.guard';
 import type { AuthUser } from '../models';
@@ -24,9 +25,13 @@ describe('NotificationsService', () => {
     return service;
   };
 
+  // These tests cover the paused feature as it works when ENABLE_ALERTS is on.
+  beforeEach(() => (environment.enableAlerts = true));
+
   afterEach(() => {
     TestBed.inject(NotificationsService).ngOnDestroy();
     localStorage.clear();
+    environment.enableAlerts = false;
   });
 
   it('loads the unread counter for customers', async () => {
@@ -35,6 +40,12 @@ describe('NotificationsService', () => {
     await Promise.resolve();
     expect(api.getUnreadCount).toHaveBeenCalled();
     expect(service.unread()).toBe(3);
+  });
+
+  it('does not ask the API at all while alerts are paused', () => {
+    environment.enableAlerts = false;
+    setup(customer);
+    expect(api.getUnreadCount).not.toHaveBeenCalled();
   });
 
   it('does not ask the API for stores or visitors', () => {
