@@ -1,11 +1,11 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../../auth.service';
 
 type AccountType = 'customer' | 'store';
 
-@Component({ selector: 'app-register', standalone: true, imports: [FormsModule, RouterLink], template: `
+@Component({ selector: 'app-register', imports: [FormsModule, RouterLink], changeDetection: ChangeDetectionStrategy.OnPush, template: `
 <main class="register-page"><section class="register-card">
   <span class="eyebrow">{{ accountType() === 'store' ? 'Registro de tienda' : 'Registro de cliente' }}</span>
   <h1>{{ accountType() === 'store' ? 'Conecta tu negocio' : 'Ahorra en tu barrio' }}</h1>
