@@ -15,3 +15,5 @@ export interface OfferQuery { neighborhood?: string; category?: string; search?:
 export type ChatMode = 'ai' | 'basic';
 export interface ChatTurn { role: 'user' | 'assistant'; content: string; }
 export interface ChatResponse { reply: string; mode: ChatMode; intent: { product: string | null; terms: string[]; category: string | null; preference: SearchPreference; neighborhood: string | null; budget: number | null }; origin: 'location' | 'neighborhood' | null; results: AssistantResult[]; }
+export interface AccountProfile extends AuthUser { email: string; pendingEmail: string | null; }
+export interface SessionUpdate { token: string; user: AuthUser; message: string; }

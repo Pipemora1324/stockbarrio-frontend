@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom, type Observable } from 'rxjs';
-import type { ChatResponse, ChatTurn, Offer, OfferQuery, AlertInput, AlertSubscription, AppNotification, AppliedDiscount, AuthUser, Coordinates, DiscountSuggestion, Product, Store } from './models';
+import type { AccountProfile, SessionUpdate, ChatResponse, ChatTurn, Offer, OfferQuery, AlertInput, AlertSubscription, AppNotification, AppliedDiscount, AuthUser, Coordinates, DiscountSuggestion, Product, Store } from './models';
 
 export interface Recommendation {
   suggestion: string;
@@ -84,6 +84,34 @@ export class ApiService {
 
   login(payload: { email: string; password: string }): Promise<{ token: string; user: AuthUser }> {
     return this.request(this.http.post<{ token: string; user: AuthUser }>(`${this.baseUrl}/auth/login`, payload), 'No se pudo iniciar sesión.');
+  }
+
+  forgotPassword(email: string): Promise<{ message: string }> {
+    return this.request(this.http.post<{ message: string }>(`${this.baseUrl}/auth/forgot-password`, { email }), 'No se pudo enviar el enlace.');
+  }
+
+  resetPassword(token: string, password: string): Promise<{ message: string }> {
+    return this.request(this.http.post<{ message: string }>(`${this.baseUrl}/auth/reset-password`, { token, password }), 'No se pudo cambiar la contraseña.');
+  }
+
+  async getAccount(): Promise<AccountProfile> {
+    return (await this.request(this.http.get<{ data: AccountProfile }>(`${this.baseUrl}/account`), 'No se pudo cargar tu perfil.')).data;
+  }
+
+  updateName(name: string): Promise<SessionUpdate> {
+    return this.request(this.http.patch<SessionUpdate>(`${this.baseUrl}/account/name`, { name }), 'No se pudo actualizar el nombre.');
+  }
+
+  changePassword(currentPassword: string, newPassword: string): Promise<SessionUpdate> {
+    return this.request(this.http.post<SessionUpdate>(`${this.baseUrl}/account/password`, { currentPassword, newPassword }), 'No se pudo cambiar la contraseña.');
+  }
+
+  requestEmailChange(newEmail: string, currentPassword: string): Promise<{ message: string }> {
+    return this.request(this.http.post<{ message: string }>(`${this.baseUrl}/account/email`, { newEmail, currentPassword }), 'No se pudo pedir el cambio de correo.');
+  }
+
+  confirmEmailChange(token: string): Promise<{ message: string }> {
+    return this.request(this.http.post<{ message: string }>(`${this.baseUrl}/account/email/confirm`, { token }), 'No se pudo confirmar el correo.');
   }
 
   async me(): Promise<AuthUser> {
