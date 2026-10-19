@@ -1,15 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom, type Observable } from 'rxjs';
-import type { AccountProfile, SessionUpdate, ChatResponse, ChatTurn, Offer, OfferQuery, AlertInput, AlertSubscription, AppNotification, AppliedDiscount, AuthUser, Coordinates, DiscountSuggestion, Product, Store } from './models';
-
-export interface Recommendation {
-  suggestion: string;
-  products: Array<{ productId: string; name: string; price: number; offerPrice: number; quantity: number; total: number; expirationDate: string }>;
-  total: number;
-  savings: number;
-  confidence: number;
-}
+import type { AccountProfile, SessionUpdate, ChatResponse, ChatTurn, Offer, OfferQuery, AlertInput, AlertSubscription, AppNotification, AppliedDiscount, AuthUser, DiscountSuggestion, Product, Store } from './models';
 
 export type ProductInput = Pick<Product, 'name' | 'category' | 'description' | 'price' | 'stock' | 'expirationDate' | 'discountPercent'>;
 
@@ -52,7 +44,6 @@ export class ApiService {
     return (await this.request(this.http.get<{ data: string[] }>(`${this.baseUrl}/products/categories`), 'No se pudieron cargar las categorías.')).data;
   }
 
-  // The optional location travels in the body and is not stored by the API.
   searchOffers(query: OfferQuery): Promise<{ data: Offer[]; total: number }> {
     return this.request(this.http.post<{ data: Offer[]; total: number }>(`${this.baseUrl}/offers/search`, query), 'No se pudieron cargar las ofertas.');
   }
@@ -61,13 +52,9 @@ export class ApiService {
     return (await this.request(this.http.get<{ data: string[] }>(`${this.baseUrl}/stores/neighborhoods`), 'No se pudieron cargar los barrios.')).data;
   }
 
-  // Sends the last turns of the conversation; the optional location is used only for distances and is not stored.
-  async chat(payload: { messages: ChatTurn[]; neighborhood?: string } & Partial<Coordinates>): Promise<ChatResponse> {
+  // Sends the last turns of the conversation and, if the customer chose one, the neighborhood to search in.
+  async chat(payload: { messages: ChatTurn[]; neighborhood?: string }): Promise<ChatResponse> {
     return (await this.request(this.http.post<{ data: ChatResponse }>(`${this.baseUrl}/assistant/chat`, payload), 'El asistente no pudo responder. Inténtalo de nuevo.')).data;
-  }
-
-  updateMyStoreLocation(payload: { latitude: number | null; longitude: number | null }): Promise<{ data: Store; message: string }> {
-    return this.request(this.http.put<{ data: Store; message: string }>(`${this.baseUrl}/stores/me`, payload), 'No se pudo guardar la ubicación de la tienda.');
   }
 
   async getProducts(filters: { neighborhood?: string; category?: string; search?: string } = {}): Promise<Product[]> {
@@ -177,9 +164,5 @@ export class ApiService {
 
   async markAllNotificationsRead(): Promise<number> {
     return (await this.request(this.http.post<{ unread: number }>(`${this.baseUrl}/notifications/read-all`, {}), 'No se pudieron marcar como leídas.')).unread;
-  }
-
-  async recommend(payload: { budget: number; neighborhood: string; productIds: string[] }): Promise<Recommendation> {
-    return (await this.request(this.http.post<{ data: Recommendation }>(`${this.baseUrl}/recommendations`, payload), 'No se pudo crear la recomendación.')).data;
   }
 }
