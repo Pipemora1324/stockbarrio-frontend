@@ -81,3 +81,9 @@ input, select, textarea { max-width: 100%; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+// Inline form validation shared by every form.
+.field-error { display: block; color: var(--color-danger); font-size: .85rem; font-weight: 600; line-height: 1.35; }
+.field-help { display: block; color: var(--color-muted); font-size: .85rem; line-height: 1.35; }
+input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='true'] { border-color: var(--color-danger) !important; background: #fffafa; }
+button:disabled { opacity: .55; cursor: not-allowed; }
