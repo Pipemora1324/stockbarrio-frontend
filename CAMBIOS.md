@@ -182,3 +182,16 @@ El backend de la rama `mejoras` (ofertas, chat, cuenta y categorías).
 ## Ajuste de IA para cupos gratuitos
 
 - El chat entiende el nuevo `mode: "rules"` (respuesta por reglas a propósito). El aviso de "modo básico" solo aparece cuando la IA no estaba disponible o se agotó el límite personal.
+
+## Alertas y notificaciones en pausa
+
+- **Bandera nueva:** `enableAlerts` en `src/environments/environment.ts`, con valor por defecto `false`. Se puede cambiar al compilar con la variable `ENABLE_ALERTS` (script `scripts/set-env.mjs`, que corre antes de `npm run build`).
+- **Con la bandera apagada:**
+  - no se registran las rutas `/alertas` ni `/notificaciones`;
+  - el header no muestra la campana ni "Mis alertas";
+  - no se consulta el contador;
+  - el cliente entra a `/ofertas`;
+  - los textos de login y registro ya no mencionan alertas ni avisos.
+- **Sin cambios de funcionamiento:** Ofertas, el chat y el panel de la tienda siguen igual. Revisé que no queden botones ni enlaces hacia lo oculto: los únicos enlaces a alertas o notificaciones estaban en el header y dentro de esas mismas páginas.
+- **No se borró código:** los componentes de alertas y notificaciones siguen en el repositorio.
+- **Pruebas:** 67 en verde. Hay tests nuevos de la bandera (sin campana, sin rutas, el cliente va a Ofertas, no se consulta el contador y al encenderla vuelve la campana). Además, `ENABLE_ALERTS=true npm run build` activa todo.
