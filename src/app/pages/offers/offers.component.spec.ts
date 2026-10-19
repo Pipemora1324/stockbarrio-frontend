@@ -2,12 +2,11 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { ApiService } from '../../api.service';
 import type { Offer } from '../../models';
-import { LocationService } from '../../services/location.service';
 import { OffersComponent, toCardProduct } from './offers.component';
 
 const offer: Offer = {
   productId: 'p1', name: 'Leche entera 1 L', category: 'Lácteos', description: '', imageUrl: '', price: 4900, offerPrice: 2940, discountPercent: 40, stock: 24,
-  expirationDate: '2099-01-01', daysToExpire: 2, distanceKm: 0.4, store: { id: 's1', name: 'Tienda Doña Luz', neighborhood: 'Chapinero', address: 'Calle 57' },
+  expirationDate: '2099-01-01', daysToExpire: 2, store: { id: 's1', name: 'Tienda Doña Luz', neighborhood: 'Chapinero', address: 'Calle 57' },
 };
 
 describe('OffersComponent', () => {
@@ -27,7 +26,7 @@ describe('OffersComponent', () => {
     return fixture;
   };
 
-  it('reads the filters from the address and shows the offers with distance', async () => {
+  it('reads the filters from the address and shows the offers', async () => {
     const fixture = setup({ barrio: 'Chapinero', categoria: 'Lácteos', orden: 'expiring' });
     await fixture.whenStable();
     fixture.detectChanges();
@@ -35,23 +34,18 @@ describe('OffersComponent', () => {
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('1 oferta');
     expect(text).toContain('Leche entera 1 L');
+    expect(text).toContain('1 oferta en Chapinero');
   });
 
-  it('asks for the location before sorting by distance and goes back if it is denied', async () => {
+  it('offers only the neighborhood filter and no location, radius or distance order', async () => {
     const fixture = setup();
-    const location = TestBed.inject(LocationService);
-    spyOn(location, 'requestLocation').and.rejectWith(new Error('No diste permiso para usar tu ubicación.'));
-    await fixture.componentInstance.changeSort('nearest');
-    expect(fixture.componentInstance.sort()).toBe('discount');
-    expect(fixture.componentInstance.locationError()).toContain('No diste permiso');
-  });
-
-  it('sends the location and radius only after the customer shares it', async () => {
-    const fixture = setup();
-    TestBed.inject(LocationService).location.set({ latitude: 4.64, longitude: -74.06 });
-    fixture.componentInstance.radiusKm.set(2);
-    await fixture.componentInstance.search();
-    expect(api.searchOffers).toHaveBeenCalledWith({ sort: 'discount', latitude: 4.64, longitude: -74.06, radiusKm: 2 });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const page = fixture.nativeElement as HTMLElement;
+    expect([...page.querySelectorAll('select[name=sort] option')].map((option) => option.textContent)).toEqual(['Mayor descuento', 'Vence primero']);
+    expect(page.querySelector('select[name=neighborhood]')).not.toBeNull();
+    expect(page.querySelector('select[name=radius]')).toBeNull();
+    expect(page.textContent).not.toMatch(/ubicación|Cerca de mí| km\b/i);
   });
 
   it('maps an offer to a product card', () => {
@@ -104,17 +98,16 @@ describe('OffersComponent', () => {
     expect(api.searchOffers.calls.mostRecent().args[0]).toEqual({ sort: 'discount', search: 'leche' });
   });
 
-  it('forgets the location, the radius and the distance order together', async () => {
+  it('searches again with the chosen neighborhood', async () => {
     const fixture = setup();
     await fixture.whenStable();
-    const component = fixture.componentInstance;
-    TestBed.inject(LocationService).location.set({ latitude: 4.64, longitude: -74.06 });
-    await component.changeSort('nearest');
-    component.radiusKm.set(5);
-    component.forgetLocation();
-    expect(component.sort()).toBe('discount');
-    expect(component.radiusKm()).toBeNull();
-    expect(api.searchOffers.calls.mostRecent().args[0]).toEqual({ sort: 'discount' });
+    const select = (fixture.nativeElement as HTMLElement).querySelector<HTMLSelectElement>('select[name=neighborhood]')!;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    select.value = 'Chapinero';
+    select.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+    expect(api.searchOffers.calls.mostRecent().args[0]).toEqual({ sort: 'discount', neighborhood: 'Chapinero' });
   });
 
   it('keeps working when the neighborhoods and categories cannot be loaded', async () => {
@@ -131,7 +124,7 @@ describe('OffersComponent', () => {
     await fixture.whenStable();
     expect(fixture.componentInstance.neighborhoods()).toEqual([]);
     expect(fixture.componentInstance.offers().length).toBe(1);
-    expect(fixture.componentInstance.sort()).toBe('discount', 'distance order needs the location first');
+    expect(fixture.componentInstance.sort()).toBe('discount', 'an old link with orden=nearest falls back to the default order');
   });
 
   it('reuses the same card object for the same offer', () => {
