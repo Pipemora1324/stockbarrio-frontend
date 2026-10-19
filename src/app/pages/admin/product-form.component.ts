@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, OnInit, output, signal } from '@angular/core';
+import { afterNextRender, ChangeDetectionStrategy, Component, computed, ElementRef, inject, input, OnInit, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService, type ProductInput } from '../../api.service';
 import { todayInBogota } from '../../dates';
@@ -65,6 +65,7 @@ const emptyProduct = (): ProductInput => ({ name: '', category: '', description:
 })
 export class ProductFormComponent implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   readonly product = input<Product | null>(null);
   readonly saved = output<string>();
   readonly cancelled = output<void>();
@@ -96,6 +97,14 @@ export class ProductFormComponent implements OnInit {
     };
   });
   readonly invalid = computed(() => rules.hasErrors(this.errors()));
+
+  constructor() {
+    // On small screens the form opens below the table: bring it into view and focus the first field.
+    afterNextRender(() => {
+      this.host.nativeElement.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+      this.host.nativeElement.querySelector<HTMLInputElement>('#product-name')?.focus({ preventScroll: true });
+    });
+  }
 
   ngOnInit() {
     const product = this.product();
