@@ -46,6 +46,11 @@ export class AuthService {
     this.session.set({ token, user });
   }
 
+  // Forgets the session without leaving the current page.
+  endSession(): void {
+    this.clear();
+  }
+
   // Closes the session and shows a message on the login page (after a password reset or an email change).
   signOutWithNotice(message: string): void {
     this.clear();
