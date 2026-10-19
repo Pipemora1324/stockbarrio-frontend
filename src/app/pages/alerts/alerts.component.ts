@@ -3,9 +3,8 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../api.service';
 import type { AlertInput, AlertSubscription } from '../../models';
-import { LocationService } from '../../services/location.service';
 
-type PlaceMode = 'anywhere' | 'neighborhood' | 'radius';
+type PlaceMode = 'anywhere' | 'neighborhood';
 
 @Component({
   selector: 'app-alerts',
@@ -29,7 +28,6 @@ type PlaceMode = 'anywhere' | 'neighborhood' | 'radius';
         <legend>¿Dónde?</legend>
         <label class="radio"><input type="radio" name="placeMode" value="anywhere" [(ngModel)]="placeMode"> En cualquier barrio</label>
         <label class="radio"><input type="radio" name="placeMode" value="neighborhood" [(ngModel)]="placeMode"> En un barrio</label>
-        <label class="radio"><input type="radio" name="placeMode" value="radius" [(ngModel)]="placeMode"> Cerca de donde estoy</label>
       </fieldset>
       @if (placeMode === 'neighborhood') {
         <label class="full">Barrio
@@ -38,13 +36,6 @@ type PlaceMode = 'anywhere' | 'neighborhood' | 'radius';
             @for (item of neighborhoods(); track item) { <option [value]="item">{{ item }}</option> }
           </select>
         </label>
-      }
-      @if (placeMode === 'radius') {
-        <div class="full radius-box">
-          <label>Radio<select name="radiusKm" [(ngModel)]="radiusKm">@for (option of radiusOptions; track option) { <option [ngValue]="option">{{ option }} km</option> }</select></label>
-          <button class="button button-light" type="button" [disabled]="location.locating()" (click)="takeLocation()">{{ position() ? '📍 Ubicación tomada' : '📍 Tomar mi ubicación' }}</button>
-          <label class="consent"><input type="checkbox" name="locationConsent" [(ngModel)]="locationConsent"> Acepto que StockBarrio guarde mi ubicación aproximada (unos 100 m) solo para esta alerta. La puedo borrar cuando quiera eliminando la alerta.</label>
-        </div>
       }
       <label>Descuento mínimo
         <select name="minDiscount" [(ngModel)]="minDiscount">@for (option of discountOptions; track option) { <option [ngValue]="option">{{ option === 0 ? 'Cualquier descuento' : option + ' % o más' }}</option> }</select>
@@ -76,12 +67,9 @@ type PlaceMode = 'anywhere' | 'neighborhood' | 'radius';
 })
 export class AlertsComponent implements OnInit {
   private readonly api = inject(ApiService);
-  protected readonly location = inject(LocationService);
-  protected readonly radiusOptions = [1, 2, 5, 10];
   protected readonly discountOptions = [0, 10, 20, 30, 50];
   readonly alerts = signal<AlertSubscription[]>([]);
   readonly neighborhoods = signal<string[]>([]);
-  readonly position = signal<{ latitude: number; longitude: number } | null>(null);
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly notice = signal('');
@@ -90,9 +78,7 @@ export class AlertsComponent implements OnInit {
   category = '';
   neighborhood = '';
   placeMode: PlaceMode = 'anywhere';
-  radiusKm = 2;
   minDiscount = 0;
-  locationConsent = false;
 
   ngOnInit() {
     void this.load();
@@ -104,7 +90,6 @@ export class AlertsComponent implements OnInit {
   }
 
   describePlace(alert: AlertSubscription) {
-    if (alert.radiusKm) return `a menos de ${alert.radiusKm} km`;
     return alert.neighborhood ? `en ${alert.neighborhood}` : 'en cualquier barrio';
   }
 
@@ -116,16 +101,6 @@ export class AlertsComponent implements OnInit {
       this.error.set(caught instanceof Error ? caught.message : 'No se pudieron cargar tus alertas.');
     } finally {
       this.loading.set(false);
-    }
-  }
-
-  async takeLocation() {
-    this.error.set('');
-    try {
-      const coordinates = await this.location.requestLocation();
-      this.position.set(coordinates);
-    } catch (caught) {
-      this.error.set(caught instanceof Error ? caught.message : 'No pudimos tomar tu ubicación.');
     }
   }
 
@@ -167,16 +142,10 @@ export class AlertsComponent implements OnInit {
     const query = this.query.trim();
     const category = this.category.trim();
     if (!query && !category) return 'Escribe un producto o una categoría.';
-    const payload: AlertInput = { minDiscount: Number(this.minDiscount), locationConsent: false, ...(query ? { query } : {}), ...(category ? { category } : {}) };
+    const payload: AlertInput = { minDiscount: Number(this.minDiscount), ...(query ? { query } : {}), ...(category ? { category } : {}) };
     if (this.placeMode === 'neighborhood') {
       if (!this.neighborhood) return 'Elige el barrio de la alerta.';
       payload.neighborhood = this.neighborhood;
-    }
-    if (this.placeMode === 'radius') {
-      const position = this.position();
-      if (!position) return 'Toma tu ubicación para crear una alerta por cercanía.';
-      if (!this.locationConsent) return 'Para guardar una alerta por cercanía debes aceptar que guardemos tu ubicación aproximada.';
-      Object.assign(payload, { latitude: position.latitude, longitude: position.longitude, radiusKm: Number(this.radiusKm), locationConsent: true });
     }
     return payload;
   }

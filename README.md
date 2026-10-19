@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/Pipemora1324/stockbarrio-frontend/actions/workflows/ci.yml/badge.svg)](https://github.com/Pipemora1324/stockbarrio-frontend/actions/workflows/ci.yml)
 
-Interfaz web de StockBarrio, una aplicación para tiendas y clientes de barrio: las tiendas gestionan su inventario y aprueban descuentos sugeridos para lo que está por vencer, y los clientes buscan productos cerca, arman combos y reciben alertas de descuentos. Está hecha con Angular 20 (componentes standalone, signals, SCSS).
+Interfaz web de StockBarrio, una aplicación para tiendas y clientes de barrio: las tiendas gestionan su inventario y aprueban descuentos sugeridos para lo que está por vencer, y los clientes buscan productos y ofertas en su barrio con ayuda de un chat. Está hecha con Angular 20 (componentes standalone, signals, SCSS).
 
 La API (Node.js + Express + PostgreSQL) está en un repositorio aparte: [stockbarrio-backend](https://github.com/Pipemora1324/stockbarrio-backend).
 
@@ -11,12 +11,12 @@ La API (Node.js + Express + PostgreSQL) está en un repositorio aparte: [stockba
 | Ruta | Qué muestra | Acceso |
 | --- | --- | --- |
 | `/` | Inicio con tiendas y ofertas | Público |
-| `/ofertas` | Productos con descuento, con filtros por barrio, categoría, texto y cercanía, y orden por descuento, cercanía o vencimiento (los filtros quedan en la URL) | Público |
+| `/ofertas` | Productos con descuento, con filtros por barrio, categoría y texto, y orden por descuento o vencimiento (los filtros quedan en la URL) | Público |
 | `/catalogo` | Catálogo con filtros por barrio, categoría y nombre (`?barrio=` filtra al entrar) | Público |
-| `/chat` | Chat con el asistente ("¿dónde puedo encontrar pollo asado?", "ofertas de hoy") con historial, tarjetas de resultados, ubicación o barrio, y combo con presupuesto | Público |
+| `/chat` | Chat con el asistente ("¿dónde puedo encontrar pollo asado?", "ofertas de hoy") con historial, tarjetas de resultados y selector de barrio | Público |
 | `/login` | Inicio de sesión | Público |
 | `/register` | Registro de cliente o de tienda (`?tipo=tienda` abre el de tienda) | Público |
-| `/admin` | Panel de la tienda: inventario, descuentos sugeridos y ubicación | Rol `store` |
+| `/admin` | Panel de la tienda: datos de la tienda como texto, inventario y descuentos sugeridos | Rol `store` |
 | `/alertas` | Alertas de descuento del cliente (pausada, ver abajo) | Rol `customer` |
 | `/notificaciones` | Bandeja de notificaciones, con enlace a la oferta (pausada, ver abajo) | Rol `customer` |
 | `/perfil` | Cambiar nombre, contraseña y correo | Con sesión |
@@ -68,11 +68,11 @@ El chat envía a la API los últimos 6 turnos (mensajes de hasta 500 caracteres)
 - **Modo básico.** Cuando la API responde sin IA, el mensaje lo indica.
 - **Datos reales.** La API valida que todo lo que dice el asistente exista en la base de datos.
 
-## Ubicación y privacidad
+## Cercanía y privacidad
 
-- La ubicación del navegador solo se pide cuando el usuario pulsa "Usar mi ubicación".
-- En el asistente, la ubicación se guarda únicamente en memoria de la pestaña (nunca en `localStorage`) y la API no la almacena.
-- Para alertas por cercanía, se envía solo si el cliente marca la casilla de consentimiento, y la API la guarda redondeada (unos 100 m).
+- La app no usa la ubicación del navegador ni calcula distancias. La cercanía es por barrio: hay filtro de barrio en Ofertas y en el catálogo, y en el chat el cliente puede elegir "Tu barrio".
+- En el chat, "cerca de mí" busca en el barrio que el cliente escriba o elija; si no hay barrio, el asistente lo pregunta y dice en qué barrios hay tiendas.
+- Bajo el campo del chat se muestra: "Tu mensaje se procesa con un servicio de IA externo; no escribas datos personales."
 
 ## Diseño, rendimiento y accesibilidad
 
@@ -138,18 +138,18 @@ Cómo correr las pruebas, qué cubre cada suite y la cobertura actual: [TESTING.
 
 1. En el backend: `npm run seed` y `npm run dev` (puerto 3000).
 2. Aquí: `npm start` y abre http://localhost:4200.
-3. Tienda: `tienda.donaluz@stockbarrio.test` / `tienda12345`. En `/admin` aprueba una sugerencia de descuento y guarda la ubicación.
+3. Tienda: `tienda.donaluz@stockbarrio.test` / `tienda12345`. En `/admin` revisa el inventario y aprueba una sugerencia de descuento.
 4. Cliente: `cliente.demo@stockbarrio.test` / `tienda12345`. Revisa la campana y `/notificaciones`, y crea alertas en `/alertas`.
-5. Asistente: en `/chat`, pulsa "busco huevos baratos" y luego "Usar mi ubicación" con "leche cerca de mí".
+5. Asistente: en `/chat`, pulsa "huevos baratos"; luego "pollo asado cerca" (te pide el barrio) y elige un barrio en "Tu barrio".
 
 ## Estructura
 
 - `src/app/pages`: páginas (`home`, `catalog`, `chat`, `admin`, `alerts`, `notifications`, `login`, `register`).
 - `src/app/components`: header y tarjeta de producto.
-- `src/app/services`: ubicación del navegador y contador de notificaciones.
+- `src/app/services`: contador de notificaciones (pausado con las alertas).
 - `src/app/validation`: reglas de validación de los formularios.
 - `src/app/api.service.ts`: llamadas a la API, con mensajes de error en español.
 - `src/app/auth.service.ts`, `auth.guard.ts`, `auth.interceptor.ts` y `session.storage.ts`: sesión, protección de rutas y manejo del 401.
-- `src/app/pipes` y `src/app/dates.ts`: formato de pesos, fechas, distancias y días para vencer en hora de Bogotá.
+- `src/app/pipes` y `src/app/dates.ts`: formato de pesos, fechas y días para vencer en hora de Bogotá.
 - `nginx.conf` y `Dockerfile`: imagen para producción.
 - `vercel.json`: configuración de Vercel.

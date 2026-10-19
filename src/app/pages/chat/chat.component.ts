@@ -5,9 +5,6 @@ import { ApiService } from '../../api.service';
 import type { AssistantResult, ChatMode, ChatTurn } from '../../models';
 import { CalendarDatePipe } from '../../pipes/calendar-date.pipe';
 import { CopCurrencyPipe } from '../../pipes/cop-currency.pipe';
-import { DistancePipe } from '../../pipes/distance.pipe';
-import { LocationService } from '../../services/location.service';
-import { ComboBuilderComponent } from './combo-builder.component';
 
 interface ConversationMessage {
   id: number;
@@ -28,7 +25,7 @@ export const buildHistory = (messages: ConversationMessage[]): ChatTurn[] =>
 
 @Component({
   selector: 'app-chat',
-  imports: [FormsModule, RouterLink, CopCurrencyPipe, CalendarDatePipe, DistancePipe, ComboBuilderComponent],
+  imports: [FormsModule, RouterLink, CopCurrencyPipe, CalendarDatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './chat.component.scss',
   template: `
@@ -39,26 +36,19 @@ export const buildHistory = (messages: ConversationMessage[]): ChatTurn[] =>
       @if (messages().length) { <button class="button button-light button-small" type="button" (click)="reset()">Nueva conversación</button> }
     </div>
 
-    <div class="location-bar">
-      @if (location.location()) {
-        <p class="location-status" role="status">📍 Usando tu ubicación para calcular distancias aproximadas. No la guardamos ni la compartimos.</p>
-        <button class="link-button" type="button" (click)="location.clear()">Dejar de usarla</button>
-      } @else {
-        <button class="button button-light" type="button" [disabled]="location.locating()" (click)="useMyLocation()">{{ location.locating() ? 'Buscando tu ubicación…' : '📍 Usar mi ubicación' }}</button>
-        <span class="or">o</span>
-        <label class="sr-only" for="chat-neighborhood">Elige tu barrio</label>
-        <select id="chat-neighborhood" [ngModel]="neighborhood()" (ngModelChange)="neighborhood.set($event)">
-          <option value="">Elige tu barrio</option>
-          @for (item of neighborhoods(); track item) { <option [value]="item">{{ item }}</option> }
-        </select>
-      }
+    <div class="neighborhood-bar">
+      <label for="chat-neighborhood">Tu barrio</label>
+      <select id="chat-neighborhood" [ngModel]="neighborhood()" (ngModelChange)="neighborhood.set($event)">
+        <option value="">Todos los barrios</option>
+        @for (item of neighborhoods(); track item) { <option [value]="item">{{ item }}</option> }
+      </select>
+      <small>Si lo eliges, busco solo en las tiendas de ese barrio.</small>
     </div>
-    @if (locationError()) { <p class="location-error" role="alert">{{ locationError() }}</p> }
 
     <div class="messages" #messageList role="log" aria-live="polite" aria-label="Conversación con el asistente">
       @if (!messages().length) {
         <div class="message assistant">
-          Hola, te ayudo a encontrar productos en las tiendas de StockBarrio. Pregúntame, por ejemplo, «¿dónde puedo encontrar pollo asado?» y dime cómo lo prefieres: más barato, más cerca, de mejor categoría, en oferta o por vencer.
+          Hola, te ayudo a encontrar productos en las tiendas de StockBarrio. Pregúntame, por ejemplo, «¿dónde puedo encontrar pollo asado?» y dime cómo lo prefieres: más barato, de mejor categoría, en oferta o por vencer. Para buscar cerca, elige tu barrio o escríbelo en el mensaje.
         </div>
       }
       @for (message of messages(); track message.id) {
@@ -74,7 +64,7 @@ export const buildHistory = (messages: ConversationMessage[]): ChatTurn[] =>
                   <strong>{{ result.name }}</strong>
                   @if (result.discountPercent > 0) { <span class="badge">-{{ result.discountPercent }}%</span> }
                 </div>
-                <span class="store">{{ result.store.name }} · {{ result.store.neighborhood }}@if (result.distanceKm !== null) { · {{ result.distanceKm | distance }} }</span>
+                <span class="store">{{ result.store.name }} · {{ result.store.neighborhood }}</span>
                 <span class="price"><strong>{{ result.offerPrice | cop }}</strong>@if (result.offerPrice < result.price) { <s><span class="sr-only">Antes </span>{{ result.price | cop }}</s> }</span>
                 <small [class.urgent]="result.daysToExpire <= 1">Vence {{ result.expirationDate | calendarDate }} · {{ expiresLabel(result.daysToExpire) }}</small>
               </li>
@@ -92,18 +82,19 @@ export const buildHistory = (messages: ConversationMessage[]): ChatTurn[] =>
 
     <form class="composer" (ngSubmit)="send()">
       <label class="sr-only" for="chat-message">Escribe tu mensaje</label>
-      <input id="chat-message" name="message" [ngModel]="draft()" (ngModelChange)="draft.set($event)" [maxlength]="maxMessageLength" autocomplete="off" placeholder="Escribe qué buscas" aria-describedby="chat-count">
+      <input id="chat-message" name="message" [ngModel]="draft()" (ngModelChange)="draft.set($event)" [maxlength]="maxMessageLength" autocomplete="off" placeholder="Escribe qué buscas" aria-describedby="chat-privacy chat-count">
       <button class="button" type="submit" [disabled]="loading() || draft().trim().length < 2">Enviar</button>
-      <small class="count" id="chat-count" [class.near-limit]="draft().length > maxMessageLength - 50">{{ draft().length }}/{{ maxMessageLength }}</small>
+      <div class="composer-notes">
+        <small class="privacy" id="chat-privacy">Tu mensaje se procesa con un servicio de IA externo; no escribas datos personales.</small>
+        <small class="count" id="chat-count" [class.near-limit]="draft().length > maxMessageLength - 50">{{ draft().length }}/{{ maxMessageLength }}</small>
+      </div>
     </form>
   </section>
-  <app-combo-builder [neighborhoods]="neighborhoods()" />
 </main>`,
 })
 export class ChatComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly injector = inject(Injector);
-  protected readonly location = inject(LocationService);
   protected readonly quickQuestions = quickQuestions;
   protected readonly maxMessageLength = maxMessageLength;
   private readonly messageList = viewChild<ElementRef<HTMLElement>>('messageList');
@@ -112,7 +103,6 @@ export class ChatComponent implements OnInit {
   readonly neighborhood = signal('');
   readonly draft = signal('');
   readonly loading = signal(false);
-  readonly locationError = signal('');
   private nextId = 1;
 
   ngOnInit() {
@@ -123,15 +113,6 @@ export class ChatComponent implements OnInit {
     if (days === 0) return 'hoy';
     if (days === 1) return 'mañana';
     return `en ${days} días`;
-  }
-
-  async useMyLocation() {
-    this.locationError.set('');
-    try {
-      await this.location.requestLocation();
-    } catch (caught) {
-      this.locationError.set(caught instanceof Error ? caught.message : 'No pudimos usar tu ubicación.');
-    }
   }
 
   reset() {
@@ -151,12 +132,7 @@ export class ChatComponent implements OnInit {
     this.push({ role: 'user', content });
     this.loading.set(true);
     try {
-      const coordinates = this.location.location();
-      const response = await this.api.chat({
-        messages: buildHistory(this.messages()),
-        ...(coordinates ?? {}),
-        ...(!coordinates && this.neighborhood() ? { neighborhood: this.neighborhood() } : {}),
-      });
+      const response = await this.api.chat({ messages: buildHistory(this.messages()), ...(this.neighborhood() ? { neighborhood: this.neighborhood() } : {}) });
       this.push({ role: 'assistant', content: response.reply, results: response.results, mode: response.mode });
     } catch (caught) {
       this.push({ role: 'assistant', content: caught instanceof Error ? caught.message : 'El asistente no pudo responder.', isError: true });

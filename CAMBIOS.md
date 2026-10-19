@@ -222,3 +222,25 @@ El backend de la rama `mejoras` (ofertas, chat, cuenta y categorías).
 - **Documentación:** `TESTING.md`.
 - **Variables nuevas:** ninguna.
 - **Cómo probar:** `npm run test:coverage`.
+
+## Simplificación (rama `simplificar`)
+
+- **Ubicación eliminada:**
+  - Se quitaron el botón "Usar mi ubicación", el permiso de Geolocation, el servicio de ubicación, el pipe y el cálculo de distancias.
+  - Ofertas ya no tiene orden "Más cerca" ni filtro por radio.
+  - Ofertas, el catálogo y el chat ya no muestran distancias.
+  - El panel de la tienda ya no tiene la sección de ubicación. Muestra el nombre, el barrio, la dirección y el teléfono como texto.
+  - Las alertas pausadas quedan solo por barrio.
+- **Cercanía por barrio:** filtro de barrio en Ofertas y en el catálogo. En el chat, el selector "Tu barrio" filtra la búsqueda. Si el cliente pide algo "cerca" sin barrio, el asistente se lo pregunta.
+- **Combos eliminados:** se quitaron el armador de combos del chat y su llamada a la API.
+- **Privacidad:** bajo el campo del chat se lee "Tu mensaje se procesa con un servicio de IA externo; no escribas datos personales."
+- **Textos:** los de ayuda, inicio, catálogo y Ofertas hablan de barrio y no de ubicación o distancia.
+- **Pruebas:** 134 en verde, con 95,0 % de líneas y 79,9 % de ramas. Se borraron las de ubicación, distancias y combos.
+- **Recorrido en el navegador** a 360, 768 y 1280 px, contra el backend local con el seed:
+  - Ofertas, con el filtro de Chapinero;
+  - catálogo de Suba;
+  - chat ("pollo asado cerca" pide el barrio; con Suba elegido solo trae Suba);
+  - panel de la tienda: 7 productos, sugerencias y sin ubicación;
+  - perfil, registro de cliente y de tienda, y login de cliente que entra a Ofertas.
+  - No hubo errores de consola ni desborde horizontal.
+- **Compatibilidad:** funciona con el backend actual y con el nuevo, porque ya no envía coordenadas ni llama a los combos.

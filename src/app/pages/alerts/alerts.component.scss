@@ -10,13 +10,10 @@
 .alert-form input:not([type=radio]):not([type=checkbox]), .alert-form select { padding: .75rem; border: 1px solid var(--color-border); border-radius: .6rem; font: inherit; }
 fieldset { display: flex; flex-wrap: wrap; gap: .6rem 1.2rem; margin: 0; padding: .8rem 1rem; border: 1px solid var(--color-border); border-radius: .8rem; }
 legend { padding: 0 .3rem; color: var(--color-text); font-weight: 800; }
-.alert-form .radio, .alert-form .consent { display: flex; align-items: flex-start; gap: .5rem; font-weight: 600; }
-.radius-box { display: flex; flex-wrap: wrap; align-items: end; gap: 1rem; }
-.consent { flex-basis: 100%; color: var(--color-text); font-size: .92rem; line-height: 1.45; }
+.alert-form .radio { display: flex; align-items: flex-start; gap: .5rem; font-weight: 600; }
 .full, .form-actions { grid-column: 1 / -1; }
 .form-actions { display: flex; justify-content: flex-end; }
 .button { border: 0; border-radius: .7rem; padding: .75rem 1.1rem; background: var(--color-primary); color: #fff; font: inherit; font-weight: 800; cursor: pointer; }
-.button-light { border: 1px solid #b9dccd; background: #fff; color: var(--color-primary); }
 .button:disabled { opacity: .6; cursor: not-allowed; }
 .alert { margin: 1rem 0 0; padding: .9rem 1rem; border-radius: .8rem; font-weight: 600; }
 .alert-error { background: var(--color-danger-soft); color: var(--color-danger); }

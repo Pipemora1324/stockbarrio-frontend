@@ -43,20 +43,24 @@ describe('ApiService', () => {
     expect(await pending).toEqual([]);
   });
 
-  it('sends the location in the body of offers and chat, never in the address', async () => {
-    const offers = api.searchOffers({ sort: 'nearest', latitude: 4.65, longitude: -74.06, radiusKm: 2 });
+  it('sends offers and chat filters in the body and never any coordinates', async () => {
+    const offers = api.searchOffers({ sort: 'expiring', neighborhood: 'Chapinero' });
     const offersRequest = backend.expectOne('/api/offers/search');
     expect(offersRequest.request.method).toBe('POST');
-    expect(offersRequest.request.urlWithParams).toBe('/api/offers/search');
-    expect(offersRequest.request.body).toEqual({ sort: 'nearest', latitude: 4.65, longitude: -74.06, radiusKm: 2 });
+    expect(offersRequest.request.body).toEqual({ sort: 'expiring', neighborhood: 'Chapinero' });
     offersRequest.flush({ data: [], total: 0 });
     await offers;
 
-    const chat = api.chat({ messages: [{ role: 'user', content: 'leche cerca' }], latitude: 4.65, longitude: -74.06 });
+    const chat = api.chat({ messages: [{ role: 'user', content: 'leche cerca' }], neighborhood: 'Suba' });
     const chatRequest = backend.expectOne('/api/assistant/chat');
-    expect(chatRequest.request.urlWithParams).toBe('/api/assistant/chat');
+    expect(chatRequest.request.body).toEqual({ messages: [{ role: 'user', content: 'leche cerca' }], neighborhood: 'Suba' });
     chatRequest.flush({ data: { reply: 'Hola', mode: 'rules', results: [] } });
     expect((await chat).reply).toBe('Hola');
+  });
+
+  it('no longer has calls for the store location or the combos', () => {
+    expect('updateMyStoreLocation' in api).toBeFalse();
+    expect('recommend' in api).toBeFalse();
   });
 
   it('calls every endpoint with the method, path and body the API expects', async () => {
@@ -77,10 +81,8 @@ describe('ApiService', () => {
       [() => api.approveSuggestion('s1'), 'POST', '/api/suggestions/s1/approve', {}, { data: {}, message: 'ok' }],
       [() => api.rejectSuggestion('s1'), 'POST', '/api/suggestions/s1/reject', {}, { message: 'ok' }],
       [() => api.approveAllSuggestions(), 'POST', '/api/suggestions/approve-all', {}, { data: [], message: 'ok' }],
-      [() => api.updateMyStoreLocation({ latitude: null, longitude: null }), 'PUT', '/api/stores/me', { latitude: null, longitude: null }, { data: {}, message: 'ok' }],
       [() => api.getNeighborhoods(), 'GET', '/api/stores/neighborhoods', null, { data: [] }],
       [() => api.getCategories(), 'GET', '/api/products/categories', null, { data: [] }],
-      [() => api.recommend({ budget: 20000, neighborhood: 'Chapinero', productIds: [] }), 'POST', '/api/recommendations', { budget: 20000, neighborhood: 'Chapinero', productIds: [] }, { data: {} }],
     ];
     for (const [call, method, url, body, response] of cases) {
       const pending = call();

@@ -29,18 +29,17 @@ describe('AlertsComponent', () => {
     component.placeMode = 'neighborhood';
     component.neighborhood = 'Chapinero';
     component.minDiscount = 20;
-    expect(component.buildPayload()).toEqual({ query: 'huevos', neighborhood: 'Chapinero', minDiscount: 20, locationConsent: false });
+    expect(component.buildPayload()).toEqual({ query: 'huevos', neighborhood: 'Chapinero', minDiscount: 20 });
   });
 
-  it('never sends a position without explicit consent', () => {
-    const component = create();
+  it('asks for the neighborhood and offers no way to share a position', () => {
+    const fixture = TestBed.createComponent(AlertsComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
     component.query = 'leche';
-    component.placeMode = 'radius';
-    expect(component.buildPayload()).toBe('Toma tu ubicación para crear una alerta por cercanía.');
-    component.position.set({ latitude: 4.64, longitude: -74.06 });
-    expect(component.buildPayload()).toMatch(/debes aceptar que guardemos tu ubicación aproximada/);
-    component.locationConsent = true;
-    expect(component.buildPayload()).toEqual(jasmine.objectContaining({ latitude: 4.64, longitude: -74.06, radiusKm: 2, locationConsent: true }));
+    component.placeMode = 'neighborhood';
+    expect(component.buildPayload()).toBe('Elige el barrio de la alerta.');
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toMatch(/ubicación|Cerca de donde estoy|km/);
   });
 
   it('creates the alert and reloads the list', async () => {
@@ -48,7 +47,7 @@ describe('AlertsComponent', () => {
     api.createAlert.and.resolveTo({ data: {} as never, message: 'Listo, te avisaremos cuando haya un descuento que coincida.' });
     component.category = 'Lácteos';
     await component.create();
-    expect(api.createAlert).toHaveBeenCalledWith({ category: 'Lácteos', minDiscount: 0, locationConsent: false });
+    expect(api.createAlert).toHaveBeenCalledWith({ category: 'Lácteos', minDiscount: 0 });
     expect(component.notice()).toContain('te avisaremos');
     expect(api.getAlerts).toHaveBeenCalledTimes(2);
   });

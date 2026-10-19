@@ -58,14 +58,6 @@ describe('validation rules', () => {
     expect(rules.expirationDate('', true, now)).toContain('obligatoria');
   });
 
-  it('keeps coordinates inside Colombia', () => {
-    expect(rules.latitude(4.64)).toBe('');
-    expect(rules.latitude(-74.06)).toContain('dentro de Colombia');
-    expect(rules.longitude(-74.06)).toBe('');
-    expect(rules.longitude(4.64)).toContain('dentro de Colombia');
-    expect(rules.latitude('')).toBe('');
-  });
-
   it('accepts only real days and uses the Bogota calendar near midnight', () => {
     const now = new Date('2026-10-18T15:00:00Z');
     expect(rules.expirationDate('2026-02-30', true, now)).toBe('La fecha no es válida.');
@@ -116,7 +108,5 @@ describe('validation rules', () => {
   it('reports whether a form has any error', () => {
     expect(rules.hasErrors({ name: '', email: '' })).toBeFalse();
     expect(rules.hasErrors({ name: '', email: 'El correo electrónico no es válido.' })).toBeTrue();
-    expect(rules.latitude('abc')).toBe('La latitud debe ser un número.');
-    expect(rules.longitude(null)).toBe('');
   });
 });

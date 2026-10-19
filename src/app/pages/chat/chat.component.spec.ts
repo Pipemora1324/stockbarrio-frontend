@@ -2,18 +2,15 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { ApiService } from '../../api.service';
 import type { ChatResponse } from '../../models';
-import { formatDistance } from '../../pipes/distance.pipe';
-import { LocationService } from '../../services/location.service';
 import { buildHistory, ChatComponent } from './chat.component';
 
 const response = (overrides: Partial<ChatResponse> = {}): ChatResponse => ({
-  reply: 'El pollo asado más cercano está en Tienda Doña Luz a $ 32.000.',
+  reply: 'El pollo asado más barato está en Tienda Doña Luz a $ 32.000.',
   mode: 'ai',
-  intent: { product: 'pollo asado', terms: ['pollo', 'asado'], category: null, preference: 'nearest', neighborhood: null, budget: null },
-  origin: 'location',
+  intent: { product: 'pollo asado', terms: ['pollo', 'asado'], category: null, preference: 'cheapest', neighborhood: null, budget: null },
   results: [{
     productId: 'p1', name: 'Pollo asado entero', category: 'Comidas preparadas', price: 32000, offerPrice: 32000, discountPercent: 0, stock: 6,
-    expirationDate: '2026-10-19', daysToExpire: 1, distanceKm: 0.34, store: { id: 's1', name: 'Tienda Doña Luz', neighborhood: 'Chapinero', address: 'Calle 57' },
+    expirationDate: '2026-10-19', daysToExpire: 1, store: { id: 's1', name: 'Tienda Doña Luz', neighborhood: 'Chapinero', address: 'Calle 57' },
   }],
   ...overrides,
 });
@@ -22,24 +19,35 @@ describe('ChatComponent', () => {
   let api: jasmine.SpyObj<ApiService>;
 
   beforeEach(() => {
-    api = jasmine.createSpyObj<ApiService>('ApiService', ['getNeighborhoods', 'chat', 'recommend']);
+    api = jasmine.createSpyObj<ApiService>('ApiService', ['getNeighborhoods', 'chat']);
     api.getNeighborhoods.and.resolveTo(['Chapinero', 'Suba']);
     api.chat.and.resolveTo(response());
     TestBed.configureTestingModule({ imports: [ChatComponent], providers: [provideRouter([]), { provide: ApiService, useValue: api }] });
   });
 
-  it('sends the conversation with the shared location and shows the result cards', async () => {
-    TestBed.inject(LocationService).location.set({ latitude: 4.64, longitude: -74.06 });
+  it('sends the conversation without any location and shows the result cards without distances', async () => {
     const fixture = TestBed.createComponent(ChatComponent);
     fixture.detectChanges();
     fixture.componentInstance.draft.set('pollo asado cerca');
     await fixture.componentInstance.send();
     fixture.detectChanges();
-    expect(api.chat).toHaveBeenCalledWith({ messages: [{ role: 'user', content: 'pollo asado cerca' }], latitude: 4.64, longitude: -74.06 });
+    expect(api.chat).toHaveBeenCalledWith({ messages: [{ role: 'user', content: 'pollo asado cerca' }] });
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('Tienda Doña Luz · Chapinero');
-    expect(text).toContain('a 350 m');
+    expect(text).not.toMatch(/\d+ m\b| km\b/);
     expect(text).not.toContain('modo básico');
+  });
+
+  it('has no location button and shows the privacy notice under the message box', () => {
+    const fixture = TestBed.createComponent(ChatComponent);
+    fixture.detectChanges();
+    const page = fixture.nativeElement as HTMLElement;
+    expect(page.textContent).not.toMatch(/ubicación/i);
+    expect(page.querySelector('app-combo-builder')).toBeNull();
+    const privacy = page.querySelector('.composer #chat-privacy');
+    expect(privacy?.textContent).toBe('Tu mensaje se procesa con un servicio de IA externo; no escribas datos personales.');
+    expect(page.querySelector('#chat-message')?.getAttribute('aria-describedby')).toContain('chat-privacy');
+    expect(page.querySelector('label[for=chat-neighborhood]')?.textContent).toBe('Tu barrio');
   });
 
   it('keeps the history of the conversation and warns when it answers in basic mode', async () => {
@@ -55,7 +63,7 @@ describe('ChatComponent', () => {
     expect(api.chat.calls.mostRecent().args[0]).toEqual({
       messages: [
         { role: 'user', content: 'pollo asado' },
-        { role: 'assistant', content: 'El pollo asado más cercano está en Tienda Doña Luz a $ 32.000.' },
+        { role: 'assistant', content: 'El pollo asado más barato está en Tienda Doña Luz a $ 32.000.' },
         { role: 'user', content: '¿y más barato?' },
       ],
       neighborhood: 'Suba',
@@ -89,18 +97,18 @@ describe('ChatComponent', () => {
     expect(buildHistory(many).map((turn) => turn.content)).toEqual(['m3', 'm4', 'm5', 'm6', 'm7', 'm8']);
   });
 
-  it('sends the chosen neighborhood only when there is no location', async () => {
+  it('sends the chosen neighborhood as the search filter, and nothing when it is "Todos los barrios"', async () => {
     const fixture = TestBed.createComponent(ChatComponent);
     const component = fixture.componentInstance;
     component.neighborhood.set('Suba');
     component.ask('leche barata');
     await fixture.whenStable();
     expect(api.chat.calls.mostRecent().args[0]).toEqual({ messages: [{ role: 'user', content: 'leche barata' }], neighborhood: 'Suba' });
-    TestBed.inject(LocationService).location.set({ latitude: 4.7, longitude: -74.05 });
+    component.reset();
+    component.neighborhood.set('');
     component.draft.set('huevos');
     await component.send();
-    expect(api.chat.calls.mostRecent().args[0]).toEqual(jasmine.objectContaining({ latitude: 4.7, longitude: -74.05 }));
-    expect(api.chat.calls.mostRecent().args[0].neighborhood).toBeUndefined();
+    expect(api.chat.calls.mostRecent().args[0]).toEqual({ messages: [{ role: 'user', content: 'huevos' }] });
   });
 
   it('ignores empty or one-letter messages and a second send while waiting', async () => {
@@ -129,12 +137,9 @@ describe('ChatComponent', () => {
     expect(api.chat.calls.mostRecent().args[0].messages[0].content.length).toBe(500);
   });
 
-  it('shows why the location could not be used and starts over with "reset"', async () => {
+  it('starts over with "reset"', async () => {
     const fixture = TestBed.createComponent(ChatComponent);
     const component = fixture.componentInstance;
-    spyOn(TestBed.inject(LocationService), 'requestLocation').and.rejectWith(new Error('Tu ubicación tardó demasiado. Inténtalo otra vez o elige tu barrio.'));
-    await component.useMyLocation();
-    expect(component.locationError()).toContain('tardó demasiado');
     component.draft.set('pan');
     await component.send();
     component.reset();
@@ -147,21 +152,4 @@ describe('ChatComponent', () => {
     expect([0, 1, 4].map((days) => component.expiresLabel(days))).toEqual(['hoy', 'mañana', 'en 4 días']);
   });
 
-});
-
-describe('formatDistance', () => {
-  it('shows meters below one kilometer and kilometers with a decimal comma', () => {
-    expect(formatDistance(0.34)).toBe('a 350 m');
-    expect(formatDistance(12.345)).toBe('a 12,3 km');
-    expect(formatDistance(null)).toBe('');
-  });
-});
-
-describe('LocationService', () => {
-  it('explains a denied permission in Spanish', async () => {
-    spyOn(navigator.geolocation, 'getCurrentPosition').and.callFake((_success, failure) => failure?.({ code: 1 } as GeolocationPositionError));
-    const service = TestBed.inject(LocationService);
-    await expectAsync(service.requestLocation()).toBeRejectedWithError(/No diste permiso/);
-    expect(service.location()).toBeNull();
-  });
 });
