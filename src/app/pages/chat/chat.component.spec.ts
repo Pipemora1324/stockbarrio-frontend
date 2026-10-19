@@ -88,6 +88,65 @@ describe('ChatComponent', () => {
     const many = Array.from({ length: 9 }, (_, index) => ({ id: index, role: (index % 2 ? 'assistant' : 'user') as 'user' | 'assistant', content: `m${index}` }));
     expect(buildHistory(many).map((turn) => turn.content)).toEqual(['m3', 'm4', 'm5', 'm6', 'm7', 'm8']);
   });
+
+  it('sends the chosen neighborhood only when there is no location', async () => {
+    const fixture = TestBed.createComponent(ChatComponent);
+    const component = fixture.componentInstance;
+    component.neighborhood.set('Suba');
+    component.ask('leche barata');
+    await fixture.whenStable();
+    expect(api.chat.calls.mostRecent().args[0]).toEqual({ messages: [{ role: 'user', content: 'leche barata' }], neighborhood: 'Suba' });
+    TestBed.inject(LocationService).location.set({ latitude: 4.7, longitude: -74.05 });
+    component.draft.set('huevos');
+    await component.send();
+    expect(api.chat.calls.mostRecent().args[0]).toEqual(jasmine.objectContaining({ latitude: 4.7, longitude: -74.05 }));
+    expect(api.chat.calls.mostRecent().args[0].neighborhood).toBeUndefined();
+  });
+
+  it('ignores empty or one-letter messages and a second send while waiting', async () => {
+    const fixture = TestBed.createComponent(ChatComponent);
+    const component = fixture.componentInstance;
+    component.draft.set('   a  ');
+    await component.send();
+    expect(api.chat).not.toHaveBeenCalled();
+
+    let answer!: (value: ChatResponse) => void;
+    api.chat.and.returnValue(new Promise<ChatResponse>((resolve) => (answer = resolve)));
+    component.draft.set('pollo asado');
+    const first = component.send();
+    component.draft.set('otra cosa');
+    await component.send();
+    expect(api.chat).toHaveBeenCalledTimes(1);
+    answer(response());
+    await first;
+    expect(component.loading()).toBeFalse();
+  });
+
+  it('cuts a pasted message to 500 characters before sending it', async () => {
+    const fixture = TestBed.createComponent(ChatComponent);
+    fixture.componentInstance.draft.set('leche '.repeat(200));
+    await fixture.componentInstance.send();
+    expect(api.chat.calls.mostRecent().args[0].messages[0].content.length).toBe(500);
+  });
+
+  it('shows why the location could not be used and starts over with "reset"', async () => {
+    const fixture = TestBed.createComponent(ChatComponent);
+    const component = fixture.componentInstance;
+    spyOn(TestBed.inject(LocationService), 'requestLocation').and.rejectWith(new Error('Tu ubicación tardó demasiado. Inténtalo otra vez o elige tu barrio.'));
+    await component.useMyLocation();
+    expect(component.locationError()).toContain('tardó demasiado');
+    component.draft.set('pan');
+    await component.send();
+    component.reset();
+    expect(component.messages()).toEqual([]);
+    expect(component.draft()).toBe('');
+  });
+
+  it('writes expiration days in Spanish', () => {
+    const component = TestBed.createComponent(ChatComponent).componentInstance;
+    expect([0, 1, 4].map((days) => component.expiresLabel(days))).toEqual(['hoy', 'mañana', 'en 4 días']);
+  });
+
 });
 
 describe('formatDistance', () => {

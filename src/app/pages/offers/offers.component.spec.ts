@@ -57,4 +57,85 @@ describe('OffersComponent', () => {
   it('maps an offer to a product card', () => {
     expect(toCardProduct(offer)).toEqual(jasmine.objectContaining({ id: 'p1', storeName: 'Tienda Doña Luz', neighborhood: 'Chapinero', offerPrice: 2940 }));
   });
+
+  it('ignores an older search that answers after a newer one', async () => {
+    const fixture = setup();
+    await fixture.whenStable();
+    let answerOld!: (value: { data: Offer[]; total: number }) => void;
+    api.searchOffers.and.returnValues(new Promise((resolve) => (answerOld = resolve)), Promise.resolve({ data: [], total: 0 }));
+    const component = fixture.componentInstance;
+    const old = component.search();
+    await component.search();
+    answerOld({ data: [offer], total: 1 });
+    await old;
+    expect(component.offers()).toEqual([]);
+    expect(component.total()).toBe(0);
+    expect(component.loading()).toBeFalse();
+  });
+
+  it('shows an error with a retry, and offers to clear the filters when nothing matches', async () => {
+    const fixture = setup({ q: 'caviar' });
+    await fixture.whenStable();
+    const component = fixture.componentInstance;
+    const page = fixture.nativeElement as HTMLElement;
+    api.searchOffers.and.rejectWith(new Error('No se pudieron cargar las ofertas.'));
+    await component.search();
+    fixture.detectChanges();
+    expect(page.querySelector('[role=alert]')?.textContent).toContain('No se pudieron cargar las ofertas.');
+
+    api.searchOffers.and.resolveTo({ data: [], total: 0 });
+    await component.search();
+    fixture.detectChanges();
+    expect(page.textContent).toContain('No hay ofertas con estos filtros.');
+    page.querySelector<HTMLButtonElement>('.state button')!.click();
+    expect(component.text()).toBe('');
+    expect(api.searchOffers.calls.mostRecent().args[0]).toEqual({ sort: 'discount' });
+  });
+
+  it('does not search for a single letter and trims the text', async () => {
+    const fixture = setup();
+    await fixture.whenStable();
+    const component = fixture.componentInstance;
+    component.text.set('l');
+    await component.search();
+    expect(api.searchOffers.calls.mostRecent().args[0]).toEqual({ sort: 'discount' });
+    component.text.set('  leche ');
+    await component.search();
+    expect(api.searchOffers.calls.mostRecent().args[0]).toEqual({ sort: 'discount', search: 'leche' });
+  });
+
+  it('forgets the location, the radius and the distance order together', async () => {
+    const fixture = setup();
+    await fixture.whenStable();
+    const component = fixture.componentInstance;
+    TestBed.inject(LocationService).location.set({ latitude: 4.64, longitude: -74.06 });
+    await component.changeSort('nearest');
+    component.radiusKm.set(5);
+    component.forgetLocation();
+    expect(component.sort()).toBe('discount');
+    expect(component.radiusKm()).toBeNull();
+    expect(api.searchOffers.calls.mostRecent().args[0]).toEqual({ sort: 'discount' });
+  });
+
+  it('keeps working when the neighborhoods and categories cannot be loaded', async () => {
+    api = jasmine.createSpyObj<ApiService>('ApiService', ['searchOffers', 'getNeighborhoods', 'getCategories']);
+    api.searchOffers.and.resolveTo({ data: [offer], total: 1 });
+    api.getNeighborhoods.and.rejectWith(new Error('caído'));
+    api.getCategories.and.rejectWith(new Error('caído'));
+    TestBed.configureTestingModule({
+      imports: [OffersComponent],
+      providers: [provideRouter([]), { provide: ApiService, useValue: api }, { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap({ orden: 'nearest' }) } } }],
+    });
+    const fixture = TestBed.createComponent(OffersComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.neighborhoods()).toEqual([]);
+    expect(fixture.componentInstance.offers().length).toBe(1);
+    expect(fixture.componentInstance.sort()).toBe('discount', 'distance order needs the location first');
+  });
+
+  it('reuses the same card object for the same offer', () => {
+    const fixture = setup();
+    expect(fixture.componentInstance.cardOf(offer)).toBe(fixture.componentInstance.cardOf(offer));
+  });
 });

@@ -1,5 +1,7 @@
 # StockBarrio - Frontend
 
+[![CI](https://github.com/Pipemora1324/stockbarrio-frontend/actions/workflows/ci.yml/badge.svg)](https://github.com/Pipemora1324/stockbarrio-frontend/actions/workflows/ci.yml)
+
 Interfaz web de StockBarrio, una aplicación para tiendas y clientes de barrio: las tiendas gestionan su inventario y aprueban descuentos sugeridos para lo que está por vencer, y los clientes buscan productos cerca, arman combos y reciben alertas de descuentos. Está hecha con Angular 20 (componentes standalone, signals, SCSS).
 
 La API (Node.js + Express + PostgreSQL) está en un repositorio aparte: [stockbarrio-backend](https://github.com/Pipemora1324/stockbarrio-backend).
@@ -125,7 +127,12 @@ docker run -p 4200:80 -e API_URL=http://host.docker.internal:3000 stockbarrio-fr
 | `npm start` | Servidor de desarrollo |
 | `npm run build` | Compila para producción en `dist/frontend/browser` (antes aplica `ENABLE_ALERTS` si está definida) |
 | `npm run watch` | Compila en modo desarrollo y vuelve a compilar con cada cambio |
-| `npm test` | Pruebas unitarias con Karma (para una sola pasada sin abrir el navegador: `npx ng test --watch=false --browsers=ChromeHeadless`) |
+| `npm test` | Pruebas unitarias y de componentes con Karma, que se vuelven a correr con cada cambio |
+| `npm run test:ci` | Una sola pasada de las pruebas en Chrome headless |
+| `npm run test:coverage` | Pruebas con reporte de cobertura en `coverage/` |
+| `npm run lint` | Revisa los tipos de la app y de las pruebas |
+
+Cómo correr las pruebas, qué cubre cada suite y la cobertura actual: [TESTING.md](TESTING.md).
 
 ## Cómo probar todo en local
 
