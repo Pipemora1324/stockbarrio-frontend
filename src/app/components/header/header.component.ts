@@ -20,6 +20,7 @@ import { NotificationsService } from '../../services/notifications.service';
   <div id="main-menu" class="menu" [class.open]="menuOpen()">
     <nav aria-label="Principal">
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Inicio</a>
+      <a routerLink="/ofertas" routerLinkActive="active">Ofertas</a>
       <a routerLink="/catalogo" routerLinkActive="active">Catálogo</a>
       <a routerLink="/chat" routerLinkActive="active">Asistente</a>
       @if (auth.isStore()) { <a routerLink="/admin" routerLinkActive="active">Mi tienda</a> }
