@@ -1,4 +1,5 @@
 import { effect, inject, Injectable, OnDestroy, signal } from '@angular/core';
+import { environment } from '../../environments/environment';
 import { ApiService } from '../api.service';
 import { AuthService } from '../auth.service';
 
@@ -14,13 +15,13 @@ export class NotificationsService implements OnDestroy {
 
   constructor() {
     effect(() => {
-      if (this.auth.isCustomer()) this.start();
+      if (environment.enableAlerts && this.auth.isCustomer()) this.start();
       else this.stop();
     });
   }
 
   async refresh(): Promise<void> {
-    if (!this.auth.isCustomer() || (typeof document !== 'undefined' && document.visibilityState === 'hidden')) return;
+    if (!environment.enableAlerts || !this.auth.isCustomer() || (typeof document !== 'undefined' && document.visibilityState === 'hidden')) return;
     try {
       this.unread.set(await this.api.getUnreadCount());
     } catch {
