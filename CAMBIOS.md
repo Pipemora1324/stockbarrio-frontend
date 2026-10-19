@@ -112,3 +112,69 @@ Ninguna. `vercel.json` no cambia.
 
 - **Requiere** el backend de `desarrollo` desplegado antes: `/api/suggestions`, `/api/assistant`, `/api/alerts`, `/api/notifications` y `/api/stores/me`.
 - **Pruebas:** `npm run build` sin advertencias y 40 pruebas unitarias en verde con `npx ng test --watch=false --browsers=ChromeHeadless`. Además se hicieron recorridos completos en Chrome headless contra el backend local con el seed.
+
+# Rama `mejoras`
+
+## A) Validaciones
+
+- `src/app/validation/rules.ts` replica las reglas de la API con los mismos mensajes en español.
+- **Registro, formulario de producto, ubicación de la tienda, recuperar y restablecer contraseña, y perfil:**
+  - error debajo de cada campo al salir de él, con `aria-invalid` y `aria-describedby`;
+  - botón de envío deshabilitado mientras haya errores.
+- El formulario de producto ahora es su propio componente:
+  - la categoría es una lista desplegable;
+  - el vencimiento no permite fechas pasadas al crear;
+  - al editar se conserva una categoría vieja;
+  - al abrirlo, la vista baja hasta él.
+- El login se deshabilita mientras falten datos (no aplica las reglas nuevas, para no bloquear cuentas viejas).
+
+## B) Botones, enlaces y ofertas
+
+Revisé todos los enlaces y botones: no había `href="#"` ni botones sin acción. Esto es lo que cambió:
+
+- **Nueva sección `/ofertas`:**
+  - productos con descuento, con filtros por barrio, categoría, texto y "Cerca de mí" (con radio);
+  - orden por mayor descuento, más cerca o vence primero;
+  - los filtros quedan en la URL, nunca la ubicación.
+- **Enlaces nuevos a Ofertas:** desde el menú principal, desde el inicio ("Ver ofertas de hoy", la tarjeta "Ofertas hoy" y "Ver todas las ofertas →"), desde el catálogo ("Ver solo ofertas →") y desde el chat.
+- **Notificaciones:** cada una tiene "Ver la oferta", que abre `/ofertas` filtrado por el producto y la marca como leída.
+- **Panel sin tienda:** ahora ofrece "Registrar una tienda" y "Cerrar sesión" en vez de solo texto.
+- **Login:** nuevo enlace "¿Olvidaste tu contraseña?".
+- **Header:** el nombre del usuario abre `/perfil`.
+
+## C) Chat con IA
+
+- **`/chat` es una conversación real:**
+  - historial, del que se envían los últimos 6 turnos;
+  - indicador "escribiendo…" y tarjetas con tienda, distancia, precio, descuento y vencimiento;
+  - sugerencias rápidas ("pollo asado cerca", "ofertas de hoy", "huevos baratos", "leche por vencer");
+  - botón "Nueva conversación" y contador de 500 caracteres.
+- **Modo básico:** cuando la API responde con sus reglas locales, el mensaje lo dice.
+- **Errores** (por ejemplo, el límite de mensajes): se muestran, pero no se reenvían como historial.
+
+## D) Cuenta
+
+- **Páginas nuevas:** `/forgot-password`, `/reset-password?token=…`, `/confirm-email?token=…` y `/perfil`, para cambiar nombre, contraseña (pide la actual) y correo (con verificación).
+- **Sesión:** tras cambiar la contraseña la sesión sigue con el token nuevo. Tras restablecerla o cambiar el correo, se cierra y lleva al login con aviso.
+
+## E) Pulido visual
+
+- **Textos:** las palabras largas se parten, el interlineado de los párrafos es más cómodo y las celdas de tabla no desbordan.
+- **Chat en el celular:** las sugerencias quedan en una fila desplazable y el placeholder ya no se corta.
+- **Ubicación de la tienda en el celular:** los botones ocupan el ancho completo.
+- **Comprobación:** recorrido automático en Chrome a 360, 768 y 1280 px por todas las páginas (con sesión de tienda y de cliente), sin desbordamiento horizontal.
+
+## Variables nuevas
+
+Ninguna en Vercel.
+
+## Requiere
+
+El backend de la rama `mejoras` (ofertas, chat, cuenta y categorías).
+
+## Cómo probar
+
+`npx ng test --watch=false --browsers=ChromeHeadless` (60 pruebas) y `npm run build`. Con el backend local y el seed:
+1. Abre `/ofertas` y `/chat` y pulsa "pollo asado cerca".
+2. En `/forgot-password` pide un enlace; sale en la consola del backend.
+3. En `/perfil` cambia el nombre y la contraseña.
