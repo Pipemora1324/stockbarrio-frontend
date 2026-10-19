@@ -9,13 +9,16 @@ La API (Node.js + Express + PostgreSQL) está en un repositorio aparte: [stockba
 | Ruta | Qué muestra | Acceso |
 | --- | --- | --- |
 | `/` | Inicio con tiendas y ofertas | Público |
+| `/ofertas` | Productos con descuento, con filtros por barrio, categoría, texto y cercanía, y orden por descuento, cercanía o vencimiento (los filtros quedan en la URL) | Público |
 | `/catalogo` | Catálogo con filtros por barrio, categoría y nombre (`?barrio=` filtra al entrar) | Público |
-| `/chat` | Asistente de búsqueda ("huevos baratos", "leche cerca de mí") con ubicación o barrio, y combo con presupuesto | Público |
+| `/chat` | Chat con el asistente ("¿dónde puedo encontrar pollo asado?", "ofertas de hoy") con historial, tarjetas de resultados, ubicación o barrio, y combo con presupuesto | Público |
 | `/login` | Inicio de sesión | Público |
 | `/register` | Registro de cliente o de tienda (`?tipo=tienda` abre el de tienda) | Público |
 | `/admin` | Panel de la tienda: inventario, descuentos sugeridos y ubicación | Rol `store` |
 | `/alertas` | Alertas de descuento del cliente | Rol `customer` |
-| `/notificaciones` | Bandeja de notificaciones | Rol `customer` |
+| `/notificaciones` | Bandeja de notificaciones, con enlace a la oferta | Rol `customer` |
+| `/perfil` | Cambiar nombre, contraseña y correo | Con sesión |
+| `/forgot-password` · `/reset-password` · `/confirm-email` | Recuperar la contraseña y confirmar un correo nuevo desde el enlace del correo | Público |
 
 Todas las peticiones a la API se hacen a la ruta relativa `/api`, así que quien sirve el frontend tiene que redirigir `/api` hacia el backend.
 
@@ -32,6 +35,17 @@ Todas las peticiones a la API se hacen a la ruta relativa `/api`, así que quien
 
 - Los precios se muestran en pesos colombianos con `Intl.NumberFormat('es-CO')`, sin decimales (pipe `cop`).
 - Las fechas de vencimiento son fechas puras `AAAA-MM-DD`: se muestran y se envían como texto (pipe `calendarDate`), sin pasar por `Date`, para que la zona horaria no corra el día.
+
+## Validación de formularios
+
+`src/app/validation/rules.ts` replica las reglas de la API (que es la autoridad) con los mismos mensajes en español. Cada formulario muestra el error debajo del campo al salir de él y deja el botón de envío deshabilitado mientras haya errores.
+
+## Asistente
+
+El chat envía a la API los últimos 6 turnos (mensajes de hasta 500 caracteres) y muestra la respuesta con tarjetas de resultados.
+
+- **Modo básico.** Cuando la API responde sin IA, el mensaje lo indica.
+- **Datos reales.** La API valida que todo lo que dice el asistente exista en la base de datos.
 
 ## Ubicación y privacidad
 
@@ -107,6 +121,7 @@ docker run -p 4200:80 -e API_URL=http://host.docker.internal:3000 stockbarrio-fr
 - `src/app/pages`: páginas (`home`, `catalog`, `chat`, `admin`, `alerts`, `notifications`, `login`, `register`).
 - `src/app/components`: header y tarjeta de producto.
 - `src/app/services`: ubicación del navegador y contador de notificaciones.
+- `src/app/validation`: reglas de validación de los formularios.
 - `src/app/api.service.ts`: llamadas a la API, con mensajes de error en español.
 - `src/app/auth.service.ts`, `auth.guard.ts`, `auth.interceptor.ts` y `session.storage.ts`: sesión, protección de rutas y manejo del 401.
 - `src/app/pipes` y `src/app/dates.ts`: formato de pesos, fechas, distancias y días para vencer en hora de Bogotá.
