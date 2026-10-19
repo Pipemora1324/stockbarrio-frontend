@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { environment } from '../../../environments/environment';
 import { AuthService } from '../../auth.service';
 
 @Component({
@@ -13,7 +14,7 @@ import { AuthService } from '../../auth.service';
   <section class="login-card">
     <span class="eyebrow">Acceso</span>
     <h1>Bienvenido a StockBarrio</h1>
-    <p>Inicia sesión para gestionar tu tienda o para ver tus alertas de descuentos.</p>
+    <p>{{ alertsEnabled ? 'Inicia sesión para gestionar tu tienda o para ver tus alertas de descuentos.' : 'Inicia sesión para gestionar tu tienda o tu cuenta de cliente.' }}</p>
     @if (auth.sessionNotice()) { <p class="notice" role="status">{{ auth.sessionNotice() }}</p> }
     <form (ngSubmit)="submit()">
       <label>Correo electrónico<input name="email" [(ngModel)]="email" type="email" autocomplete="email" required></label>
@@ -27,12 +28,13 @@ import { AuthService } from '../../auth.service';
   <aside class="login-visual" aria-hidden="true">
     <span>SB</span>
     <h2>Tu barrio, siempre informado.</h2>
-    <p>Controla stock, precios y ofertas, o recibe avisos cuando lo que buscas baje de precio.</p>
+    <p>{{ alertsEnabled ? 'Controla stock, precios y ofertas, o recibe avisos cuando lo que buscas baje de precio.' : 'Controla stock, precios y ofertas, o encuentra los descuentos de las tiendas de tu barrio.' }}</p>
   </aside>
 </main>`,
 })
 export class LoginComponent {
   protected readonly auth = inject(AuthService);
+  protected readonly alertsEnabled = environment.enableAlerts;
   readonly email = signal('');
   readonly password = signal('');
   readonly loading = signal(false);
