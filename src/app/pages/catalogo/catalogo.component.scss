@@ -22,3 +22,4 @@ h1 { margin: .5rem 0; color: #173b32; font-size: clamp(2.4rem, 5vw, 4rem); }
 .empty { padding: 4rem; border-radius: 1rem; background: #f1f6f3; text-align: center; color: #617067; }
 @media (max-width: 800px) { .filters { grid-template-columns: 1fr; } .cards-grid { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 560px) { .cards-grid { grid-template-columns: 1fr; } .results-header { align-items: start; flex-direction: column; } }
+.empty.error { display: grid; gap: 1rem; justify-items: center; background: #fdf1f1; color: #b23434; }
