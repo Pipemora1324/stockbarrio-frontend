@@ -1,11 +1,11 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom, type Observable } from 'rxjs';
-import type { AuthUser, Product, Store } from './models';
+import type { AppliedDiscount, AuthUser, DiscountSuggestion, Product, Store } from './models';
 
 export interface Recommendation {
   suggestion: string;
-  products: Array<{ name: string; offerPrice: number; quantity: number; total: number }>;
+  products: Array<{ productId: string; name: string; price: number; offerPrice: number; quantity: number; total: number; expirationDate: string }>;
   total: number;
   savings: number;
   confidence: number;
@@ -83,6 +83,22 @@ export class ApiService {
 
   async deleteProduct(id: string): Promise<void> {
     await this.request(this.http.delete(`${this.baseUrl}/products/${id}`), 'No se pudo eliminar el producto.');
+  }
+
+  async getSuggestions(): Promise<DiscountSuggestion[]> {
+    return (await this.request(this.http.get<{ data: DiscountSuggestion[] }>(`${this.baseUrl}/suggestions`), 'No se pudieron cargar las sugerencias de descuento.')).data;
+  }
+
+  approveSuggestion(id: string): Promise<{ data: AppliedDiscount; message: string }> {
+    return this.request(this.http.post<{ data: AppliedDiscount; message: string }>(`${this.baseUrl}/suggestions/${id}/approve`, {}), 'No se pudo aplicar el descuento.');
+  }
+
+  rejectSuggestion(id: string): Promise<{ message: string }> {
+    return this.request(this.http.post<{ message: string }>(`${this.baseUrl}/suggestions/${id}/reject`, {}), 'No se pudo descartar la sugerencia.');
+  }
+
+  approveAllSuggestions(): Promise<{ data: AppliedDiscount[]; message: string }> {
+    return this.request(this.http.post<{ data: AppliedDiscount[]; message: string }>(`${this.baseUrl}/suggestions/approve-all`, {}), 'No se pudieron aplicar los descuentos.');
   }
 
   async recommend(payload: { budget: number; neighborhood: string; productIds: string[] }): Promise<Recommendation> {
