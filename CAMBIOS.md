@@ -80,3 +80,35 @@ Ninguna.
 Con el seed:
 1. Entra como `tienda.donaluz@stockbarrio.test` y aprueba "Leche entera 1 L".
 2. Sal y entra como `cliente.demo@stockbarrio.test` (contraseña `tienda12345`): la campana debe mostrar 1 y la bandeja el aviso.
+
+## Fase 5: diseño, rendimiento y pulido
+
+### Qué cambió
+
+- **Estilos coherentes.** Tokens de color, tipografía del sistema y foco visible en `src/styles.scss`, usados en todos los componentes. El verde principal pasa a `#0e7f5b` y los grises de texto se oscurecen para cumplir el contraste AA.
+- **Header.** En móvil tiene menú desplegable con botón accesible (`aria-expanded`), que se cierra al navegar o con Escape. Marca la página activa y, sin sesión, muestra "Crear cuenta" y "Entrar".
+- **Tarjetas de producto compartidas.** Llevan ícono y color según la categoría (huevos, lácteos, panadería, frutas y verduras, carnes, granos, despensa…) o la imagen del producto con `loading="lazy"`. Muestran descuento, precio con descuento, precio anterior, días para vencer (en rojo si vence hoy o mañana) y stock.
+- **Responsive real.**
+  - Inicio, catálogo, chat, login, registro, alertas y bandeja se adaptan desde 360 px.
+  - En el celular, la tabla del inventario pasa a tarjetas con etiquetas.
+  - Probado sin desbordamiento horizontal a 360, 768 y 1280 px.
+- **Rendimiento.**
+  - Carga diferida de todas las páginas menos el inicio: el bundle inicial bajó de 375 kB a 323 kB.
+  - `OnPush` en todos los componentes, `@for` con `track` y control de flujo nuevo en todas las plantillas.
+- **Estados.** El inicio tiene carga, vacío (invita a registrar una tienda) y error con reintento.
+- **Accesibilidad.**
+  - Enlace "Saltar al contenido", etiquetas y `autocomplete` en los formularios.
+  - `aria-label` en los botones de acción de cada producto.
+  - Título de página por ruta.
+- **Código en inglés.** El catálogo se renombró a `CatalogComponent` en `pages/catalog`; la URL sigue siendo `/catalogo`.
+- **Corrección.** Al crear, editar o borrar un producto, las sugerencias de descuento del panel se actualizan; antes se podía ver la sugerencia de un producto ya borrado.
+- **README** actualizado con páginas, privacidad, diseño y cómo probar.
+
+### Variables nuevas
+
+Ninguna. `vercel.json` no cambia.
+
+## Resumen para pasar `desarrollo` a `main`
+
+- **Requiere** el backend de `desarrollo` desplegado antes: `/api/suggestions`, `/api/assistant`, `/api/alerts`, `/api/notifications` y `/api/stores/me`.
+- **Pruebas:** `npm run build` sin advertencias y 40 pruebas unitarias en verde con `npx ng test --watch=false --browsers=ChromeHeadless`. Además se hicieron recorridos completos en Chrome headless contra el backend local con el seed.
