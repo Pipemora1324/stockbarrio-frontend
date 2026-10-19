@@ -10,3 +10,12 @@ export const storeGuard: CanActivateFn = () => {
   if (!auth.isStore()) return router.createUrlTree(['/']);
   return true;
 };
+
+// Alerts and the notification inbox belong to customer accounts.
+export const customerGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (!auth.user()) return router.createUrlTree(['/login']);
+  if (!auth.isCustomer()) return router.createUrlTree(['/']);
+  return true;
+};
