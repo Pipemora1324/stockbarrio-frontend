@@ -65,4 +65,58 @@ describe('validation rules', () => {
     expect(rules.longitude(4.64)).toContain('dentro de Colombia');
     expect(rules.latitude('')).toBe('');
   });
+
+  it('accepts only real days and uses the Bogota calendar near midnight', () => {
+    const now = new Date('2026-10-18T15:00:00Z');
+    expect(rules.expirationDate('2026-02-30', true, now)).toBe('La fecha no es válida.');
+    expect(rules.expirationDate('2028-02-29', true, now)).toBe('');
+    expect(rules.expirationDate('2027-02-29', false, now)).toBe('La fecha no es válida.');
+    expect(rules.expirationDate('18/10/2026', true, now)).toContain('AAAA-MM-DD');
+    // 22:00 in Bogota on the 18th is already the 19th in UTC: the 18th is still today.
+    expect(rules.expirationDate('2026-10-18', true, new Date('2026-10-19T03:00:00Z'))).toBe('');
+    expect(rules.expirationDate('2026-10-18', true, new Date('2026-10-19T05:00:00Z'))).toContain('en el pasado');
+  });
+
+  it('checks the limits of prices, stock and discounts exactly', () => {
+    expect([rules.price(1), rules.price(10_000_000)]).toEqual(['', '']);
+    expect(rules.price('')).toContain('entero');
+    expect(rules.price('abc')).toContain('entero');
+    expect([rules.stock(100_000), rules.stock(100_001)]).toEqual(['', 'El stock no puede superar 100.000 unidades.']);
+    expect(rules.stock(2.5)).toContain('entero');
+    expect([rules.discount(0), rules.discount(-1)]).toEqual(['', 'El descuento no puede ser negativo.']);
+    expect(rules.discount(12.5)).toContain('entero');
+  });
+
+  it('validates neighborhoods and addresses', () => {
+    expect(rules.neighborhood('Chapinero Alto')).toBe('');
+    expect(rules.neighborhood("San José de Bavaria, Etapa 2-B")).toBe('');
+    expect(rules.neighborhood('')).toBe('El barrio es obligatorio.');
+    expect(rules.neighborhood('x')).toContain('entre 2 y 80');
+    expect(rules.neighborhood('Barrio <script>')).toContain('solo puede tener');
+    expect(rules.address('Calle 57 # 9-20')).toBe('');
+    expect(rules.address('')).toBe('La dirección es obligatoria.');
+    expect(rules.address('Cl 1')).toContain('al menos 5');
+    expect(rules.address('x'.repeat(201))).toContain('como máximo 200');
+  });
+
+  it('collapses spaces before measuring names and accepts landlines of every city', () => {
+    expect(rules.personName('   Ana    María   ')).toBe('');
+    expect(rules.personName('     ')).toBe('El nombre es obligatorio.');
+    expect(rules.storeName(' A ')).toContain('al menos 2');
+    expect(rules.phone('604 444 5555')).toBe('');
+    expect(rules.phone('609 444 5555')).toContain('celular colombiano');
+    expect(rules.phone('+573101234567')).toBe('');
+  });
+
+  it('counts bytes for long passwords with accents, like bcrypt does', () => {
+    expect(rules.password(`a1${'ñ'.repeat(34)}`)).toBe('');
+    expect(rules.password(`a1${'ñ'.repeat(36)}`)).toContain('como máximo 72');
+  });
+
+  it('reports whether a form has any error', () => {
+    expect(rules.hasErrors({ name: '', email: '' })).toBeFalse();
+    expect(rules.hasErrors({ name: '', email: 'El correo electrónico no es válido.' })).toBeTrue();
+    expect(rules.latitude('abc')).toBe('La latitud debe ser un número.');
+    expect(rules.longitude(null)).toBe('');
+  });
 });
