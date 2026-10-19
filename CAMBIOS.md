@@ -54,3 +54,29 @@ Ninguna.
 Con el backend y el seed en local:
 1. Abre `/chat`, pulsa "busco huevos baratos" y luego "Usar mi ubicación" para preguntar "leche cerca de mí".
 2. En `/admin`, con una tienda, guarda coordenadas. Unas invertidas deben mostrar el aviso de que quedan fuera de Colombia.
+
+## Fase 4: alertas y notificaciones
+
+### Qué cambió
+
+- **Registro.** Selector "Soy cliente" / "Tengo una tienda". Los campos de tienda solo aparecen si se elige tienda, y `/register?tipo=tienda` abre directamente esa opción.
+- **Sesión del cliente.** Al entrar, el cliente va a `/alertas`. El header muestra "Mis alertas" y una campana con el contador de no leídas, que se actualiza cada minuto y no consulta mientras la pestaña está oculta.
+- **`/alertas`** (solo clientes):
+  - Crea alertas por producto o categoría, en cualquier barrio, en un barrio concreto o cerca de donde estás (radio de 1, 2, 5 o 10 km), con descuento mínimo.
+  - Para la opción por cercanía hay que tomar la ubicación y marcar la casilla de consentimiento; sin ella no se envía la posición.
+  - Lista las alertas activas y permite eliminarlas.
+- **`/notificaciones`** (solo clientes): bandeja con los avisos (los no leídos resaltados), marcar como leída y marcar todas.
+
+### Requiere
+
+El backend de `desarrollo` con las migraciones `004` y `005`.
+
+### Variables nuevas
+
+Ninguna.
+
+### Cómo probarlo
+
+Con el seed:
+1. Entra como `tienda.donaluz@stockbarrio.test` y aprueba "Leche entera 1 L".
+2. Sal y entra como `cliente.demo@stockbarrio.test` (contraseña `tienda12345`): la campana debe mostrar 1 y la bandeja el aviso.
