@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../auth.service';
@@ -18,7 +18,7 @@ import { AuthService } from '../../auth.service';
     <form (ngSubmit)="submit()">
       <label>Correo electrónico<input name="email" [(ngModel)]="email" type="email" autocomplete="email" required></label>
       <label>Contraseña<input name="password" [(ngModel)]="password" type="password" autocomplete="current-password" required></label>
-      <button class="button" type="submit" [disabled]="loading()">{{ loading() ? 'Entrando…' : 'Iniciar sesión' }}</button>
+      <button class="button" type="submit" [disabled]="loading() || !canSubmit()">{{ loading() ? 'Entrando…' : 'Iniciar sesión' }}</button>
       @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
     </form>
     <a routerLink="/register">¿No tienes cuenta? Regístrate</a>
@@ -36,6 +36,8 @@ export class LoginComponent {
   readonly password = signal('');
   readonly loading = signal(false);
   readonly error = signal('');
+  // Login only checks that both fields are filled: older accounts may not follow the current password rules.
+  readonly canSubmit = computed(() => this.email().trim().length > 3 && this.password().length > 0);
 
   async submit() {
     this.loading.set(true);
