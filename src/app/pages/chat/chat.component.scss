@@ -34,6 +34,9 @@ small.urgent { color: var(--color-danger); font-weight: 700; }
   .chat-header { align-items: start; flex-direction: column; padding: 1.25rem; }
   .location-bar, .messages { padding-left: 1rem; padding-right: 1rem; }
   .message { max-width: 100%; }
+  /* One scrollable row of suggestions so the message box stays in view. */
+  .chips { flex-wrap: nowrap; overflow-x: auto; padding-bottom: .4rem; scrollbar-width: thin; }
+  .chip { flex-shrink: 0; }
 }
 
 .button-small { padding: .5rem .8rem; font-size: .9rem; }

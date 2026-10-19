@@ -92,7 +92,7 @@ export const buildHistory = (messages: ConversationMessage[]): ChatTurn[] =>
 
     <form class="composer" (ngSubmit)="send()">
       <label class="sr-only" for="chat-message">Escribe tu mensaje</label>
-      <input id="chat-message" name="message" [ngModel]="draft()" (ngModelChange)="draft.set($event)" [maxlength]="maxMessageLength" autocomplete="off" placeholder="Ej. ¿dónde hay pollo asado cerca?" aria-describedby="chat-count">
+      <input id="chat-message" name="message" [ngModel]="draft()" (ngModelChange)="draft.set($event)" [maxlength]="maxMessageLength" autocomplete="off" placeholder="Escribe qué buscas" aria-describedby="chat-count">
       <button class="button" type="submit" [disabled]="loading() || draft().trim().length < 2">Enviar</button>
       <small class="count" id="chat-count" [class.near-limit]="draft().length > maxMessageLength - 50">{{ draft().length }}/{{ maxMessageLength }}</small>
     </form>
