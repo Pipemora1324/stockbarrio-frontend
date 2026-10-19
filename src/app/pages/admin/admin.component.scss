@@ -8,7 +8,7 @@ h1 { margin: .3rem 0 0; color: var(--color-ink); }
 .stats article { padding: 1.3rem; border-radius: 1rem; background: #fff; }
 .stats span { display: block; color: var(--color-muted); }
 .stats strong { display: block; margin-top: .4rem; color: var(--color-primary); font-size: 2rem; }
-.table-card,.form-card { margin-top: 1rem; padding: 1.3rem; border-radius: 1rem; background: #fff; box-shadow: var(--shadow-card); }
+.table-card { margin-top: 1rem; padding: 1.3rem; border-radius: 1rem; background: #fff; box-shadow: var(--shadow-card); }
 .table-toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .75rem; }
 .table-toolbar input { width: min(260px, 100%); padding: .7rem; border: 1px solid var(--color-border); border-radius: .6rem; }
 table { width: 100%; margin-top: 1rem; border-collapse: collapse; }
@@ -17,16 +17,10 @@ th { color: var(--color-muted); font-size: .75rem; text-transform: uppercase; }
 td small { display: block; color: var(--color-muted); }
 td button { margin-right: .4rem; border: 0; background: transparent; color: var(--color-primary); font-weight: 700; cursor: pointer; }
 td button.danger { color: var(--color-danger); }
-.form-card form { display: grid; grid-template-columns: repeat(2,1fr); gap: 1rem; }
-.form-card label { color: var(--color-text); font-weight: 700; }
-.form-card input,.form-card textarea { display: block; width: 100%; margin-top: .4rem; padding: .75rem; border: 1px solid var(--color-border); border-radius: .6rem; }
-.form-actions { grid-column: 1/-1; display: flex; justify-content: flex-end; gap: .7rem; }
 @media (max-width: 700px) {
   .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; }
   .stats article { padding: .9rem; }
   .stats strong { font-size: 1.5rem; }
-  .form-card form { grid-template-columns: 1fr; }
-  .form-actions .button { flex: 1; }
   /* The inventory table becomes a list of cards on small screens. */
   table, tbody, tr, td { display: block; }
   thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
@@ -47,3 +41,5 @@ td button.danger { color: var(--color-danger); }
 .full { grid-column: 1/-1; }
 .button:disabled,td button:disabled { opacity: .6; cursor: not-allowed; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.state-actions { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 1rem; }
+.state-actions .button { text-decoration: none; }

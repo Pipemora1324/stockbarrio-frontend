@@ -1,5 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { environment } from '../environments/environment';
 import { ApiError, ApiService } from './api.service';
 import type { AuthUser } from './models';
 import { clearSession, readSession, writeSession } from './session.storage';
@@ -40,6 +41,24 @@ export class AuthService {
     }
   }
 
+  // Replaces the stored session after a profile change that issued a new token (name or password).
+  replaceSession(token: string, user: AuthUser): void {
+    writeSession({ token, user });
+    this.session.set({ token, user });
+  }
+
+  // Forgets the session without leaving the current page.
+  endSession(): void {
+    this.clear();
+  }
+
+  // Closes the session and shows a message on the login page (after a password reset or an email change).
+  signOutWithNotice(message: string): void {
+    this.clear();
+    this.sessionNotice.set(message);
+    void this.router.navigate(['/login']);
+  }
+
   logout(): void {
     this.clear();
     void this.router.navigate(['/']);
@@ -61,7 +80,7 @@ export class AuthService {
     writeSession({ token, user });
     this.session.set({ token, user });
     this.sessionNotice.set('');
-    const home: Record<AuthUser['role'], string> = { store: '/admin', customer: '/alertas', admin: '/' };
+    const home: Record<AuthUser['role'], string> = { store: '/admin', customer: environment.enableAlerts ? '/alertas' : '/ofertas', admin: '/' };
     void this.router.navigate([home[user.role]]);
   }
 }

@@ -19,3 +19,9 @@ export const customerGuard: CanActivateFn = () => {
   if (!auth.isCustomer()) return router.createUrlTree(['/']);
   return true;
 };
+
+// Any signed-in account (profile page).
+export const signedInGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  return auth.user() ? true : inject(Router).createUrlTree(['/login']);
+};

@@ -39,6 +39,11 @@ body {
 
 h1, h2, h3 { color: var(--color-ink); line-height: 1.15; letter-spacing: -.01em; }
 
+// Long product or store names wrap instead of pushing the layout sideways.
+body { overflow-wrap: break-word; }
+p, li { line-height: 1.55; }
+td, th { overflow-wrap: anywhere; }
+
 img { display: block; max-width: 100%; height: auto; }
 
 a { color: var(--color-primary); }
@@ -81,3 +86,37 @@ input, select, textarea { max-width: 100%; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+// Inline form validation shared by every form.
+.field-error { display: block; color: var(--color-danger); font-size: .85rem; font-weight: 600; line-height: 1.35; }
+.field-help { display: block; color: var(--color-muted); font-size: .85rem; line-height: 1.35; }
+input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='true'] { border-color: var(--color-danger) !important; background: #fffafa; }
+button:disabled { opacity: .55; cursor: not-allowed; }
+
+// Animated "typing" indicator for chat-like views.
+.dots { display: inline-flex; gap: .2rem; margin-right: .35rem; vertical-align: middle; }
+.dots span { width: .4rem; height: .4rem; border-radius: 50%; background: var(--color-muted); animation: typing 1.2s infinite ease-in-out; }
+.dots span:nth-child(2) { animation-delay: .15s; }
+.dots span:nth-child(3) { animation-delay: .3s; }
+@keyframes typing { 0%, 80%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+
+// Shared buttons. Components may refine them with their own styles.
+.button { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; border: 0; border-radius: .7rem; padding: .75rem 1rem; background: var(--color-primary); color: #fff; font-weight: 800; text-decoration: none; cursor: pointer; }
+.button:hover:not(:disabled) { background: var(--color-primary-strong); }
+.button-light { border: 1px solid #b9dccd; background: #fff; color: var(--color-primary); }
+.button-light:hover:not(:disabled) { background: var(--color-primary-soft); }
+.link-button { border: 0; padding: 0; background: none; color: var(--color-primary); font-weight: 800; text-decoration: underline; cursor: pointer; }
+
+// Small centered card used by the account pages (forgot, reset and confirm).
+.auth-page { display: grid; place-items: center; min-height: calc(100vh - 70px); padding: clamp(1rem, 4vw, 2.5rem) 1rem; }
+.auth-card { width: min(480px, 100%); padding: clamp(1.5rem, 5vw, 2.5rem); border-radius: 1.5rem; background: #fff; box-shadow: 0 24px 60px rgba(11, 36, 32, .08); }
+.auth-card h1 { margin: .4rem 0; font-size: clamp(1.6rem, 5vw, 2rem); }
+.auth-card p { max-width: 60ch; color: var(--color-muted); line-height: 1.55; }
+.auth-card form { display: grid; gap: .4rem; margin: 1.4rem 0; }
+.auth-card label { margin-top: .5rem; color: var(--color-text); font-weight: 700; }
+.auth-card input { width: 100%; padding: .8rem; border: 1px solid var(--color-border); border-radius: .7rem; background: #fff; }
+.auth-card .button { margin-top: .9rem; padding: .9rem; }
+.auth-card .eyebrow { color: var(--color-primary); font-size: .78rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.form-message { margin: .8rem 0 0; padding: .85rem 1rem; border-radius: .8rem; font-weight: 600; line-height: 1.45; }
+.form-message.success { background: var(--color-primary-soft); color: var(--color-success); }
+.form-message.failure { background: var(--color-danger-soft); color: var(--color-danger); }

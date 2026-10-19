@@ -31,7 +31,10 @@ const dateTimeFormatter = new Intl.DateTimeFormat('es-CO', { timeZone: 'America/
             <p>{{ notification.message }}</p>
             <small>{{ formatDate(notification.createdAt) }}</small>
           </div>
-          @if (!notification.readAt) { <button class="link-button" type="button" (click)="markRead(notification)">Marcar como leída</button> }
+          <div class="item-actions">
+            @if (notification.productName) { <a class="link-button" routerLink="/ofertas" [queryParams]="{ q: notification.productName }" (click)="markRead(notification)">Ver la oferta</a> }
+            @if (!notification.readAt) { <button class="link-button" type="button" (click)="markRead(notification)">Marcar como leída</button> }
+          </div>
         </li>
       }
     </ul>
@@ -72,6 +75,7 @@ export class NotificationsComponent implements OnInit {
   }
 
   async markRead(notification: AppNotification) {
+    if (notification.readAt) return;
     try {
       this.counter.setUnread(await this.api.markNotificationRead(notification.id));
       this.notifications.update((items) => items.map((item) => (item.id === notification.id ? { ...item, readAt: new Date().toISOString() } : item)));

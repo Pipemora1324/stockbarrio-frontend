@@ -1,2 +1,15 @@
-.register-page{min-height:calc(100vh - 70px);display:grid;place-items:center;padding:clamp(1rem,4vw,2.5rem) 1rem;background:var(--color-bg)}.register-card{width:min(560px,100%);padding:clamp(1.5rem,5vw,2.5rem);background:#fff;border-radius:24px;box-shadow:0 24px 60px rgba(11,36,32,.08)}.register-card h1{font-size:2.2rem;margin:8px 0}.register-card form{display:grid;gap:14px;margin:28px 0}.register-card label{display:grid;gap:6px;font-weight:600}.register-card input{border:1px solid var(--color-border);border-radius:12px;padding:13px;background:#fff}.register-card .button{border:0;border-radius:12px;padding:14px;background:#184f3b;color:#fff;cursor:pointer}.register-card a{color:#184f3b;font-weight:700}.error{color:var(--color-danger)}.eyebrow{color:var(--color-muted);font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em}
-.account-type{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-top:1.2rem;padding:.3rem;border-radius:14px;background:#eef4f1}.account-type button{border:0;border-radius:11px;padding:.7rem;background:transparent;color:var(--color-text);font:inherit;font-weight:700;cursor:pointer}.account-type button.active{background:#fff;color:#184f3b;box-shadow:0 2px 8px #0b242014}.register-card small{color:var(--color-muted);font-weight:500}
+.register-page { display: grid; place-items: center; min-height: calc(100vh - 70px); padding: clamp(1rem, 4vw, 2.5rem) 1rem; background: var(--color-bg); }
+.register-card { width: min(560px, 100%); padding: clamp(1.5rem, 5vw, 2.5rem); border-radius: 24px; background: #fff; box-shadow: 0 24px 60px rgba(11, 36, 32, .08); }
+.register-card h1 { margin: .5rem 0; font-size: clamp(1.7rem, 5vw, 2.2rem); }
+.register-card p { max-width: 60ch; color: var(--color-muted); line-height: 1.55; }
+.eyebrow { color: var(--color-primary); font-size: .8rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.account-type { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; margin-top: 1.2rem; padding: .3rem; border-radius: 14px; background: #eef4f1; }
+.account-type button { border: 0; border-radius: 11px; padding: .7rem; background: transparent; color: var(--color-text); font-weight: 700; cursor: pointer; }
+.account-type button.active { background: #fff; color: var(--color-primary-strong); box-shadow: 0 2px 8px rgba(11, 36, 32, .08); }
+form { display: grid; gap: .35rem; margin: 1.6rem 0; }
+label { margin-top: .65rem; color: var(--color-text); font-weight: 700; }
+input { width: 100%; padding: .8rem; border: 1px solid var(--color-border); border-radius: 12px; background: #fff; }
+.button { margin-top: 1rem; border: 0; border-radius: 12px; padding: .9rem; background: var(--color-primary); color: #fff; font-weight: 800; cursor: pointer; }
+.button:hover:not(:disabled) { background: var(--color-primary-strong); }
+.error { margin: .5rem 0 0; color: var(--color-danger); font-weight: 600; }
+.register-card a { color: var(--color-primary-strong); font-weight: 700; }

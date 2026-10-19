@@ -20,13 +20,13 @@ const storesShown = 8;
       <h1>Compra inteligente.<br><em>Ahorra en tu barrio.</em></h1>
       <p>Encuentra en las tiendas cercanas los productos que necesitas, con descuentos en lo que está por vencer. Pregúntale al asistente y te muestra la opción más barata o la más cerca.</p>
       <div class="hero-actions">
-        <a class="button" routerLink="/catalogo">Explorar ofertas</a>
+        <a class="button" routerLink="/ofertas">Ver ofertas de hoy</a>
         <a class="button button-light" routerLink="/chat">Preguntar al asistente</a>
       </div>
     </div>
-    <div class="hero-visual" aria-hidden="true">
-      <div class="visual-card"><span>Ofertas hoy</span><strong>{{ loading() ? '…' : discounted().length }}</strong><small>productos con descuento</small></div>
-      <div class="mini-card"><span>🌱</span><p><strong>Menos desperdicio</strong><br>Productos próximos a vencer a mejor precio</p></div>
+    <div class="hero-visual">
+      <a class="visual-card" routerLink="/ofertas" [attr.aria-label]="'Ver ' + discounted().length + ' ofertas de hoy'"><span>Ofertas hoy</span><strong>{{ loading() ? '…' : discounted().length }}</strong><small>productos con descuento · Ver todas →</small></a>
+      <div class="mini-card" aria-hidden="true"><span>🌱</span><p><strong>Menos desperdicio</strong><br>Productos próximos a vencer a mejor precio</p></div>
     </div>
   </section>
 
@@ -59,7 +59,7 @@ const storesShown = 8;
     <section class="section section-green" aria-labelledby="deals-title">
       <div class="section-heading">
         <div><span class="eyebrow">Ofertas relámpago</span><h2 id="deals-title">Productos que vuelven a ahorrar</h2></div>
-        <a routerLink="/chat">Armar un combo →</a>
+        <a routerLink="/ofertas">Ver todas las ofertas →</a>
       </div>
       <ul class="cards-grid">
         @for (product of featured(); track product.id) { <li><app-product-card [product]="product" /></li> }

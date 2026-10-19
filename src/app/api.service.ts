@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom, type Observable } from 'rxjs';
-import type { AlertInput, AlertSubscription, AppNotification, AppliedDiscount, AssistantResponse, AuthUser, Coordinates, DiscountSuggestion, Product, Store } from './models';
+import type { AccountProfile, SessionUpdate, ChatResponse, ChatTurn, Offer, OfferQuery, AlertInput, AlertSubscription, AppNotification, AppliedDiscount, AuthUser, Coordinates, DiscountSuggestion, Product, Store } from './models';
 
 export interface Recommendation {
   suggestion: string;
@@ -48,13 +48,22 @@ export class ApiService {
     return (await this.request(this.http.get<{ data: Store[] }>(`${this.baseUrl}/stores`, { params }), 'No se pudieron cargar las tiendas.')).data;
   }
 
+  async getCategories(): Promise<string[]> {
+    return (await this.request(this.http.get<{ data: string[] }>(`${this.baseUrl}/products/categories`), 'No se pudieron cargar las categorías.')).data;
+  }
+
+  // The optional location travels in the body and is not stored by the API.
+  searchOffers(query: OfferQuery): Promise<{ data: Offer[]; total: number }> {
+    return this.request(this.http.post<{ data: Offer[]; total: number }>(`${this.baseUrl}/offers/search`, query), 'No se pudieron cargar las ofertas.');
+  }
+
   async getNeighborhoods(): Promise<string[]> {
     return (await this.request(this.http.get<{ data: string[] }>(`${this.baseUrl}/stores/neighborhoods`), 'No se pudieron cargar los barrios.')).data;
   }
 
-  // The location travels only in this request body; the API does not store it.
-  async searchAssistant(payload: { message: string; neighborhood?: string } & Partial<Coordinates>): Promise<AssistantResponse> {
-    return (await this.request(this.http.post<{ data: AssistantResponse }>(`${this.baseUrl}/assistant/search`, payload), 'El asistente no pudo responder. Inténtalo de nuevo.')).data;
+  // Sends the last turns of the conversation; the optional location is used only for distances and is not stored.
+  async chat(payload: { messages: ChatTurn[]; neighborhood?: string } & Partial<Coordinates>): Promise<ChatResponse> {
+    return (await this.request(this.http.post<{ data: ChatResponse }>(`${this.baseUrl}/assistant/chat`, payload), 'El asistente no pudo responder. Inténtalo de nuevo.')).data;
   }
 
   updateMyStoreLocation(payload: { latitude: number | null; longitude: number | null }): Promise<{ data: Store; message: string }> {
@@ -75,6 +84,34 @@ export class ApiService {
 
   login(payload: { email: string; password: string }): Promise<{ token: string; user: AuthUser }> {
     return this.request(this.http.post<{ token: string; user: AuthUser }>(`${this.baseUrl}/auth/login`, payload), 'No se pudo iniciar sesión.');
+  }
+
+  forgotPassword(email: string): Promise<{ message: string }> {
+    return this.request(this.http.post<{ message: string }>(`${this.baseUrl}/auth/forgot-password`, { email }), 'No se pudo enviar el enlace.');
+  }
+
+  resetPassword(token: string, password: string): Promise<{ message: string }> {
+    return this.request(this.http.post<{ message: string }>(`${this.baseUrl}/auth/reset-password`, { token, password }), 'No se pudo cambiar la contraseña.');
+  }
+
+  async getAccount(): Promise<AccountProfile> {
+    return (await this.request(this.http.get<{ data: AccountProfile }>(`${this.baseUrl}/account`), 'No se pudo cargar tu perfil.')).data;
+  }
+
+  updateName(name: string): Promise<SessionUpdate> {
+    return this.request(this.http.patch<SessionUpdate>(`${this.baseUrl}/account/name`, { name }), 'No se pudo actualizar el nombre.');
+  }
+
+  changePassword(currentPassword: string, newPassword: string): Promise<SessionUpdate> {
+    return this.request(this.http.post<SessionUpdate>(`${this.baseUrl}/account/password`, { currentPassword, newPassword }), 'No se pudo cambiar la contraseña.');
+  }
+
+  requestEmailChange(newEmail: string, currentPassword: string): Promise<{ message: string }> {
+    return this.request(this.http.post<{ message: string }>(`${this.baseUrl}/account/email`, { newEmail, currentPassword }), 'No se pudo pedir el cambio de correo.');
+  }
+
+  confirmEmailChange(token: string): Promise<{ message: string }> {
+    return this.request(this.http.post<{ message: string }>(`${this.baseUrl}/account/email/confirm`, { token }), 'No se pudo confirmar el correo.');
   }
 
   async me(): Promise<AuthUser> {
