@@ -35,6 +35,8 @@ td button.danger { color: var(--color-danger); }
   td::before { content: attr(data-label); color: var(--color-muted); font-size: .8rem; font-weight: 700; text-transform: uppercase; text-align: left; }
   td[data-label="Producto"] { flex-direction: column; text-align: left; }
   td[data-label="Producto"]::before { display: none; }
+  td[data-label="Precio"] { flex-wrap: wrap; }
+  td[data-label="Precio"] small { flex-basis: 100%; }
   td.actions { justify-content: flex-end; padding-top: .6rem; }
   td.actions button { padding: .5rem .2rem; }
 }

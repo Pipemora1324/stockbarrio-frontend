@@ -14,3 +14,4 @@ p { margin: 0; }
 .price strong { color: var(--color-primary); font-size: 1.3rem; }
 .price s { color: var(--color-muted); }
 .urgent { color: var(--color-danger); font-weight: 700; }
+@media (max-width: 560px) { .media { aspect-ratio: 16 / 7; } }
