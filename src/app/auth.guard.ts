@@ -2,19 +2,11 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from './auth.service';
 
-export const authGuard: CanActivateFn = () => {
+// The store panel is only for store owners; the API also checks that each product belongs to their store.
+export const storeGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
-
-  if (!auth.user()) {
-    router.navigate(['/login']);
-    return false;
-  }
-
-  if (!auth.isAdmin()) {
-    router.navigate(['/']);
-    return false;
-  }
-
+  if (!auth.user()) return router.createUrlTree(['/login']);
+  if (!auth.isStore()) return router.createUrlTree(['/']);
   return true;
 };
