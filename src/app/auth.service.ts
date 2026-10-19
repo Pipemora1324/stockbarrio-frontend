@@ -40,6 +40,19 @@ export class AuthService {
     }
   }
 
+  // Replaces the stored session after a profile change that issued a new token (name or password).
+  replaceSession(token: string, user: AuthUser): void {
+    writeSession({ token, user });
+    this.session.set({ token, user });
+  }
+
+  // Closes the session and shows a message on the login page (after a password reset or an email change).
+  signOutWithNotice(message: string): void {
+    this.clear();
+    this.sessionNotice.set(message);
+    void this.router.navigate(['/login']);
+  }
+
   logout(): void {
     this.clear();
     void this.router.navigate(['/']);
