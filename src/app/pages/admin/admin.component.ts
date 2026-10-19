@@ -4,11 +4,12 @@ import { ApiError, ApiService, type ProductInput } from '../../api.service';
 import type { Product, Store } from '../../models';
 import { CalendarDatePipe } from '../../pipes/calendar-date.pipe';
 import { CopCurrencyPipe } from '../../pipes/cop-currency.pipe';
+import { StoreLocationComponent } from './store-location.component';
 import { SuggestionsPanelComponent } from './suggestions-panel.component';
 
 const emptyForm = (): ProductInput => ({ name: '', category: 'Alimentación', description: '', price: 0, stock: 0, expirationDate: '', discountPercent: 0 });
 
-@Component({ selector: 'app-admin', standalone: true, imports: [FormsModule, CopCurrencyPipe, CalendarDatePipe, SuggestionsPanelComponent], template: `
+@Component({ selector: 'app-admin', standalone: true, imports: [FormsModule, CopCurrencyPipe, CalendarDatePipe, SuggestionsPanelComponent, StoreLocationComponent], template: `
 <main class="admin"><header><div><span class="eyebrow">Panel privado</span><h1>{{ store()?.name ?? 'Inventario de tu tienda' }}</h1>@if (store(); as current) { <p class="store-meta">{{ current.neighborhood }} · {{ current.address }}</p> }</div>@if (state() === 'ready') { <button class="button" type="button" (click)="startCreate()">+ Nuevo producto</button> }</header>
 @if (notice()) { <p class="alert alert-success" role="status">{{ notice() }}</p> }
 @switch (state()) {
@@ -23,6 +24,7 @@ const emptyForm = (): ProductInput => ({ name: '', category: 'Alimentación', de
 @if (!products().length) { <p class="muted">Todavía no tienes productos. Crea el primero con «Nuevo producto».</p> } @else if (!filteredProducts().length) { <p class="muted">Ningún producto coincide con «{{ search() }}».</p> } @else {
 <div class="table-wrap"><table><thead><tr><th scope="col">Producto</th><th scope="col">Precio</th><th scope="col">Stock</th><th scope="col">Vencimiento</th><th scope="col">Oferta</th><th scope="col">Acciones</th></tr></thead><tbody>@for (product of filteredProducts(); track product.id) { <tr><td><strong>{{ product.name }}</strong><small>{{ product.category }}</small></td><td>{{ product.price | cop }}@if (product.discountPercent > 0) { <small>{{ product.offerPrice | cop }} con descuento</small> }</td><td>{{ product.stock }}</td><td>{{ product.expirationDate | calendarDate }}</td><td>{{ product.discountPercent }}%</td><td><button type="button" (click)="edit(product)">Editar</button><button type="button" class="danger" [disabled]="removingId() === product.id" (click)="remove(product)">{{ removingId() === product.id ? 'Eliminando…' : 'Eliminar' }}</button></td></tr> }</tbody></table></div> }
 </section>
+<app-store-location [store]="store()" (saved)="store.set($event)" />
 @if (formOpen()) { <section class="form-card"><h2>{{ editing() ? 'Editar producto' : 'Nuevo producto' }}</h2><form #productForm="ngForm" (ngSubmit)="save()"><label>Nombre<input name="name" [(ngModel)]="form.name" required minlength="2" maxlength="120"></label><label>Categoría<input name="category" [(ngModel)]="form.category" required minlength="2" maxlength="80"></label><label>Precio (COP)<input name="price" [(ngModel)]="form.price" type="number" min="1" step="1" required></label><label>Stock<input name="stock" [(ngModel)]="form.stock" type="number" min="0" step="1" required></label><label>Vencimiento<input name="expirationDate" [(ngModel)]="form.expirationDate" type="date" required></label><label>Descuento %<input name="discountPercent" [(ngModel)]="form.discountPercent" type="number" min="0" max="100" required></label><label class="full">Descripción<textarea name="description" [(ngModel)]="form.description" maxlength="500"></textarea></label>@if (formError()) { <p class="alert alert-error full" role="alert">{{ formError() }}</p> }<div class="form-actions"><button type="button" class="button button-light" (click)="closeForm()">Cancelar</button><button class="button" type="submit" [disabled]="saving() || productForm.invalid">{{ saving() ? 'Guardando…' : 'Guardar' }}</button></div></form></section> }
 }
 }
