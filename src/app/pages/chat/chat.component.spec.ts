@@ -63,6 +63,16 @@ describe('ChatComponent', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('modo básico');
   });
 
+  it('does not warn about basic mode when the rules answered a clear question', async () => {
+    api.chat.and.resolveTo(response({ mode: 'rules', reply: 'Encontré 3 opciones de «pollo asado» en 3 tiendas.' }));
+    const fixture = TestBed.createComponent(ChatComponent);
+    fixture.detectChanges();
+    fixture.componentInstance.draft.set('pollo asado');
+    await fixture.componentInstance.send();
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('modo básico');
+  });
+
   it('shows the API error without sending it back as history', async () => {
     api.chat.and.rejectWith(new Error('Llegaste al límite de mensajes por minuto.'));
     const fixture = TestBed.createComponent(ChatComponent);

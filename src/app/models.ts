@@ -12,7 +12,8 @@ export interface AppNotification { id: string; title: string; message: string; p
 export type OfferSort = 'discount' | 'nearest' | 'expiring';
 export interface Offer { productId: string; name: string; category: string; description: string; imageUrl: string; price: number; offerPrice: number; discountPercent: number; stock: number; expirationDate: string; daysToExpire: number; distanceKm: number | null; store: { id: string; name: string; neighborhood: string; address: string }; }
 export interface OfferQuery { neighborhood?: string; category?: string; search?: string; latitude?: number; longitude?: number; radiusKm?: number; sort: OfferSort; }
-export type ChatMode = 'ai' | 'basic';
+// rules: clear match answered without AI; ai: the model helped; basic: AI unavailable or over its limits.
+export type ChatMode = 'ai' | 'rules' | 'basic';
 export interface ChatTurn { role: 'user' | 'assistant'; content: string; }
 export interface ChatResponse { reply: string; mode: ChatMode; intent: { product: string | null; terms: string[]; category: string | null; preference: SearchPreference; neighborhood: string | null; budget: number | null }; origin: 'location' | 'neighborhood' | null; results: AssistantResult[]; }
 export interface AccountProfile extends AuthUser { email: string; pendingEmail: string | null; }
