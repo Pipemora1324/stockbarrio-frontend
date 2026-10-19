@@ -178,3 +178,7 @@ El backend de la rama `mejoras` (ofertas, chat, cuenta y categorías).
 1. Abre `/ofertas` y `/chat` y pulsa "pollo asado cerca".
 2. En `/forgot-password` pide un enlace; sale en la consola del backend.
 3. En `/perfil` cambia el nombre y la contraseña.
+
+## Ajuste de IA para cupos gratuitos
+
+- El chat entiende el nuevo `mode: "rules"` (respuesta por reglas a propósito). El aviso de "modo básico" solo aparece cuando la IA no estaba disponible o se agotó el límite personal.
