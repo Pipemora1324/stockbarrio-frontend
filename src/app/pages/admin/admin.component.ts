@@ -4,10 +4,11 @@ import { ApiError, ApiService, type ProductInput } from '../../api.service';
 import type { Product, Store } from '../../models';
 import { CalendarDatePipe } from '../../pipes/calendar-date.pipe';
 import { CopCurrencyPipe } from '../../pipes/cop-currency.pipe';
+import { SuggestionsPanelComponent } from './suggestions-panel.component';
 
 const emptyForm = (): ProductInput => ({ name: '', category: 'Alimentación', description: '', price: 0, stock: 0, expirationDate: '', discountPercent: 0 });
 
-@Component({ selector: 'app-admin', standalone: true, imports: [FormsModule, CopCurrencyPipe, CalendarDatePipe], template: `
+@Component({ selector: 'app-admin', standalone: true, imports: [FormsModule, CopCurrencyPipe, CalendarDatePipe, SuggestionsPanelComponent], template: `
 <main class="admin"><header><div><span class="eyebrow">Panel privado</span><h1>{{ store()?.name ?? 'Inventario de tu tienda' }}</h1>@if (store(); as current) { <p class="store-meta">{{ current.neighborhood }} · {{ current.address }}</p> }</div>@if (state() === 'ready') { <button class="button" type="button" (click)="startCreate()">+ Nuevo producto</button> }</header>
 @if (notice()) { <p class="alert alert-success" role="status">{{ notice() }}</p> }
 @switch (state()) {
@@ -16,6 +17,7 @@ const emptyForm = (): ProductInput => ({ name: '', category: 'Alimentación', de
 @case ('error') { <section class="table-card"><p class="alert alert-error" role="alert">{{ loadError() }}</p><button class="button" type="button" (click)="load()">Reintentar</button></section> }
 @case ('ready') {
 <section class="stats"><article><span>Productos</span><strong>{{ products().length }}</strong></article><article><span>Stock total</span><strong>{{ totalStock() }}</strong></article><article><span>Ofertas</span><strong>{{ discountCount() }}</strong></article></section>
+<app-suggestions-panel (applied)="reloadProducts()" />
 @if (actionError()) { <p class="alert alert-error" role="alert">{{ actionError() }}</p> }
 <section class="table-card"><div class="table-toolbar"><h2>Productos</h2><label class="sr-only" for="inventory-search">Buscar producto</label><input id="inventory-search" type="search" [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="Buscar producto"></div>
 @if (!products().length) { <p class="muted">Todavía no tienes productos. Crea el primero con «Nuevo producto».</p> } @else if (!filteredProducts().length) { <p class="muted">Ningún producto coincide con «{{ search() }}».</p> } @else {
@@ -66,6 +68,15 @@ export class AdminComponent implements OnInit {
       }
       this.loadError.set(caught instanceof Error ? caught.message : 'No se pudo cargar el inventario.');
       this.state.set('error');
+    }
+  }
+
+  // Refreshes the table after a discount is applied without hiding the panel.
+  async reloadProducts() {
+    try {
+      this.products.set((await this.api.getMyInventory()).products);
+    } catch (caught) {
+      this.actionError.set(caught instanceof Error ? caught.message : 'No se pudo actualizar el inventario.');
     }
   }
 
