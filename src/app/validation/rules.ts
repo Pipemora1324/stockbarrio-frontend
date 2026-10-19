@@ -120,18 +120,4 @@ export const expirationDate = (value: string, creating: boolean, now: Date = new
   return '';
 };
 
-export const latitude = (value: unknown): string => {
-  if (value === null || value === '' || value === undefined) return '';
-  const number = Number(value);
-  if (!Number.isFinite(number)) return 'La latitud debe ser un número.';
-  return number < -4.3 || number > 13.6 ? 'La latitud debe estar dentro de Colombia (entre -4,3 y 13,6).' : '';
-};
-
-export const longitude = (value: unknown): string => {
-  if (value === null || value === '' || value === undefined) return '';
-  const number = Number(value);
-  if (!Number.isFinite(number)) return 'La longitud debe ser un número.';
-  return number < -82 || number > -66.8 ? 'La longitud debe estar dentro de Colombia (entre -82 y -66,8).' : '';
-};
-
 export const hasErrors = (errors: Record<string, string>) => Object.values(errors).some(Boolean);
