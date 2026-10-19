@@ -41,3 +41,5 @@ td button.danger { color: var(--color-danger); }
 .full { grid-column: 1/-1; }
 .button:disabled,td button:disabled { opacity: .6; cursor: not-allowed; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.state-actions { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 1rem; }
+.state-actions .button { text-decoration: none; }

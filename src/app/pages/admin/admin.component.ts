@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { AuthService } from '../../auth.service';
 import { ApiError, ApiService } from '../../api.service';
 import type { Product, Store } from '../../models';
 import { CalendarDatePipe } from '../../pipes/calendar-date.pipe';
@@ -9,12 +11,12 @@ import { ProductFormComponent } from './product-form.component';
 import { SuggestionsPanelComponent } from './suggestions-panel.component';
 
 
-@Component({ selector: 'app-admin', changeDetection: ChangeDetectionStrategy.OnPush, imports: [FormsModule, CopCurrencyPipe, CalendarDatePipe, SuggestionsPanelComponent, StoreLocationComponent, ProductFormComponent], template: `
+@Component({ selector: 'app-admin', changeDetection: ChangeDetectionStrategy.OnPush, imports: [FormsModule, RouterLink, CopCurrencyPipe, CalendarDatePipe, SuggestionsPanelComponent, StoreLocationComponent, ProductFormComponent], template: `
 <main class="admin"><header><div><span class="eyebrow">Panel privado</span><h1>{{ store()?.name ?? 'Inventario de tu tienda' }}</h1>@if (store(); as current) { <p class="store-meta">{{ current.neighborhood }} · {{ current.address }}</p> }</div>@if (state() === 'ready') { <button class="button" type="button" (click)="startCreate()">+ Nuevo producto</button> }</header>
 @if (notice()) { <p class="alert alert-success" role="status">{{ notice() }}</p> }
 @switch (state()) {
 @case ('loading') { <section class="table-card"><p class="muted" role="status">Cargando el inventario…</p></section> }
-@case ('no-store') { <section class="table-card"><h2>Tu cuenta no tiene una tienda asociada</h2><p class="muted">Para gestionar inventario necesitas una cuenta de tienda. Si crees que es un error, cierra sesión y vuelve a entrar, o registra tu tienda.</p></section> }
+@case ('no-store') { <section class="table-card"><h2>Tu cuenta no tiene una tienda asociada</h2><p class="muted">Para gestionar inventario necesitas una cuenta de tienda. Si crees que es un error, cierra sesión y vuelve a entrar, o registra tu tienda.</p><div class="state-actions"><a class="button" routerLink="/register" [queryParams]="{ tipo: 'tienda' }">Registrar una tienda</a><button class="button button-light" type="button" (click)="auth.logout()">Cerrar sesión</button></div></section> }
 @case ('error') { <section class="table-card"><p class="alert alert-error" role="alert">{{ loadError() }}</p><button class="button" type="button" (click)="load()">Reintentar</button></section> }
 @case ('ready') {
 <section class="stats"><article><span>Productos</span><strong>{{ products().length }}</strong></article><article><span>Stock total</span><strong>{{ totalStock() }}</strong></article><article><span>Ofertas</span><strong>{{ discountCount() }}</strong></article></section>
@@ -31,6 +33,7 @@ import { SuggestionsPanelComponent } from './suggestions-panel.component';
 </main>`, styleUrl: './admin.component.scss' })
 export class AdminComponent implements OnInit {
   private readonly api = inject(ApiService);
+  protected readonly auth = inject(AuthService);
   readonly state = signal<'loading' | 'ready' | 'no-store' | 'error'>('loading');
   readonly products = signal<Product[]>([]);
   readonly store = signal<Store | null>(null);
