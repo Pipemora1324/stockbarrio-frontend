@@ -1,0 +1,15 @@
+.combo { align-self: start; padding: 1.75rem; border-radius: 1.5rem; background: #173b32; color: #fff; }
+.eyebrow { color: #8fe0c2; font-size: .7rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+h2 { margin: .5rem 0 .75rem; font-size: 1.5rem; }
+p { color: #d3e5de; line-height: 1.55; }
+form { display: grid; gap: .45rem; margin-top: 1rem; }
+label { color: #d3e5de; font-size: .85rem; font-weight: 700; }
+input, select { margin-bottom: .5rem; padding: .75rem; border: 1px solid #3a6458; border-radius: .65rem; background: #fff; color: #173b32; font: inherit; }
+.button { border: 0; border-radius: .65rem; padding: .8rem 1rem; background: #2fd197; color: #0d2a22; font-weight: 800; cursor: pointer; }
+.button:disabled { opacity: .6; cursor: not-allowed; }
+.error { color: #ffc9c9; font-weight: 700; }
+.suggestion { margin-top: 1.25rem; }
+.result-list { display: grid; gap: .6rem; margin: 1rem 0; padding: 0; list-style: none; }
+.result-list li { display: flex; justify-content: space-between; gap: 1rem; padding: .8rem; border-radius: .8rem; background: #244f43; }
+.result-list small { display: block; color: #b9d3ca; }
+.totals { display: flex; justify-content: space-between; padding-top: .7rem; border-top: 1px solid #3a6458; }
