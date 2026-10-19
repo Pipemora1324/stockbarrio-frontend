@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiError, ApiService, type ProductInput } from '../../api.service';
 import type { Product, Store } from '../../models';
@@ -44,6 +44,8 @@ export class AdminComponent implements OnInit {
   readonly formOpen = signal(false);
   readonly editing = signal<Product | null>(null);
   form: ProductInput = emptyForm();
+  // Suggestions depend on the inventory, so they are refreshed after every product change.
+  private readonly suggestionsPanel = viewChild(SuggestionsPanelComponent);
   readonly filteredProducts = computed(() => {
     const term = this.search().trim().toLowerCase();
     return term ? this.products().filter((product) => product.name.toLowerCase().includes(term)) : this.products();
@@ -115,6 +117,7 @@ export class AdminComponent implements OnInit {
       this.notice.set(current ? 'El producto se actualizó correctamente.' : 'El producto se creó correctamente.');
       this.closeForm();
       await this.load();
+      void this.suggestionsPanel()?.load();
     } catch (caught) {
       this.formError.set(caught instanceof Error ? caught.message : 'No se pudo guardar el producto.');
     } finally {
@@ -132,6 +135,7 @@ export class AdminComponent implements OnInit {
       this.products.update((items) => items.filter((item) => item.id !== product.id));
       if (this.editing()?.id === product.id) this.closeForm();
       this.notice.set('El producto se eliminó correctamente.');
+      void this.suggestionsPanel()?.load();
     } catch (caught) {
       this.actionError.set(caught instanceof Error ? caught.message : 'No se pudo eliminar el producto.');
     } finally {
