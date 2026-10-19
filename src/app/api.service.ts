@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom, type Observable } from 'rxjs';
-import type { AlertInput, AlertSubscription, AppNotification, AppliedDiscount, AssistantResponse, AuthUser, Coordinates, DiscountSuggestion, Product, Store } from './models';
+import type { Offer, OfferQuery, AlertInput, AlertSubscription, AppNotification, AppliedDiscount, AssistantResponse, AuthUser, Coordinates, DiscountSuggestion, Product, Store } from './models';
 
 export interface Recommendation {
   suggestion: string;
@@ -46,6 +46,15 @@ export class ApiService {
   async getStores(neighborhood?: string): Promise<Store[]> {
     const params = neighborhood ? { neighborhood } : undefined;
     return (await this.request(this.http.get<{ data: Store[] }>(`${this.baseUrl}/stores`, { params }), 'No se pudieron cargar las tiendas.')).data;
+  }
+
+  async getCategories(): Promise<string[]> {
+    return (await this.request(this.http.get<{ data: string[] }>(`${this.baseUrl}/products/categories`), 'No se pudieron cargar las categorías.')).data;
+  }
+
+  // The optional location travels in the body and is not stored by the API.
+  searchOffers(query: OfferQuery): Promise<{ data: Offer[]; total: number }> {
+    return this.request(this.http.post<{ data: Offer[]; total: number }>(`${this.baseUrl}/offers/search`, query), 'No se pudieron cargar las ofertas.');
   }
 
   async getNeighborhoods(): Promise<string[]> {
