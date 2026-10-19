@@ -1,19 +1,21 @@
 # StockBarrio - Frontend
 
-Interfaz web de StockBarrio, una aplicación de inventario para tiendas y mercados de barrio. Está hecha con Angular 20.
+Interfaz web de StockBarrio, una aplicación para tiendas y clientes de barrio: las tiendas gestionan su inventario y aprueban descuentos sugeridos para lo que está por vencer, y los clientes buscan productos cerca, arman combos y reciben alertas de descuentos. Está hecha con Angular 20 (componentes standalone, signals, SCSS).
 
 La API (Node.js + Express + PostgreSQL) está en un repositorio aparte: [stockbarrio-backend](https://github.com/Pipemora1324/stockbarrio-backend).
 
 ## Páginas
 
-| Ruta | Qué muestra |
-| --- | --- |
-| `/` | Inicio |
-| `/catalogo` | Catálogo de productos con búsqueda y filtros |
-| `/chat` | Recomendaciones de compra según presupuesto y barrio |
-| `/login` | Inicio de sesión |
-| `/register` | Registro de tienda |
-| `/admin` | Panel de la tienda: gestión de sus propios productos (requiere sesión con rol `store`) |
+| Ruta | Qué muestra | Acceso |
+| --- | --- | --- |
+| `/` | Inicio con tiendas y ofertas | Público |
+| `/catalogo` | Catálogo con filtros por barrio, categoría y nombre (`?barrio=` filtra al entrar) | Público |
+| `/chat` | Asistente de búsqueda ("huevos baratos", "leche cerca de mí") con ubicación o barrio, y combo con presupuesto | Público |
+| `/login` | Inicio de sesión | Público |
+| `/register` | Registro de cliente o de tienda (`?tipo=tienda` abre el de tienda) | Público |
+| `/admin` | Panel de la tienda: inventario, descuentos sugeridos y ubicación | Rol `store` |
+| `/alertas` | Alertas de descuento del cliente | Rol `customer` |
+| `/notificaciones` | Bandeja de notificaciones | Rol `customer` |
 
 Todas las peticiones a la API se hacen a la ruta relativa `/api`, así que quien sirve el frontend tiene que redirigir `/api` hacia el backend.
 
@@ -22,12 +24,34 @@ Todas las peticiones a la API se hacen a la ruta relativa `/api`, así que quien
 - El token y el usuario se guardan en `localStorage`. Si esos datos están dañados o el navegador bloquea el almacenamiento, la app arranca sin sesión en vez de fallar.
 - Al iniciar, la app valida el token con `GET /api/auth/me` en segundo plano. Si la API no responde (por ejemplo, mientras Render despierta), la sesión se mantiene.
 - Un interceptor agrega el token a las llamadas a `/api` y, si la API responde 401, cierra la sesión y lleva al login con un aviso.
-- El panel solo es accesible para cuentas de tienda. La API además comprueba que cada producto pertenezca a la tienda del usuario.
+- El panel es solo para cuentas de tienda; las alertas y la bandeja, solo para clientes. La API además comprueba los permisos en cada llamada.
+- Al entrar, la tienda va a `/admin` y el cliente a `/alertas`.
+- La campana del header muestra las notificaciones sin leer y se actualiza cada minuto (no consulta con la pestaña oculta).
 
 ## Formatos
 
 - Los precios se muestran en pesos colombianos con `Intl.NumberFormat('es-CO')`, sin decimales (pipe `cop`).
 - Las fechas de vencimiento son fechas puras `AAAA-MM-DD`: se muestran y se envían como texto (pipe `calendarDate`), sin pasar por `Date`, para que la zona horaria no corra el día.
+
+## Ubicación y privacidad
+
+- La ubicación del navegador solo se pide cuando el usuario pulsa "Usar mi ubicación".
+- En el asistente, la ubicación se guarda únicamente en memoria de la pestaña (nunca en `localStorage`) y la API no la almacena.
+- Para alertas por cercanía, se envía solo si el cliente marca la casilla de consentimiento, y la API la guarda redondeada (unos 100 m).
+
+## Diseño, rendimiento y accesibilidad
+
+- **Estilos.** Tokens de color, tipografía y foco en `src/styles.scss`. Los colores de texto cumplen el contraste AA sobre blanco.
+- **Responsive, empezando por el móvil.** El header se convierte en menú desplegable, las cuadrículas se adaptan al ancho y la tabla del inventario pasa a tarjetas en el celular. Probado sin desbordamiento horizontal a 360, 768 y 1280 px.
+- **Tarjetas de producto** con ícono según la categoría, o imagen con `loading="lazy"` si el producto la tiene.
+- **Rendimiento.**
+  - Las páginas se cargan de forma diferida (salvo el inicio) y todos los componentes usan `ChangeDetectionStrategy.OnPush`.
+  - Las listas usan `@for` con `track` y la búsqueda del catálogo usa debounce.
+  - Hay estados de carga, vacío y error en todas las páginas.
+- **Accesibilidad.**
+  - Enlace "Saltar al contenido", etiquetas en todos los campos y foco visible.
+  - `aria-live` en resultados y avisos.
+  - `aria-expanded` en el menú y títulos de página por ruta.
 
 ## Requisitos
 
@@ -68,14 +92,23 @@ docker run -p 4200:80 -e API_URL=http://host.docker.internal:3000 stockbarrio-fr
 | `npm start` | Servidor de desarrollo |
 | `npm run build` | Compila para producción en `dist/frontend/browser` |
 | `npm run watch` | Compila en modo desarrollo y vuelve a compilar con cada cambio |
-| `npm test` | Pruebas unitarias con Karma (en modo continuo: `npx ng test --watch=false --browsers=ChromeHeadless`) |
+| `npm test` | Pruebas unitarias con Karma (para una sola pasada sin abrir el navegador: `npx ng test --watch=false --browsers=ChromeHeadless`) |
+
+## Cómo probar todo en local
+
+1. En el backend: `npm run seed` y `npm run dev` (puerto 3000).
+2. Aquí: `npm start` y abre http://localhost:4200.
+3. Tienda: `tienda.donaluz@stockbarrio.test` / `tienda12345`. En `/admin` aprueba una sugerencia de descuento y guarda la ubicación.
+4. Cliente: `cliente.demo@stockbarrio.test` / `tienda12345`. Revisa la campana y `/notificaciones`, y crea alertas en `/alertas`.
+5. Asistente: en `/chat`, pulsa "busco huevos baratos" y luego "Usar mi ubicación" con "leche cerca de mí".
 
 ## Estructura
 
-- `src/app/pages`: páginas de la aplicación.
-- `src/app/components`: componentes compartidos (cabecera).
-- `src/app/api.service.ts`: llamadas a la API.
+- `src/app/pages`: páginas (`home`, `catalog`, `chat`, `admin`, `alerts`, `notifications`, `login`, `register`).
+- `src/app/components`: header y tarjeta de producto.
+- `src/app/services`: ubicación del navegador y contador de notificaciones.
+- `src/app/api.service.ts`: llamadas a la API, con mensajes de error en español.
 - `src/app/auth.service.ts`, `auth.guard.ts`, `auth.interceptor.ts` y `session.storage.ts`: sesión, protección de rutas y manejo del 401.
-- `src/app/pipes`: formato de pesos y de fechas.
+- `src/app/pipes` y `src/app/dates.ts`: formato de pesos, fechas, distancias y días para vencer en hora de Bogotá.
 - `nginx.conf` y `Dockerfile`: imagen para producción.
 - `vercel.json`: configuración de Vercel.

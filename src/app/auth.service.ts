@@ -13,6 +13,7 @@ export class AuthService {
   readonly token = computed(() => this.session()?.token ?? null);
   readonly isAdmin = computed(() => this.user()?.role === 'admin');
   readonly isStore = computed(() => this.user()?.role === 'store');
+  readonly isCustomer = computed(() => this.user()?.role === 'customer');
   readonly sessionNotice = signal('');
 
   async login(email: string, password: string): Promise<void> {
@@ -60,6 +61,7 @@ export class AuthService {
     writeSession({ token, user });
     this.session.set({ token, user });
     this.sessionNotice.set('');
-    void this.router.navigate(user.role === 'store' ? ['/admin'] : ['/']);
+    const home: Record<AuthUser['role'], string> = { store: '/admin', customer: '/alertas', admin: '/' };
+    void this.router.navigate([home[user.role]]);
   }
 }

@@ -1,13 +1,15 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiError, ApiService, type ProductInput } from '../../api.service';
 import type { Product, Store } from '../../models';
 import { CalendarDatePipe } from '../../pipes/calendar-date.pipe';
 import { CopCurrencyPipe } from '../../pipes/cop-currency.pipe';
+import { StoreLocationComponent } from './store-location.component';
+import { SuggestionsPanelComponent } from './suggestions-panel.component';
 
 const emptyForm = (): ProductInput => ({ name: '', category: 'Alimentación', description: '', price: 0, stock: 0, expirationDate: '', discountPercent: 0 });
 
-@Component({ selector: 'app-admin', standalone: true, imports: [FormsModule, CopCurrencyPipe, CalendarDatePipe], template: `
+@Component({ selector: 'app-admin', changeDetection: ChangeDetectionStrategy.OnPush, imports: [FormsModule, CopCurrencyPipe, CalendarDatePipe, SuggestionsPanelComponent, StoreLocationComponent], template: `
 <main class="admin"><header><div><span class="eyebrow">Panel privado</span><h1>{{ store()?.name ?? 'Inventario de tu tienda' }}</h1>@if (store(); as current) { <p class="store-meta">{{ current.neighborhood }} · {{ current.address }}</p> }</div>@if (state() === 'ready') { <button class="button" type="button" (click)="startCreate()">+ Nuevo producto</button> }</header>
 @if (notice()) { <p class="alert alert-success" role="status">{{ notice() }}</p> }
 @switch (state()) {
@@ -16,11 +18,13 @@ const emptyForm = (): ProductInput => ({ name: '', category: 'Alimentación', de
 @case ('error') { <section class="table-card"><p class="alert alert-error" role="alert">{{ loadError() }}</p><button class="button" type="button" (click)="load()">Reintentar</button></section> }
 @case ('ready') {
 <section class="stats"><article><span>Productos</span><strong>{{ products().length }}</strong></article><article><span>Stock total</span><strong>{{ totalStock() }}</strong></article><article><span>Ofertas</span><strong>{{ discountCount() }}</strong></article></section>
+<app-suggestions-panel (applied)="reloadProducts()" />
 @if (actionError()) { <p class="alert alert-error" role="alert">{{ actionError() }}</p> }
 <section class="table-card"><div class="table-toolbar"><h2>Productos</h2><label class="sr-only" for="inventory-search">Buscar producto</label><input id="inventory-search" type="search" [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="Buscar producto"></div>
 @if (!products().length) { <p class="muted">Todavía no tienes productos. Crea el primero con «Nuevo producto».</p> } @else if (!filteredProducts().length) { <p class="muted">Ningún producto coincide con «{{ search() }}».</p> } @else {
-<div class="table-wrap"><table><thead><tr><th scope="col">Producto</th><th scope="col">Precio</th><th scope="col">Stock</th><th scope="col">Vencimiento</th><th scope="col">Oferta</th><th scope="col">Acciones</th></tr></thead><tbody>@for (product of filteredProducts(); track product.id) { <tr><td><strong>{{ product.name }}</strong><small>{{ product.category }}</small></td><td>{{ product.price | cop }}@if (product.discountPercent > 0) { <small>{{ product.offerPrice | cop }} con descuento</small> }</td><td>{{ product.stock }}</td><td>{{ product.expirationDate | calendarDate }}</td><td>{{ product.discountPercent }}%</td><td><button type="button" (click)="edit(product)">Editar</button><button type="button" class="danger" [disabled]="removingId() === product.id" (click)="remove(product)">{{ removingId() === product.id ? 'Eliminando…' : 'Eliminar' }}</button></td></tr> }</tbody></table></div> }
+<div class="table-wrap"><table><thead><tr><th scope="col">Producto</th><th scope="col">Precio</th><th scope="col">Stock</th><th scope="col">Vencimiento</th><th scope="col">Oferta</th><th scope="col">Acciones</th></tr></thead><tbody>@for (product of filteredProducts(); track product.id) { <tr><td data-label="Producto"><strong>{{ product.name }}</strong><small>{{ product.category }}</small></td><td data-label="Precio">{{ product.price | cop }}@if (product.discountPercent > 0) { <small>{{ product.offerPrice | cop }} con descuento</small> }</td><td data-label="Stock">{{ product.stock }}</td><td data-label="Vence">{{ product.expirationDate | calendarDate }}</td><td data-label="Oferta">{{ product.discountPercent }}%</td><td class="actions"><button type="button" (click)="edit(product)" [attr.aria-label]="'Editar ' + product.name">Editar</button><button type="button" class="danger" [disabled]="removingId() === product.id" (click)="remove(product)" [attr.aria-label]="'Eliminar ' + product.name">{{ removingId() === product.id ? 'Eliminando…' : 'Eliminar' }}</button></td></tr> }</tbody></table></div> }
 </section>
+<app-store-location [store]="store()" (saved)="store.set($event)" />
 @if (formOpen()) { <section class="form-card"><h2>{{ editing() ? 'Editar producto' : 'Nuevo producto' }}</h2><form #productForm="ngForm" (ngSubmit)="save()"><label>Nombre<input name="name" [(ngModel)]="form.name" required minlength="2" maxlength="120"></label><label>Categoría<input name="category" [(ngModel)]="form.category" required minlength="2" maxlength="80"></label><label>Precio (COP)<input name="price" [(ngModel)]="form.price" type="number" min="1" step="1" required></label><label>Stock<input name="stock" [(ngModel)]="form.stock" type="number" min="0" step="1" required></label><label>Vencimiento<input name="expirationDate" [(ngModel)]="form.expirationDate" type="date" required></label><label>Descuento %<input name="discountPercent" [(ngModel)]="form.discountPercent" type="number" min="0" max="100" required></label><label class="full">Descripción<textarea name="description" [(ngModel)]="form.description" maxlength="500"></textarea></label>@if (formError()) { <p class="alert alert-error full" role="alert">{{ formError() }}</p> }<div class="form-actions"><button type="button" class="button button-light" (click)="closeForm()">Cancelar</button><button class="button" type="submit" [disabled]="saving() || productForm.invalid">{{ saving() ? 'Guardando…' : 'Guardar' }}</button></div></form></section> }
 }
 }
@@ -40,6 +44,8 @@ export class AdminComponent implements OnInit {
   readonly formOpen = signal(false);
   readonly editing = signal<Product | null>(null);
   form: ProductInput = emptyForm();
+  // Suggestions depend on the inventory, so they are refreshed after every product change.
+  private readonly suggestionsPanel = viewChild(SuggestionsPanelComponent);
   readonly filteredProducts = computed(() => {
     const term = this.search().trim().toLowerCase();
     return term ? this.products().filter((product) => product.name.toLowerCase().includes(term)) : this.products();
@@ -66,6 +72,15 @@ export class AdminComponent implements OnInit {
       }
       this.loadError.set(caught instanceof Error ? caught.message : 'No se pudo cargar el inventario.');
       this.state.set('error');
+    }
+  }
+
+  // Refreshes the table after a discount is applied without hiding the panel.
+  async reloadProducts() {
+    try {
+      this.products.set((await this.api.getMyInventory()).products);
+    } catch (caught) {
+      this.actionError.set(caught instanceof Error ? caught.message : 'No se pudo actualizar el inventario.');
     }
   }
 
@@ -102,6 +117,7 @@ export class AdminComponent implements OnInit {
       this.notice.set(current ? 'El producto se actualizó correctamente.' : 'El producto se creó correctamente.');
       this.closeForm();
       await this.load();
+      void this.suggestionsPanel()?.load();
     } catch (caught) {
       this.formError.set(caught instanceof Error ? caught.message : 'No se pudo guardar el producto.');
     } finally {
@@ -119,6 +135,7 @@ export class AdminComponent implements OnInit {
       this.products.update((items) => items.filter((item) => item.id !== product.id));
       if (this.editing()?.id === product.id) this.closeForm();
       this.notice.set('El producto se eliminó correctamente.');
+      void this.suggestionsPanel()?.load();
     } catch (caught) {
       this.actionError.set(caught instanceof Error ? caught.message : 'No se pudo eliminar el producto.');
     } finally {

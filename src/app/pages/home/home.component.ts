@@ -1,21 +1,99 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { CopCurrencyPipe } from '../../pipes/cop-currency.pipe';
-import { CalendarDatePipe } from '../../pipes/calendar-date.pipe';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../api.service';
+import { ProductCardComponent } from '../../components/product-card/product-card.component';
 import type { Product, Store } from '../../models';
 
-@Component({ selector: 'app-home', standalone: true, imports: [CommonModule, CopCurrencyPipe, CalendarDatePipe, RouterLink], template: `
+const featuredCount = 4;
+const storesShown = 8;
+
+@Component({
+  selector: 'app-home',
+  imports: [RouterLink, ProductCardComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrl: './home.component.scss',
+  template: `
 <main class="home">
-  <section class="hero"><div class="hero-copy"><span class="eyebrow">Menos desperdicio, más barrio</span><h1>Compra inteligente.<br><em>Recicla con conciencia.</em></h1><p>Descubre tiendas cercanas, ofertas por vencimiento y combos sugeridos por inteligencia artificial.</p><div class="hero-actions"><a class="button" routerLink="/catalogo">Explorar ofertas</a><a class="button button-light" routerLink="/chat">Hablar con IA</a></div></div><div class="hero-visual"><div class="visual-card"><span>Ofertas hoy</span><strong>{{ products().length }}</strong><small>productos disponibles</small></div><div class="mini-card"><span>🌱</span><p><strong>Menos desperdicio</strong><br>Solo productos próximos a vencer</p></div></div></section>
-  <section class="section"><div class="section-heading"><div><span class="eyebrow">Cercanas a ti</span><h2>Tiendas del barrio</h2></div><a routerLink="/catalogo">Ver todo →</a></div><div class="cards-grid"><article class="card" *ngFor="let store of stores()"><div class="store-icon">⌂</div><h3>{{ store.name }}</h3><p>{{ store.neighborhood }} · {{ store.address }}</p><a class="text-link" [routerLink]="['/catalogo']" [queryParams]="{ barrio: store.neighborhood }">Ver productos →</a></article></div></section>
-  <section class="section section-green"><div class="section-heading"><div><span class="eyebrow">Ofertas relámpago</span><h2>Productos que vuelven a ahorrar</h2></div></div><div class="cards-grid product-grid"><article class="card product-card" *ngFor="let product of products() | slice:0:4"><div class="product-image">🥫</div><span class="badge">-{{ product.discountPercent }}%</span><h3>{{ product.name }}</h3><p>{{ product.storeName }} · {{ product.neighborhood }}</p><div class="price-row"><strong>{{ product.offerPrice | cop }}</strong><s>{{ product.price | cop }}</s></div><small>Vence {{ product.expirationDate | calendarDate }}</small></article></div></section>
-</main>`, styleUrl: './home.component.scss' })
+  <section class="hero">
+    <div class="hero-copy">
+      <span class="eyebrow">Menos desperdicio, más barrio</span>
+      <h1>Compra inteligente.<br><em>Ahorra en tu barrio.</em></h1>
+      <p>Encuentra en las tiendas cercanas los productos que necesitas, con descuentos en lo que está por vencer. Pregúntale al asistente y te muestra la opción más barata o la más cerca.</p>
+      <div class="hero-actions">
+        <a class="button" routerLink="/catalogo">Explorar ofertas</a>
+        <a class="button button-light" routerLink="/chat">Preguntar al asistente</a>
+      </div>
+    </div>
+    <div class="hero-visual" aria-hidden="true">
+      <div class="visual-card"><span>Ofertas hoy</span><strong>{{ loading() ? '…' : discounted().length }}</strong><small>productos con descuento</small></div>
+      <div class="mini-card"><span>🌱</span><p><strong>Menos desperdicio</strong><br>Productos próximos a vencer a mejor precio</p></div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="stores-title">
+    <div class="section-heading">
+      <div><span class="eyebrow">Cerca de ti</span><h2 id="stores-title">Tiendas del barrio</h2></div>
+      <a routerLink="/catalogo">Ver todo el catálogo →</a>
+    </div>
+    @if (loading()) {
+      <p class="state" role="status">Cargando tiendas…</p>
+    } @else if (error()) {
+      <div class="state state-error" role="alert"><p>{{ error() }}</p><button class="button" type="button" (click)="load()">Reintentar</button></div>
+    } @else if (!stores().length) {
+      <p class="state">Todavía no hay tiendas registradas. ¿Tienes una? <a routerLink="/register" [queryParams]="{ tipo: 'tienda' }">Regístrala gratis</a>.</p>
+    } @else {
+      <ul class="cards-grid">
+        @for (store of shownStores(); track store.id) {
+          <li class="card store-card">
+            <div class="store-icon" aria-hidden="true">🏪</div>
+            <h3>{{ store.name }}</h3>
+            <p>{{ store.neighborhood }} · {{ store.address }}</p>
+            <a class="text-link" [routerLink]="['/catalogo']" [queryParams]="{ barrio: store.neighborhood }">Ver productos de {{ store.neighborhood }} →</a>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  @if (!loading() && !error() && featured().length) {
+    <section class="section section-green" aria-labelledby="deals-title">
+      <div class="section-heading">
+        <div><span class="eyebrow">Ofertas relámpago</span><h2 id="deals-title">Productos que vuelven a ahorrar</h2></div>
+        <a routerLink="/chat">Armar un combo →</a>
+      </div>
+      <ul class="cards-grid">
+        @for (product of featured(); track product.id) { <li><app-product-card [product]="product" /></li> }
+      </ul>
+    </section>
+  }
+</main>`,
+})
 export class HomeComponent implements OnInit {
   private readonly api = inject(ApiService);
   readonly stores = signal<Store[]>([]);
   readonly products = signal<Product[]>([]);
-  ngOnInit() { void this.load(); }
-  private async load() { try { this.stores.set(await this.api.getStores()); this.products.set(await this.api.getProducts()); } catch { this.products.set([]); } }
+  readonly loading = signal(true);
+  readonly error = signal('');
+  readonly shownStores = computed(() => this.stores().slice(0, storesShown));
+  readonly discounted = computed(() => this.products().filter((product) => product.discountPercent > 0));
+  // Discounted products first (the API already sorts by expiration), then the rest to fill the row.
+  readonly featured = computed(() => [...this.discounted(), ...this.products().filter((product) => product.discountPercent === 0)].slice(0, featuredCount));
+
+  ngOnInit() {
+    void this.load();
+  }
+
+  async load() {
+    this.loading.set(true);
+    this.error.set('');
+    try {
+      const [stores, products] = await Promise.all([this.api.getStores(), this.api.getProducts()]);
+      this.stores.set(stores);
+      this.products.set(products);
+    } catch (caught) {
+      this.error.set(caught instanceof Error ? caught.message : 'No se pudieron cargar las tiendas.');
+    } finally {
+      this.loading.set(false);
+    }
+  }
 }
