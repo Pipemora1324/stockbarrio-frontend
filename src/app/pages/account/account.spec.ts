@@ -2,8 +2,10 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
-import { ApiService } from '../../api.service';
+import { ApiError, ApiService } from '../../api.service';
 import { AuthService } from '../../auth.service';
+import { writeSession } from '../../session.storage';
+import { ConfirmEmailComponent } from './confirm-email.component';
 import { ForgotPasswordComponent } from './forgot-password.component';
 import { ProfileComponent } from './profile.component';
 import { ResetPasswordComponent } from './reset-password.component';
@@ -13,7 +15,7 @@ describe('account pages', () => {
 
   const setup = (token = '') => {
     localStorage.clear();
-    api = jasmine.createSpyObj<ApiService>('ApiService', ['forgotPassword', 'resetPassword', 'getAccount', 'updateName', 'changePassword', 'requestEmailChange', 'me']);
+    api = jasmine.createSpyObj<ApiService>('ApiService', ['forgotPassword', 'resetPassword', 'getAccount', 'updateName', 'changePassword', 'requestEmailChange', 'confirmEmailChange', 'me']);
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
@@ -84,5 +86,96 @@ describe('account pages', () => {
     expect(TestBed.inject(AuthService).token()).toBe('token-nuevo');
     expect(page.passwordState().message).toBe('Tu contraseña se cambió.');
     expect(page.currentPassword()).toBe('');
+  });
+
+  const user = { id: 'u1', name: 'Ana Pérez', email: 'ana2026@correo.co', role: 'customer' as const };
+  const openProfile = async () => {
+    api.getAccount.and.resolveTo({ ...user, pendingEmail: null });
+    const fixture = TestBed.createComponent(ProfileComponent);
+    await fixture.componentInstance.ngOnInit();
+    return { fixture, page: fixture.componentInstance };
+  };
+
+  it('confirms the new email from the link and closes the old session', async () => {
+    setup('token-de-confirmacion-largo-1234');
+    writeSession({ token: 'viejo', user });
+    api.confirmEmailChange.and.resolveTo({ message: 'Tu correo se actualizó. Inicia sesión con el correo nuevo.' });
+    const fixture = TestBed.createComponent(ConfirmEmailComponent);
+    await fixture.componentInstance.ngOnInit();
+    fixture.detectChanges();
+    expect(api.confirmEmailChange).toHaveBeenCalledWith('token-de-confirmacion-largo-1234');
+    expect(TestBed.inject(AuthService).token()).toBeNull();
+    expect((fixture.nativeElement as HTMLElement).querySelector('a[href="/login"]')).not.toBeNull();
+  });
+
+  it('keeps the session and explains when the confirmation link fails or is incomplete', async () => {
+    setup('token-de-confirmacion-largo-1234');
+    writeSession({ token: 'vigente', user });
+    api.confirmEmailChange.and.rejectWith(new ApiError('El enlace no es válido o ya venció. Pide uno nuevo.', 400));
+    const fixture = TestBed.createComponent(ConfirmEmailComponent);
+    await fixture.componentInstance.ngOnInit();
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelector('[role=alert]')?.textContent).toContain('ya venció');
+    expect(TestBed.inject(AuthService).token()).toBe('vigente');
+
+    TestBed.resetTestingModule();
+    setup();
+    const empty = TestBed.createComponent(ConfirmEmailComponent);
+    await empty.componentInstance.ngOnInit();
+    expect(empty.componentInstance.failure()).toContain('El enlace está incompleto');
+    expect(api.confirmEmailChange).not.toHaveBeenCalled();
+  });
+
+  it('changes the name with a new session and refuses an invalid one', async () => {
+    setup();
+    const { page } = await openProfile();
+    page.name.set('Ana 2');
+    await page.saveName();
+    expect(api.updateName).not.toHaveBeenCalled();
+    api.updateName.and.resolveTo({ token: 'token-nombre', user: { ...user, name: 'Ana María Pérez' }, message: 'Tu nombre se actualizó.' });
+    page.name.set('  Ana María Pérez ');
+    await page.saveName();
+    expect(api.updateName).toHaveBeenCalledWith('Ana María Pérez');
+    expect(TestBed.inject(AuthService).user()?.name).toBe('Ana María Pérez');
+    expect(page.profile()?.name).toBe('Ana María Pérez');
+  });
+
+  it('asks for a different email and the current password before sending the link', async () => {
+    setup();
+    const { page } = await openProfile();
+    page.newEmail.set(' ANA2026@correo.co ');
+    expect(page.newEmailError()).toBe('Es el mismo correo que ya tienes.');
+    page.newEmail.set('Nuevo@Correo.co');
+    await page.saveEmail();
+    expect(api.requestEmailChange).not.toHaveBeenCalled();
+
+    api.requestEmailChange.and.resolveTo({ message: 'Te enviamos un enlace a nuevo@correo.co.' });
+    page.emailPassword.set('cliente12345');
+    await page.saveEmail();
+    expect(api.requestEmailChange).toHaveBeenCalledWith('nuevo@correo.co', 'cliente12345');
+    expect(page.profile()?.pendingEmail).toBe('nuevo@correo.co');
+    expect(page.emailPassword()).toBe('');
+    expect(page.emailState().message).toContain('Te enviamos un enlace');
+  });
+
+  it('shows the API errors of each form and of loading the profile', async () => {
+    setup();
+    const { page } = await openProfile();
+    api.changePassword.and.rejectWith(new ApiError('La contraseña actual no es correcta.', 400));
+    page.currentPassword.set('equivocada1');
+    page.newPassword.set('nuevaClave2026');
+    page.confirmPassword.set('otraClave2026');
+    expect(page.confirmError()).toBe('Las contraseñas no coinciden.');
+    await page.savePassword();
+    expect(api.changePassword).not.toHaveBeenCalled();
+    page.confirmPassword.set('nuevaClave2026');
+    await page.savePassword();
+    expect(page.passwordState()).toEqual({ busy: false, message: '', failure: 'La contraseña actual no es correcta.' });
+    expect(page.currentPassword()).toBe('equivocada1', 'the form keeps what was typed after a failure');
+
+    api.getAccount.and.rejectWith(new ApiError('Tu sesión ya no es válida. Vuelve a iniciar sesión.', 401));
+    const broken = TestBed.createComponent(ProfileComponent).componentInstance;
+    await broken.ngOnInit();
+    expect(broken.loadError()).toContain('Vuelve a iniciar sesión');
   });
 });
