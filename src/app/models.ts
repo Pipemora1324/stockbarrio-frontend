@@ -5,7 +5,6 @@ export interface DiscountSuggestion { id: string; productId: string; productName
 export interface AppliedDiscount { productId: string; discountPercent: number; offerPrice: number; }
 export type SearchPreference = 'relevance' | 'cheapest' | 'best_deal' | 'best_grade' | 'nearest' | 'expiring';
 export interface AssistantResult { productId: string; name: string; category: string; price: number; offerPrice: number; discountPercent: number; stock: number; expirationDate: string; daysToExpire: number; distanceKm: number | null; store: { id: string; name: string; neighborhood: string; address: string }; }
-export interface AssistantResponse { reply: string; intent: { terms: string[]; preference: SearchPreference; neighborhood: string | null }; origin: 'location' | 'neighborhood' | null; results: AssistantResult[]; }
 export interface Coordinates { latitude: number; longitude: number; }
 export interface AlertSubscription { id: string; query: string | null; category: string | null; neighborhood: string | null; latitude: number | null; longitude: number | null; radiusKm: number | null; minDiscount: number; createdAt: string; }
 export interface AlertInput { query?: string; category?: string; neighborhood?: string; latitude?: number; longitude?: number; radiusKm?: number; minDiscount: number; locationConsent: boolean; }

@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom, type Observable } from 'rxjs';
-import type { ChatResponse, ChatTurn, Offer, OfferQuery, AlertInput, AlertSubscription, AppNotification, AppliedDiscount, AssistantResponse, AuthUser, Coordinates, DiscountSuggestion, Product, Store } from './models';
+import type { ChatResponse, ChatTurn, Offer, OfferQuery, AlertInput, AlertSubscription, AppNotification, AppliedDiscount, AuthUser, Coordinates, DiscountSuggestion, Product, Store } from './models';
 
 export interface Recommendation {
   suggestion: string;
@@ -59,11 +59,6 @@ export class ApiService {
 
   async getNeighborhoods(): Promise<string[]> {
     return (await this.request(this.http.get<{ data: string[] }>(`${this.baseUrl}/stores/neighborhoods`), 'No se pudieron cargar los barrios.')).data;
-  }
-
-  // The location travels only in this request body; the API does not store it.
-  async searchAssistant(payload: { message: string; neighborhood?: string } & Partial<Coordinates>): Promise<AssistantResponse> {
-    return (await this.request(this.http.post<{ data: AssistantResponse }>(`${this.baseUrl}/assistant/search`, payload), 'El asistente no pudo responder. Inténtalo de nuevo.')).data;
   }
 
   // Sends the last turns of the conversation; the optional location is used only for distances and is not stored.
