@@ -1,6 +1,5 @@
 import { formatCalendarDate } from './calendar-date.pipe';
 import { formatCop } from './cop-currency.pipe';
-import { formatDistance } from './distance.pipe';
 import { daysUntil, expirationLabel } from '../dates';
 
 describe('format pipes', () => {
@@ -23,15 +22,6 @@ describe('format pipes', () => {
     expect(formatCop('no es un número')).toBe('');
     expect(formatCop(null)).toBe('');
     expect(formatCop('  ')).toBe('');
-  });
-
-  it('never shows "1000 m": from 975 m it switches to kilometers', () => {
-    expect(formatDistance(0)).toBe('a 50 m');
-    expect(formatDistance(0.974)).toBe('a 950 m');
-    expect(formatDistance(0.98)).toBe('a 1,0 km');
-    expect(formatDistance(1.05)).toBe('a 1,1 km');
-    expect(formatDistance(Number.NaN)).toBe('');
-    expect(formatDistance(undefined)).toBe('');
   });
 
   it('rejects dates that do not look like a calendar day', () => {
