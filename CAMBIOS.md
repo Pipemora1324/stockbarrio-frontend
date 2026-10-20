@@ -320,3 +320,23 @@ Se quita solo código que nadie usa, sin cambiar lo que ve la persona. Se conser
 | `ApiService.getProducts` y `getNeighborhoods` | Ninguna pantalla los usa (el catálogo usa `getCatalog`; los barrios solo los usaban las alertas) |
 | Clases globales `.button-corn` y `label.field-label` | Ninguna plantilla las usa |
 | Comentarios obvios, y el resto pasa a español | Regla del proyecto: código en inglés; comentarios y textos en español |
+
+### Qué cambió
+
+1. **Eliminar un local:** la confirmación avisa que también se quitarán sus productos (con su cantidad).
+2. **Catálogo completo:** muestra todos los productos, también los que están en oferta, con la etiqueta "En oferta", el precio con descuento y el original tachado. Ofertas sigue mostrando solo las activas.
+3. **Ver u ocultar la contraseña:** `<app-password-field>` en todos los campos de contraseña de la app, accesible y sin librerías. Al probarlo en Chrome real apareció un error que las pruebas no veían (con un clic real el cursor volvía al inicio) y quedó corregido.
+4. **Un correo, una cuenta:** correo normalizado en todos los formularios, alias con `+` rechazados en el registro y el cambio de correo, revisión del buzón con `POST /api/auth/check-email` antes de registrar y de cambiar el correo, y en modo supabase los mensajes para el correo ya vinculado o sin confirmar.
+5. **Limpieza** según el plan de arriba. Los comentarios pasaron a español.
+
+### Variables
+
+Ninguna nueva. Se quita `ENABLE_ALERTS` del build (si está en Vercel, se puede borrar; si se queda, no hace nada).
+
+### Requiere
+
+El backend de la rama `ajustes` (catálogo con ofertas y `check-email`). Con el backend anterior, el registro mostraría un error al revisar el correo, así que el orden es backend primero.
+
+### Pruebas manuales
+
+Ver la lista del README (puntos 11 a 13 son de esta ronda), más el punto 2 de arriba en el catálogo.
