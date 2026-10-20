@@ -135,3 +135,14 @@ describe('offer range rules (same messages as the API)', () => {
     expect(rules.offerOnExpired(10, today, today)).toBe('');
   });
 });
+
+describe('email rules for new accounts', () => {
+  it('normalizes and rejects "+" aliases only for new accounts', () => {
+    expect(rules.normalizeEmail('  Ana@Correo.CO ')).toBe('ana@correo.co');
+    expect(rules.normalizeEmail(null)).toBe('');
+    expect(rules.newEmail('ana+x@correo.co')).toBe(rules.plusAliasMessage);
+    expect(rules.newEmail('ana@correo.co')).toBe('');
+    expect(rules.newEmail('no-es-correo')).toBe('El correo electrónico no es válido.');
+    expect(rules.email('ana+x@correo.co')).toBe('', 'login and recovery still accept older addresses');
+  });
+});

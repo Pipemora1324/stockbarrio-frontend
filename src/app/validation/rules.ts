@@ -55,6 +55,11 @@ export const phone = (value: string): string => {
   return /^3\d{9}$/.test(digits) || /^60[1-8]\d{7}$/.test(digits) ? '' : 'El teléfono debe ser un celular colombiano de 10 dígitos que empiece por 3, o un fijo como 601 2345678.';
 };
 
+// Every form saves the email trimmed and in lowercase.
+export const normalizeEmail = (value: string | null | undefined) => (value ?? '').trim().toLowerCase();
+export const plusAliasMessage = 'No uses alias con +; escribe tu correo normal.';
+export const emailTakenMessage = 'Este correo ya está vinculado a una cuenta. Inicia sesión o recupera tu contraseña.';
+
 export const email = (value: string): string => {
   const text = (value ?? '').trim();
   if (!text) return 'El correo electrónico es obligatorio.';
@@ -141,3 +146,6 @@ export const offerEnd = (value: string, start: string, expirationDate: string, t
 // An expired product cannot have an offer.
 export const offerOnExpired = (discountPercent: number, expirationDate: string, today: string): string =>
   discountPercent > 0 && expirationDate && expirationDate < today ? 'Un producto vencido no puede tener oferta. Quita el descuento o corrige la fecha de vencimiento.' : '';
+
+// For new accounts and email changes (login and recovery accept older addresses with "+").
+export const newEmail = (value: string): string => email(value) || (normalizeEmail(value).split('@')[0].includes('+') ? plusAliasMessage : '');
