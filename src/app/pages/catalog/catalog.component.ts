@@ -1,64 +1,117 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { catchError, debounceTime, from, map, merge, of, Subject, switchMap, tap } from 'rxjs';
+import { afterNextRender, ChangeDetectionStrategy, Component, inject, Injector, OnInit, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../api.service';
-import type { Product } from '../../models';
+import { CategoryFilterComponent } from '../../components/category-filter/category-filter.component';
+import { IconComponent } from '../../components/icon/icon.component';
+import { IllustrationComponent } from '../../components/illustration/illustration.component';
 import { ProductCardComponent } from '../../components/product-card/product-card.component';
+import { RevealDirective } from '../../components/reveal.directive';
+import type { CatalogGroup } from '../../models';
 
-type FilterName = 'neighborhood' | 'category' | 'search';
+// Products without an active offer (those are in Ofertas), grouped by store, with one filter: the category.
+@Component({
+  selector: 'app-catalog',
+  imports: [RouterLink, ProductCardComponent, CategoryFilterComponent, IconComponent, IllustrationComponent, RevealDirective],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrl: './catalog.component.scss',
+  template: `
+<main class="page catalog">
+  <header class="page-header">
+    <span class="eyebrow"><app-icon name="catalog" />Catálogo</span>
+    <h1>Todo lo que hay en las tiendas</h1>
+    <p>Los productos de cada local a su precio normal. Lo que está en descuento lo encuentras en <a routerLink="/ofertas">Ofertas</a>.</p>
+  </header>
 
-const searchDebounceMs = 350;
+  <app-category-filter label="Filtrar el catálogo por categoría" [categories]="categories()" [value]="category()" (valueChange)="choose($event)" />
 
-@Component({ selector: 'app-catalog', imports: [FormsModule, RouterLink, ProductCardComponent], changeDetection: ChangeDetectionStrategy.OnPush, template: `
-<main class="catalog"><section class="page-hero"><span class="eyebrow">Catálogo interactivo</span><h1>Productos de tu barrio</h1><p>Filtra por barrio, categoría o producto para encontrar el mejor valor.</p></section><form class="filters" role="search" (ngSubmit)="searchNow()"><label for="filter-neighborhood">Barrio<input id="filter-neighborhood" name="neighborhood" [ngModel]="neighborhood()" (ngModelChange)="updateFilter('neighborhood', $event)" placeholder="Ej. Chapinero"></label><label for="filter-category">Categoría<input id="filter-category" name="category" [ngModel]="category()" (ngModelChange)="updateFilter('category', $event)" placeholder="Ej. Lácteos"></label><label for="filter-search">Buscar<input id="filter-search" name="search" type="search" [ngModel]="search()" (ngModelChange)="updateFilter('search', $event)" placeholder="Nombre del producto"></label><button class="button" type="submit">Filtrar</button></form><section class="results" aria-live="polite"><div class="results-header"><h2>@if (loading()) { Buscando… } @else { {{ products().length }} {{ products().length === 1 ? 'producto' : 'productos' }} }</h2><a routerLink="/ofertas">Ver solo ofertas →</a></div>@if (error()) { <div class="empty error" role="alert">{{ error() }} <button class="button" type="button" (click)="searchNow()">Reintentar</button></div> } @else if (!loading() && !products().length) { <div class="empty">No encontramos productos con estos filtros.</div> } @else { <ul class="cards-grid">@for (product of products(); track product.id) { <li><app-product-card [product]="product" /></li> }</ul> }</section></main>`, styleUrl: './catalog.component.scss' })
+  <section aria-labelledby="catalog-count">
+    <h2 id="catalog-count" class="results-title" aria-live="polite">
+      @if (loading()) { Buscando productos… } @else if (!error()) { {{ total() }} {{ total() === 1 ? 'producto' : 'productos' }} en {{ groups().length }} {{ groups().length === 1 ? 'local' : 'locales' }} }
+    </h2>
+    @if (error()) {
+      <div class="state state-error" role="alert"><p>{{ error() }}</p><button class="button" type="button" (click)="load()"><app-icon name="refresh" />Reintentar</button></div>
+    } @else if (loading()) {
+      <div class="skeleton group-skeleton" aria-hidden="true"></div>
+    } @else if (!groups().length) {
+      <div class="state">
+        <app-illustration class="state-art" name="empty-basket" />
+        @if (category()) {
+          <h3>No hay productos de {{ category() }}</h3>
+          <p>Prueba con otra categoría o mira todo el catálogo.</p>
+          <div class="state-actions"><button class="button" type="button" (click)="choose('')">Ver todo el catálogo</button></div>
+        } @else {
+          <h3>El catálogo está vacío por ahora</h3>
+          <p>Todavía no hay productos publicados fuera de las ofertas. Revisa las ofertas de hoy o registra tu tienda.</p>
+          <div class="state-actions"><a class="button" routerLink="/ofertas"><app-icon name="tag" />Ver ofertas</a><a class="button button-light" routerLink="/register" [queryParams]="{ tipo: 'tienda' }"><app-icon name="store" />Registrar mi tienda</a></div>
+        }
+      </div>
+    } @else {
+      @for (group of groups(); track group.store.id) {
+        <section class="store-group" [id]="'local-' + group.store.id" [attr.aria-labelledby]="'local-title-' + group.store.id" appReveal>
+          <header class="store-header">
+            <span class="store-sign" aria-hidden="true"><app-icon name="store" /></span>
+            <div>
+              <h3 [id]="'local-title-' + group.store.id">{{ group.store.name }}</h3>
+              <p class="muted"><app-icon name="pin" />{{ group.store.neighborhood }} · {{ group.store.address }}</p>
+            </div>
+            <span class="count">{{ group.products.length }} {{ group.products.length === 1 ? 'producto' : 'productos' }}</span>
+          </header>
+          <ul class="cards-grid">
+            @for (product of group.products; track product.id) { <li><app-product-card [product]="product" [showStore]="false" /></li> }
+          </ul>
+        </section>
+      }
+    }
+  </section>
+</main>`,
+})
 export class CatalogComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly typed$ = new Subject<void>();
-  private readonly immediate$ = new Subject<void>();
-  readonly neighborhood = signal('');
+  private readonly router = inject(Router);
+  private readonly injector = inject(Injector);
+  readonly categories = signal<string[]>([]);
   readonly category = signal('');
-  readonly search = signal('');
-  readonly products = signal<Product[]>([]);
-  readonly loading = signal(false);
+  readonly groups = signal<CatalogGroup[]>([]);
+  readonly total = signal(0);
+  readonly loading = signal(true);
   readonly error = signal('');
+  private requestId = 0;
 
   ngOnInit() {
-    merge(this.typed$.pipe(debounceTime(searchDebounceMs)), this.immediate$)
-      .pipe(
-        tap(() => {
-          this.loading.set(true);
-          this.error.set('');
-        }),
-        // switchMap drops responses from older searches so results never arrive out of order.
-        switchMap(() =>
-          from(this.api.getProducts({ neighborhood: this.neighborhood(), category: this.category(), search: this.search() })).pipe(
-            map((products) => ({ products, error: '' })),
-            catchError((caught: unknown) => of({ products: [] as Product[], error: caught instanceof Error ? caught.message : 'No se pudieron cargar los productos.' })),
-          ),
-        ),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe(({ products, error }) => {
-        this.products.set(products);
-        this.error.set(error);
-        this.loading.set(false);
-      });
-    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-      this.neighborhood.set(params.get('barrio') ?? '');
-      this.searchNow();
-    });
+    this.category.set(this.route.snapshot.queryParamMap.get('categoria') ?? '');
+    this.api.getCategories().then((items) => this.categories.set(items), () => this.categories.set([]));
+    void this.load();
   }
 
-  updateFilter(filter: FilterName, value: string) {
-    this[filter].set(value ?? '');
-    this.typed$.next();
+  choose(category: string) {
+    this.category.set(category);
+    void this.router.navigate([], { relativeTo: this.route, replaceUrl: true, queryParams: { categoria: category || null } });
+    void this.load();
   }
 
-  searchNow() {
-    this.immediate$.next();
+  async load() {
+    const id = ++this.requestId;
+    this.loading.set(true);
+    this.error.set('');
+    try {
+      const response = await this.api.getCatalog(this.category() || undefined);
+      if (id !== this.requestId) return;
+      this.groups.set(response.groups);
+      this.total.set(response.total);
+      this.scrollToStore();
+    } catch (caught) {
+      if (id !== this.requestId) return;
+      this.error.set(caught instanceof Error ? caught.message : 'No se pudo cargar el catálogo.');
+    } finally {
+      if (id === this.requestId) this.loading.set(false);
+    }
+  }
+
+  // Links from the home page point to one store (#local-<id>); the groups arrive after the navigation.
+  private scrollToStore() {
+    const fragment = this.route.snapshot.fragment;
+    if (!fragment) return;
+    afterNextRender(() => document.getElementById(fragment)?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }), { injector: this.injector });
   }
 }
