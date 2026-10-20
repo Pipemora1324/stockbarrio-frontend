@@ -1,26 +1,28 @@
 import { Injectable } from '@angular/core';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '../../environments/environment';
 
 export const supabaseEnabled = () => environment.authProvider === 'supabase';
 
-// Thin wrapper so the app (and the tests) use one Supabase Auth client. It is created on first use, only in the
-// supabase mode, with the public anon key.
+// Thin wrapper so the app (and the tests) use one Supabase Auth client. supabase-js is downloaded on first use,
+// only in the supabase mode, so the legacy build does not carry it; the client uses the public anon key.
 @Injectable({ providedIn: 'root' })
 export class SupabaseService {
-  private client: SupabaseClient | null = null;
+  private client: Promise<SupabaseClient> | null = null;
 
-  get auth(): SupabaseClient['auth'] {
-    this.client ??= createClient(environment.supabaseUrl, environment.supabaseAnonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        // Confirmation links come back to /login only to show a notice; the person signs in with the password.
-        detectSessionInUrl: false,
-        storageKey: 'stockbarrio-supabase',
-      },
-    });
-    return this.client.auth;
+  async auth(): Promise<SupabaseClient['auth']> {
+    this.client ??= import('@supabase/supabase-js').then(({ createClient }) =>
+      createClient(environment.supabaseUrl, environment.supabaseAnonKey, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          // Confirmation links come back to /login only to show a notice; the person signs in with the password.
+          detectSessionInUrl: false,
+          storageKey: 'stockbarrio-supabase',
+        },
+      }),
+    );
+    return (await this.client).auth;
   }
 }
 

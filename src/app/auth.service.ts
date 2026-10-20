@@ -32,7 +32,7 @@ export class AuthService {
       this.saveSession(response.token, response.user);
       return;
     }
-    const { data, error } = await this.supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+    const { data, error } = await (await this.supabase.auth()).signInWithPassword({ email: email.trim().toLowerCase(), password });
     if (error || !data.session) throw toAuthFailure(error);
     await this.openSupabaseSession(data.session.access_token);
   }
@@ -45,29 +45,29 @@ export class AuthService {
       return 'signed-in';
     }
     const { email, password, ...profile } = payload as { email: string; password: string } & Record<string, unknown>;
-    const { error } = await this.supabase.auth.signUp({ email, password, options: { data: profile, emailRedirectTo: backTo('/login?confirmado=1') } });
+    const { error } = await (await this.supabase.auth()).signUp({ email, password, options: { data: profile, emailRedirectTo: backTo('/login?confirmado=1') } });
     if (error) throw toAuthFailure(error);
     return 'confirm-email';
   }
 
   async resendConfirmation(email: string): Promise<void> {
-    const { error } = await this.supabase.auth.resend({ type: 'signup', email: email.trim().toLowerCase(), options: { emailRedirectTo: backTo('/login?confirmado=1') } });
+    const { error } = await (await this.supabase.auth()).resend({ type: 'signup', email: email.trim().toLowerCase(), options: { emailRedirectTo: backTo('/login?confirmado=1') } });
     if (error) throw toAuthFailure(error);
   }
 
   // Password recovery with a 6 digit code sent by Supabase.
   async requestRecoveryCode(email: string): Promise<void> {
-    const { error } = await this.supabase.auth.resetPasswordForEmail(email.trim().toLowerCase());
+    const { error } = await (await this.supabase.auth()).resetPasswordForEmail(email.trim().toLowerCase());
     if (error) throw toAuthFailure(error);
   }
 
   async resetWithCode(email: string, code: string, password: string): Promise<void> {
-    const verified = await this.supabase.auth.verifyOtp({ email: email.trim().toLowerCase(), token: code.trim(), type: 'recovery' });
+    const verified = await (await this.supabase.auth()).verifyOtp({ email: email.trim().toLowerCase(), token: code.trim(), type: 'recovery' });
     if (verified.error) throw toAuthFailure(verified.error);
-    const updated = await this.supabase.auth.updateUser({ password });
+    const updated = await (await this.supabase.auth()).updateUser({ password });
     if (updated.error) throw toAuthFailure(updated.error);
     // Closes every session of the account, including the one the code opened.
-    await this.supabase.auth.signOut({ scope: 'global' }).catch(() => undefined);
+    await (await this.supabase.auth()).signOut({ scope: 'global' }).catch(() => undefined);
   }
 
   // Profile changes. The name always lives in the API; the password and the email live in Supabase in that mode.
@@ -85,16 +85,16 @@ export class AuthService {
       return response.message;
     }
     await this.confirmCurrentPassword(currentPassword);
-    const { error } = await this.supabase.auth.updateUser({ password: newPassword });
+    const { error } = await (await this.supabase.auth()).updateUser({ password: newPassword });
     if (error) throw toAuthFailure(error);
-    await this.supabase.auth.signOut({ scope: 'others' }).catch(() => undefined);
+    await (await this.supabase.auth()).signOut({ scope: 'others' }).catch(() => undefined);
     return 'Tu contraseña se cambió. Cerramos las demás sesiones abiertas.';
   }
 
   async requestEmailChange(newEmail: string, currentPassword: string): Promise<string> {
     if (!this.usesSupabase) return (await this.api.requestEmailChange(newEmail, currentPassword)).message;
     await this.confirmCurrentPassword(currentPassword);
-    const { error } = await this.supabase.auth.updateUser({ email: newEmail }, { emailRedirectTo: backTo('/login?correo=1') });
+    const { error } = await (await this.supabase.auth()).updateUser({ email: newEmail }, { emailRedirectTo: backTo('/login?correo=1') });
     if (error) throw toAuthFailure(error);
     return `Te enviamos un enlace a ${newEmail}. El correo cambiará cuando lo confirmes; si te llega también un aviso al correo actual, confírmalo ahí.`;
   }
@@ -103,7 +103,7 @@ export class AuthService {
   private async confirmCurrentPassword(password: string) {
     const email = this.user()?.email;
     if (!email) throw new SupabaseAuthFailure('Tu sesión expiró. Vuelve a iniciar sesión.', 'session_not_found');
-    const { error } = await this.supabase.auth.signInWithPassword({ email, password });
+    const { error } = await (await this.supabase.auth()).signInWithPassword({ email, password });
     if (error) throw error.code === 'invalid_credentials' ? new SupabaseAuthFailure('La contraseña actual no es correcta.', 'invalid_credentials') : toAuthFailure(error);
   }
 
@@ -162,16 +162,16 @@ export class AuthService {
     try {
       const user = await this.api.me(accessToken);
       this.saveSession(accessToken, user);
-      this.listenToSupabase();
+      void this.listenToSupabase();
     } catch (error) {
       // The token is valid for Supabase but the API refused it (unconfirmed email, profile data): leave it closed.
-      await this.supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
+      await (await this.supabase.auth()).signOut({ scope: 'local' }).catch(() => undefined);
       throw error;
     }
   }
 
   private async validateSupabaseSession() {
-    const { data } = await this.supabase.auth.getSession().catch(() => ({ data: { session: null } }));
+    const { data } = await (await this.supabase.auth()).getSession().catch(() => ({ data: { session: null } }));
     if (!data.session) {
       if (this.session()) this.expireSession();
       return;
@@ -179,17 +179,17 @@ export class AuthService {
     try {
       const user = await this.api.me(data.session.access_token);
       this.replaceSession(data.session.access_token, user);
-      this.listenToSupabase();
+      void this.listenToSupabase();
     } catch (error) {
       if (error instanceof ApiError && (error.status === 401 || error.status === 403)) this.expireSession();
     }
   }
 
   // supabase-js refreshes the access token before it expires: keep the copy the interceptor sends up to date.
-  private listenToSupabase() {
+  private async listenToSupabase() {
     if (this.listening) return;
     this.listening = true;
-    this.supabase.auth.onAuthStateChange((event, session) => {
+    (await this.supabase.auth()).onAuthStateChange((event, session) => {
       const current = this.session();
       if ((event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN' || event === 'USER_UPDATED') && session && current) this.replaceSession(session.access_token, current.user);
       if (event === 'SIGNED_OUT' && current) this.expireSession();
@@ -199,7 +199,7 @@ export class AuthService {
   private clear(): void {
     clearSession();
     this.session.set(null);
-    if (this.usesSupabase) void this.supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
+    if (this.usesSupabase) void this.supabase.auth().then((auth) => auth.signOut({ scope: 'local' })).catch(() => undefined);
   }
 
   private saveSession(token: string, user: AuthUser): void {
