@@ -408,6 +408,10 @@ textarea:focus-visible {
   outline: 3px solid var(--color-blue-soft);
   outline-offset: 0;
 }
+// Room for the eye button of app-password-field.
+.password-field > input:not([type='checkbox']):not([type='radio']) {
+  padding-right: 3.1rem;
+}
 input[type='date']::-webkit-calendar-picker-indicator {
   filter: var(--date-icon-filter, none);
 }
