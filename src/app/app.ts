@@ -10,7 +10,7 @@ import { HeaderComponent } from './components/header/header.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {
-  // With <base href="/"> a plain "#main-content" link would change the route, so move the focus by hand.
+  // Con <base href="/"> un enlace "#main-content" normal cambiaría la ruta, así que el foco se mueve a mano.
   skipToContent(event: Event) {
     event.preventDefault();
     document.getElementById('main-content')?.focus();

@@ -1,8 +1,8 @@
-// Stock Barrio design system: a modern neighborhood market.
-// Palette: tomato red, corn yellow, ink blue and cream (charcoal in the dark theme). Every text color meets WCAG AA
-// (4.5:1) on the backgrounds it is used on, in both themes; theme.spec.ts checks the main pairs.
+// Sistema de diseño de Stock Barrio: un mercado de barrio moderno.
+// Paleta: rojo tomate, amarillo maíz, azul tinta y crema (carbón en el tema oscuro). Cada color de texto cumple WCAG AA
+// (4,5:1) sobre los fondos donde se usa, en los dos temas; theme.service.spec.ts revisa los pares principales.
 
-// Self-hosted fonts (SIL Open Font License, see public/fonts). Nothing is requested from external servers.
+// Fuentes autohospedadas (SIL Open Font License, ver public/fonts). No se pide nada a servidores externos.
 @font-face {
   font-family: 'Bricolage Grotesque';
   font-style: normal;
@@ -91,7 +91,7 @@
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
-// The system preference decides by default; the header switch saves an explicit choice in data-theme.
+// Por defecto decide la preferencia del sistema; el botón del header guarda una elección explícita en data-theme.
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     @include dark-tokens;
@@ -188,7 +188,7 @@ textarea {
   color: var(--color-on-corn);
 }
 
-// One clear focus ring for keyboard users everywhere, visible on both themes.
+// Un solo anillo de foco claro para quien usa el teclado, visible en los dos temas.
 :focus-visible {
   outline: 3px solid var(--color-blue);
   outline-offset: 2px;
@@ -223,7 +223,7 @@ textarea {
   top: 0.75rem;
 }
 
-// ---------- Layout ----------
+// ---------- Estructura ----------
 .page {
   width: 100%;
   max-width: calc(var(--page-max) + 2 * var(--page-gutter));
@@ -286,7 +286,7 @@ textarea {
   list-style: none;
 }
 
-// ---------- Buttons ----------
+// ---------- Botones ----------
 .button {
   display: inline-flex;
   align-items: center;
@@ -320,14 +320,6 @@ textarea {
 .button-light:hover:not(:disabled) {
   border-color: var(--color-ink);
   background: var(--color-surface);
-}
-.button-corn {
-  background: var(--color-corn);
-  color: var(--color-on-corn);
-}
-.button-corn:hover:not(:disabled) {
-  background: var(--color-corn);
-  filter: brightness(1.05);
 }
 .button-danger {
   border-color: var(--color-danger);
@@ -372,14 +364,13 @@ button:disabled {
   cursor: not-allowed;
 }
 
-// ---------- Forms ----------
+// ---------- Formularios ----------
 .field {
   display: grid;
   gap: 0.3rem;
   min-width: 0;
 }
-.field label,
-label.field-label {
+.field label {
   color: var(--color-ink);
   font-size: 0.92rem;
   font-weight: 750;
@@ -407,6 +398,10 @@ textarea:focus-visible {
   border-color: var(--color-blue);
   outline: 3px solid var(--color-blue-soft);
   outline-offset: 0;
+}
+// Espacio para el botón del ojo de app-password-field.
+.password-field > input:not([type='checkbox']):not([type='radio']) {
+  padding-right: 3.1rem;
 }
 input[type='date']::-webkit-calendar-picker-indicator {
   filter: var(--date-icon-filter, none);
@@ -438,11 +433,11 @@ textarea[aria-invalid='true'] {
   border-color: var(--color-danger) !important;
 }
 
-// Single category filter shown as a row of pills (radio buttons underneath, so it works with the keyboard).
+// Filtro único por categoría como fila de píldoras (con botones de radio debajo, para que funcione con el teclado).
 .category-filter {
   display: flex;
   gap: 0.5rem;
-  // A fieldset never shrinks below its content unless told so.
+  // Un fieldset nunca se encoge por debajo de su contenido si no se le indica.
   min-width: 0;
   margin: 0 0 1.5rem;
   padding: 0 0 0.35rem;
@@ -497,7 +492,7 @@ textarea[aria-invalid='true'] {
   outline-offset: 2px;
 }
 
-// ---------- Cards ----------
+// ---------- Tarjetas ----------
 .card {
   padding: clamp(1.1rem, 3vw, 1.6rem);
   border: 1px solid var(--color-border);
@@ -506,7 +501,7 @@ textarea[aria-invalid='true'] {
   box-shadow: var(--shadow-card);
 }
 
-// Price tag: notched corners on the left side and a hole for the string.
+// Etiqueta de precio: esquinas cortadas a la izquierda y un agujero para el cordel.
 .price-tag {
   position: relative;
   display: flex;
@@ -535,7 +530,6 @@ textarea[aria-invalid='true'] {
   box-shadow: var(--shadow-lift);
 }
 
-// Discount ribbon.
 .ribbon {
   display: inline-flex;
   align-items: center;
@@ -548,7 +542,7 @@ textarea[aria-invalid='true'] {
   font-weight: 800;
 }
 
-// ---------- States and messages ----------
+// ---------- Estados y mensajes ----------
 .state {
   display: grid;
   justify-items: center;
@@ -630,7 +624,7 @@ textarea[aria-invalid='true'] {
   }
 }
 
-// Animated "typing" indicator for chat-like views.
+// Indicador animado de "escribiendo" para las vistas tipo chat.
 .dots {
   display: inline-flex;
   gap: 0.2rem;
@@ -663,7 +657,7 @@ textarea[aria-invalid='true'] {
   }
 }
 
-// ---------- Responsive data table (cards on small screens) ----------
+// ---------- Tabla responsiva (tarjetas en pantallas pequeñas) ----------
 .table-wrap {
   overflow-x: auto;
 }
@@ -698,7 +692,7 @@ textarea[aria-invalid='true'] {
   display: block;
   color: var(--color-muted);
 }
-// Dates, amounts and stock never break in the middle.
+// Las fechas, los montos y el stock nunca se parten a la mitad.
 .data-table .nowrap {
   overflow-wrap: normal;
   white-space: nowrap;
@@ -735,7 +729,7 @@ textarea[aria-invalid='true'] {
   .data-table td:last-child {
     border-bottom: 0;
   }
-  // The label is the first column; everything in the cell goes to the second one.
+  // La etiqueta es la primera columna; todo lo de la celda va en la segunda.
   .data-table td > * {
     grid-column: 2;
   }
@@ -757,7 +751,7 @@ textarea[aria-invalid='true'] {
   }
 }
 
-// Offer and product states inside the store panel.
+// Estados de las ofertas y de los productos en el panel del vendedor.
 .status {
   display: inline-flex;
   align-items: center;
@@ -786,7 +780,7 @@ textarea[aria-invalid='true'] {
   color: var(--color-danger);
 }
 
-// ---------- Account pages ----------
+// ---------- Páginas de cuenta ----------
 .auth-page {
   display: grid;
   place-items: center;
@@ -823,8 +817,8 @@ textarea[aria-invalid='true'] {
   margin-top: 0.9rem;
 }
 
-// ---------- Motion ----------
-// Content enters softly when it scrolls into view (see RevealDirective). Without JavaScript it is simply visible.
+// ---------- Movimiento ----------
+// El contenido entra suave al aparecer en pantalla (ver RevealDirective). Sin JavaScript simplemente se ve.
 .reveal {
   opacity: 0;
   transform: translateY(14px);

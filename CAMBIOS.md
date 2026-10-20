@@ -306,3 +306,37 @@ Ninguna. Siguen `AUTH_PROVIDER`, `SUPABASE_URL`, `SUPABASE_ANON_KEY` y `ENABLE_A
 ### Pruebas
 
 208 pruebas (antes 158), 96,65 % de líneas y 80,66 % de ramas. Recorrido automático sin desbordes ni errores a 320, 360, 768, 1024, 1280 y 1920 px, en claro y oscuro, con datos y con la base vacía. Pruebas manuales en el README.
+
+## Ajustes al probar como usuario (rama `ajustes`)
+
+### Plan de limpieza (escrito antes de borrar)
+
+Se quita solo código que nadie usa, sin cambiar lo que ve la persona. Se conserva `AUTH_PROVIDER=legacy`.
+
+| Qué se quita | Por qué |
+| --- | --- |
+| Páginas `/alertas` y `/notificaciones`, `NotificationsService`, la campana del header, sus rutas, modelos y llamadas a la API, `alerts-flag.spec.ts` | Estaban apagadas con `enableAlerts` y no se van a reactivar |
+| La bandera `enableAlerts` de `environment.ts` y la variable `ENABLE_ALERTS` de `scripts/set-env.mjs` | Ya no hay nada que encender; los textos de login y registro que dependían de ella quedan con su versión actual |
+| `ApiService.getProducts` y `getNeighborhoods` | Ninguna pantalla los usa (el catálogo usa `getCatalog`; los barrios solo los usaban las alertas) |
+| Clases globales `.button-corn` y `label.field-label` | Ninguna plantilla las usa |
+| Comentarios obvios, y el resto pasa a español | Regla del proyecto: código en inglés; comentarios y textos en español |
+
+### Qué cambió
+
+1. **Eliminar un local:** la confirmación avisa que también se quitarán sus productos (con su cantidad).
+2. **Catálogo completo:** muestra todos los productos, también los que están en oferta, con la etiqueta "En oferta", el precio con descuento y el original tachado. Ofertas sigue mostrando solo las activas.
+3. **Ver u ocultar la contraseña:** `<app-password-field>` en todos los campos de contraseña de la app, accesible y sin librerías. Al probarlo en Chrome real apareció un error que las pruebas no veían (con un clic real el cursor volvía al inicio) y quedó corregido.
+4. **Un correo, una cuenta:** correo normalizado en todos los formularios, alias con `+` rechazados en el registro y el cambio de correo, revisión del buzón con `POST /api/auth/check-email` antes de registrar y de cambiar el correo, y en modo supabase los mensajes para el correo ya vinculado o sin confirmar.
+5. **Limpieza** según el plan de arriba. Los comentarios pasaron a español.
+
+### Variables
+
+Ninguna nueva. Se quita `ENABLE_ALERTS` del build (si está en Vercel, se puede borrar; si se queda, no hace nada).
+
+### Requiere
+
+El backend de la rama `ajustes` (catálogo con ofertas y `check-email`). Con el backend anterior, el registro mostraría un error al revisar el correo, así que el orden es backend primero.
+
+### Pruebas manuales
+
+Ver la lista del README (puntos 11 a 13 son de esta ronda), más el punto 2 de arriba en el catálogo.

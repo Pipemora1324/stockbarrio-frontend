@@ -1,14 +1,17 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { environment } from '../environments/environment';
+import { emailTakenMessage } from './validation/rules';
 import { ApiError, ApiService } from './api.service';
 import type { AuthUser } from './models';
 import { SupabaseAuthFailure, SupabaseService, supabaseEnabled, toAuthFailure } from './services/supabase.service';
 import { clearSession, readSession, writeSession } from './session.storage';
 
-export type RegisterResult = 'signed-in' | 'confirm-email';
+// already-pending: la cuenta existe, pero su correo no está confirmado; Supabase volvió a enviar la confirmación.
+export type RegisterResult = 'signed-in' | 'confirm-email' | 'already-pending';
+// Un usuario creado hace más de este tiempo no lo creó este registro.
+export const existingUserAfterMs = 10_000;
 
-// Where Supabase sends people back after they open a confirmation link.
+// A dónde devuelve Supabase a las personas después de abrir un enlace de confirmación.
 const backTo = (path: string) => `${globalThis.location?.origin ?? ''}${path}`;
 
 @Injectable({ providedIn: 'root' })
@@ -37,7 +40,7 @@ export class AuthService {
     await this.openSupabaseSession(data.session.access_token);
   }
 
-  // In the supabase mode the account exists only after the person confirms the email from the link.
+  // En el modo supabase la cuenta solo existe cuando la persona confirma el correo desde el enlace.
   async register(payload: Record<string, unknown>): Promise<RegisterResult> {
     if (!this.usesSupabase) {
       const response = await this.api.register(payload);
@@ -45,8 +48,13 @@ export class AuthService {
       return 'signed-in';
     }
     const { email, password, ...profile } = payload as { email: string; password: string } & Record<string, unknown>;
-    const { error } = await (await this.supabase.auth()).signUp({ email, password, options: { data: profile, emailRedirectTo: backTo('/login?confirmado=1') } });
+    const { data, error } = await (await this.supabase.auth()).signUp({ email, password, options: { data: profile, emailRedirectTo: backTo('/login?confirmado=1') } });
     if (error) throw toAuthFailure(error);
+    // Con "Confirm email" activo, Supabase responde a una dirección ya confirmada con un usuario ofuscado sin identities
+    // en vez de un error, para que nadie pueda saber qué correos existen solo con la API.
+    if (data?.user && Array.isArray(data.user.identities) && !data.user.identities.length) throw new SupabaseAuthFailure(emailTakenMessage, 'email_taken');
+    const createdAt = data?.user?.created_at ? Date.parse(data.user.created_at) : NaN;
+    if (data?.user && !data.user.email_confirmed_at && Date.now() - createdAt > existingUserAfterMs) return 'already-pending';
     return 'confirm-email';
   }
 
@@ -55,7 +63,7 @@ export class AuthService {
     if (error) throw toAuthFailure(error);
   }
 
-  // Password recovery with a 6 digit code sent by Supabase.
+  // Recuperación de la contraseña con un código de 6 dígitos que envía Supabase.
   async requestRecoveryCode(email: string): Promise<void> {
     const { error } = await (await this.supabase.auth()).resetPasswordForEmail(email.trim().toLowerCase());
     if (error) throw toAuthFailure(error);
@@ -66,11 +74,11 @@ export class AuthService {
     if (verified.error) throw toAuthFailure(verified.error);
     const updated = await (await this.supabase.auth()).updateUser({ password });
     if (updated.error) throw toAuthFailure(updated.error);
-    // Closes every session of the account, including the one the code opened.
+    // Cierra todas las sesiones de la cuenta, incluida la que abrió el código.
     await (await this.supabase.auth()).signOut({ scope: 'global' }).catch(() => undefined);
   }
 
-  // Profile changes. The name always lives in the API; the password and the email live in Supabase in that mode.
+  // Cambios del perfil. El nombre siempre vive en la API; la contraseña y el correo viven en Supabase en ese modo.
   async updateName(name: string): Promise<string> {
     const response = await this.api.updateName(name);
     if ('token' in response) this.replaceSession(response.token, response.user);
@@ -99,7 +107,7 @@ export class AuthService {
     return `Te enviamos un enlace a ${newEmail}. El correo cambiará cuando lo confirmes; si te llega también un aviso al correo actual, confírmalo ahí.`;
   }
 
-  // Supabase does not ask for the current password, so the app checks it first by signing in again.
+  // Supabase no pide la contraseña actual, así que la app la comprueba antes iniciando sesión otra vez.
   private async confirmCurrentPassword(password: string) {
     const email = this.user()?.email;
     if (!email) throw new SupabaseAuthFailure('Tu sesión expiró. Vuelve a iniciar sesión.', 'session_not_found');
@@ -107,7 +115,7 @@ export class AuthService {
     if (error) throw error.code === 'invalid_credentials' ? new SupabaseAuthFailure('La contraseña actual no es correcta.', 'invalid_credentials') : toAuthFailure(error);
   }
 
-  // Checks the stored session against the API; a network failure keeps the session (the API may be waking up).
+  // Compara la sesión guardada con la API; una falla de red conserva la sesión (la API puede estar despertando).
   async validateSession(): Promise<void> {
     if (this.usesSupabase) return this.validateSupabaseSession();
     const current = this.session();
@@ -122,24 +130,24 @@ export class AuthService {
     }
   }
 
-  // Replaces the stored session after a profile change that issued a new token (name or password).
+  // Reemplaza la sesión guardada después de un cambio del perfil que emitió un token nuevo (nombre o contraseña).
   replaceSession(token: string, user: AuthUser): void {
     writeSession({ token, user });
     this.session.set({ token, user });
   }
 
-  // Updates the profile data and keeps the current token (the supabase mode never issues own tokens).
+  // Actualiza los datos del perfil y conserva el token actual (el modo supabase nunca emite tokens propios).
   updateUser(user: AuthUser): void {
     const token = this.token();
     if (token) this.replaceSession(token, user);
   }
 
-  // Forgets the session without leaving the current page.
+  // Olvida la sesión sin salir de la página actual.
   endSession(): void {
     this.clear();
   }
 
-  // Closes the session and shows a message on the login page (after a password reset or an email change).
+  // Cierra la sesión y muestra un mensaje en el login (después de restablecer la contraseña o de cambiar el correo).
   signOutWithNotice(message: string): void {
     this.clear();
     this.sessionNotice.set(message);
@@ -164,7 +172,7 @@ export class AuthService {
       this.saveSession(accessToken, user);
       void this.listenToSupabase();
     } catch (error) {
-      // The token is valid for Supabase but the API refused it (unconfirmed email, profile data): leave it closed.
+      // El token es válido para Supabase, pero la API lo rechazó (correo sin confirmar, datos del perfil): se deja cerrada.
       await (await this.supabase.auth()).signOut({ scope: 'local' }).catch(() => undefined);
       throw error;
     }
@@ -185,7 +193,7 @@ export class AuthService {
     }
   }
 
-  // supabase-js refreshes the access token before it expires: keep the copy the interceptor sends up to date.
+  // supabase-js renueva el token antes de que venza: se mantiene al día la copia que envía el interceptor.
   private async listenToSupabase() {
     if (this.listening) return;
     this.listening = true;
@@ -206,7 +214,7 @@ export class AuthService {
     writeSession({ token, user });
     this.session.set({ token, user });
     this.sessionNotice.set('');
-    const home: Record<AuthUser['role'], string> = { store: '/admin', customer: environment.enableAlerts ? '/alertas' : '/ofertas', admin: '/' };
+    const home: Record<AuthUser['role'], string> = { store: '/admin', customer: '/ofertas', admin: '/' };
     void this.router.navigate([home[user.role]]);
   }
 }

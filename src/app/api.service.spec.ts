@@ -34,13 +34,8 @@ describe('ApiService', () => {
     expect([offline.message, offline.status]).toEqual(['No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.', 0]);
   });
 
-  it('sends only the filled product filters, trimmed', async () => {
-    const pending = api.getProducts({ neighborhood: '  Chapinero ', category: '   ', search: 'leche' });
-    const request = backend.expectOne((req) => req.url === '/api/products');
-    expect(request.request.params.keys().sort()).toEqual(['neighborhood', 'search']);
-    expect(request.request.params.get('neighborhood')).toBe('Chapinero');
-    request.flush({ data: [] });
-    expect(await pending).toEqual([]);
+  it('has no calls for the removed alerts, notifications, flat catalog or neighborhoods', () => {
+    for (const name of ['getAlerts', 'createAlert', 'getNotifications', 'getUnreadCount', 'getProducts', 'getNeighborhoods']) expect(name in api).withContext(name).toBeFalse();
   });
 
   it('sends offers and chat filters in the body and never any coordinates', async () => {
@@ -86,7 +81,6 @@ describe('ApiService', () => {
       [() => api.approveSuggestion('s1', { offerStartsOn: '2026-10-20', offerEndsOn: '2026-10-22' }), 'POST', '/api/suggestions/s1/approve', { offerStartsOn: '2026-10-20', offerEndsOn: '2026-10-22' }, { data: {}, message: 'ok' }],
       [() => api.rejectSuggestion('s1'), 'POST', '/api/suggestions/s1/reject', {}, { message: 'ok' }],
       [() => api.approveAllSuggestions(), 'POST', '/api/suggestions/approve-all', {}, { data: [], message: 'ok' }],
-      [() => api.getNeighborhoods(), 'GET', '/api/stores/neighborhoods', null, { data: [] }],
       [() => api.getCategories(), 'GET', '/api/products/categories', null, { data: [] }],
     ];
     for (const [call, method, url, body, response] of cases) {
@@ -143,9 +137,5 @@ describe('ApiService', () => {
     const inventory = api.getMyInventory();
     backend.expectOne('/api/products/mine').flush({ data: [{ id: 'p1' }], store: { id: 's1' }, stores: [{ id: 's1' }], today: '2026-10-19' });
     expect(await inventory).toEqual(jasmine.objectContaining({ products: [jasmine.objectContaining({ id: 'p1' })], store: jasmine.objectContaining({ id: 's1' }) }));
-
-    const neighborhoods = api.getNeighborhoods();
-    backend.expectOne('/api/stores/neighborhoods').flush({ data: ['Chapinero', 'Suba'] });
-    expect(await neighborhoods).toEqual(['Chapinero', 'Suba']);
   });
 });

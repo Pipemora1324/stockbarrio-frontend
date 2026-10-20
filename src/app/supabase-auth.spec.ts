@@ -73,7 +73,7 @@ describe('Supabase Auth mode', () => {
     localStorage.clear();
   });
 
-  // Lets the awaited supabase promises settle so the next HTTP request is sent.
+  // Deja que se resuelvan las promesas de supabase para que se envíe la siguiente petición HTTP.
   const settle = () => new Promise((resolve) => setTimeout(resolve));
 
   describe('login', () => {
@@ -148,7 +148,10 @@ describe('Supabase Auth mode', () => {
       page.set('storeName', 'Tienda Doña Luz');
       page.set('neighborhood', 'Chapinero');
       page.set('address', 'Calle 57 # 9-20');
-      await page.submit();
+      const submitted = page.submit();
+      await settle();
+      TestBed.inject(HttpTestingController).expectOne('/api/auth/check-email').flush({ available: true });
+      await submitted;
       fixture.detectChanges();
       expect(fake.signUp).toHaveBeenCalledWith({
         email: 'luz@tienda.co',
@@ -160,6 +163,37 @@ describe('Supabase Auth mode', () => {
       });
       expect((fixture.nativeElement as HTMLElement).textContent).toContain('Te enviamos un enlace a luz@tienda.co');
       expect(TestBed.inject(AuthService).user()).toBeNull();
+    });
+
+    it('says the email already has an account when Supabase answers an obfuscated user without identities', async () => {
+      const { auth } = setup();
+      fake.signUp.and.resolveTo({ data: { user: { id: 'x', identities: [], created_at: new Date().toISOString() }, session: null }, error: null });
+      await expectAsync(auth.register({ email: 'ana@correo.co', password: 'cliente12345' })).toBeRejectedWithError('Este correo ya está vinculado a una cuenta. Inicia sesión o recupera tu contraseña.');
+    });
+
+    it('recognizes an older account that still waits for its confirmation', async () => {
+      const { auth } = setup();
+      const old = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      fake.signUp.and.resolveTo({ data: { user: { id: 'x', identities: [{ id: 'i' }], created_at: old, email_confirmed_at: null }, session: null }, error: null });
+      expect(await auth.register({ email: 'ana@correo.co', password: 'cliente12345' })).toBe('already-pending');
+      fake.signUp.and.resolveTo({ data: { user: { id: 'y', identities: [{ id: 'i' }], created_at: new Date().toISOString(), email_confirmed_at: null }, session: null }, error: null });
+      expect(await auth.register({ email: 'nueva@correo.co', password: 'cliente12345' })).toBe('confirm-email');
+    });
+
+    it('does not call Supabase when the API says the mailbox already has an account', async () => {
+      setup();
+      const fixture = TestBed.createComponent(RegisterComponent);
+      fixture.detectChanges();
+      const page = fixture.componentInstance;
+      page.set('name', 'Ana Pérez');
+      page.set('email', 'anaperez@gmail.com');
+      page.set('password', 'cliente12345');
+      const submitted = page.submit();
+      await settle();
+      TestBed.inject(HttpTestingController).expectOne('/api/auth/check-email').flush({ available: false, message: 'Este correo ya está vinculado a una cuenta. Inicia sesión o recupera tu contraseña.' });
+      await submitted;
+      expect(fake.signUp).not.toHaveBeenCalled();
+      expect(page.error()).toContain('ya está vinculado');
     });
 
     it('shows Supabase errors in Spanish', async () => {

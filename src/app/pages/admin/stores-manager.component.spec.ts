@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ApiError, ApiService } from '../../api.service';
 import type { OwnedStore } from '../../models';
-import { StoresManagerComponent } from './stores-manager.component';
+import { deleteStoreQuestion, StoresManagerComponent } from './stores-manager.component';
 
 const store = (overrides: Partial<OwnedStore> = {}): OwnedStore => ({ id: 's1', name: 'Tienda La Esquina', neighborhood: 'Kennedy', address: 'Calle 1 # 2-3', phone: '', active: true, productCount: 4, ...overrides });
 
@@ -89,8 +89,13 @@ describe('StoresManagerComponent', () => {
     await component.remove(store());
     expect(api.deleteStore).not.toHaveBeenCalled();
     await component.remove(store());
-    expect(confirm.calls.mostRecent().args[0]).toBe('¿Eliminar el local «Tienda La Esquina»? El local y sus 4 productos dejarán de verse en Stock Barrio.');
+    expect(confirm.calls.mostRecent().args[0]).toBe('¿Eliminar el local «Tienda La Esquina»? También se quitarán sus 4 productos de Stock Barrio (ofertas, catálogo y asistente).');
     expect(changes).toEqual([{ message: 'Se eliminó el local «Tienda La Esquina».', selectId: null }]);
+  });
+
+  it('warns that the products go away too, in singular, plural or without a count', () => {
+    expect(deleteStoreQuestion(store({ productCount: 1 }))).toContain('También se quitarán su producto');
+    expect(deleteStoreQuestion(store({ productCount: 0 }))).toContain('También se quitarán todos sus productos');
   });
 
   it('shows the API error, for example a name already taken', async () => {

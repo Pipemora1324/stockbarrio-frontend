@@ -2,7 +2,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 
 const copFormatter = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
-// A missing amount shows nothing instead of "$ 0", which would look like a free product.
+// Si falta el monto no se muestra nada, en vez de "$ 0", que parecería un producto gratis.
 export const formatCop = (value: number | string | null | undefined): string => {
   if (value === null || value === undefined || (typeof value === 'string' && !value.trim())) return '';
   const amount = Number(value);

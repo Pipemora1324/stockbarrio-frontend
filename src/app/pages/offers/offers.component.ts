@@ -27,11 +27,11 @@ export const toCardProduct = (offer: Offer): Product => ({
   offerEndsOn: offer.offerEndsOn,
 });
 
-// The biggest discounts stand out: at most this many, and only from this percent.
+// Los descuentos más grandes destacan: como máximo esta cantidad, y solo desde este porcentaje.
 export const maxFeatured = 3;
 export const featuredMinPercent = 30;
 
-// Offers come sorted by the biggest discount first (the API default).
+// Las ofertas llegan ordenadas del mayor descuento al menor (el orden por defecto de la API).
 export const splitFeatured = (offers: Product[]) => {
   const featured = offers.slice(0, maxFeatured).filter((offer) => offer.discountPercent >= featuredMinPercent);
   return { featured, rest: offers.slice(featured.length) };
@@ -132,7 +132,7 @@ export class OffersComponent implements OnInit {
     }
   }
 
-  // Keeps the category in the address so an offers view can be shared.
+  // Guarda la categoría en la dirección para que se pueda compartir una vista de ofertas.
   private syncUrl() {
     void this.router.navigate([], { relativeTo: this.route, replaceUrl: true, queryParams: { categoria: this.category() || null } });
   }

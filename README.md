@@ -12,36 +12,15 @@ La API (Node.js + Express + PostgreSQL) está en un repositorio aparte: [stockba
 | --- | --- | --- |
 | `/` | Inicio: el mensaje de la app, los locales afiliados (con sus ofertas de hoy) y las ofertas con mayor descuento, con estados vacíos y llamadas a la acción | Público |
 | `/ofertas` | Ofertas activas hoy, con un único filtro por categoría (`?categoria=`), del mayor descuento al menor; los más rebajados destacan y cada oferta dice hasta cuándo dura | Público |
-| `/catalogo` | Productos sin oferta activa, agrupados por local con su encabezado (`#local-<id>` salta a uno), con un único filtro por categoría | Público |
+| `/catalogo` | Todos los productos activos, agrupados por local con su encabezado (`#local-<id>` salta a uno), con un único filtro por categoría. Los que están en oferta muestran "En oferta", el precio con descuento y el original tachado | Público |
 | `/chat` | Asistente con historial, indicador de "escribiendo", tarjetas de resultados y de tiendas, y botones "Ofertas de hoy" y "Tiendas cercanas" (sin selector de barrio) | Público |
 | `/login` | Inicio de sesión | Público |
 | `/register` | Registro de cliente o de tienda (`?tipo=tienda` abre el de tienda) | Público |
 | `/admin` | Panel del vendedor: sus locales (crear, renombrar, eliminar), inventario del local elegido (`?local=`) en tabla, descuentos sugeridos y formulario de producto con fechas de la oferta | Rol `store` |
-| `/alertas` | Alertas de descuento del cliente (pausada, ver abajo) | Rol `customer` |
-| `/notificaciones` | Bandeja de notificaciones, con enlace a la oferta (pausada, ver abajo) | Rol `customer` |
 | `/perfil` | Cambiar nombre, contraseña y correo | Con sesión |
 | `/forgot-password` · `/reset-password` · `/confirm-email` | Recuperar la contraseña y confirmar un correo nuevo desde el enlace del correo | Público |
 
 Todas las peticiones a la API se hacen a la ruta relativa `/api`, así que quien sirve el frontend tiene que redirigir `/api` hacia el backend.
-
-## Alertas y notificaciones (pausadas)
-
-Por ahora solo se muestra la sección de Ofertas. Las alertas, la bandeja de notificaciones y la campana del header están apagadas con la bandera `enableAlerts` de `src/environments/environment.ts`, que es `false` por defecto.
-
-Con la bandera apagada:
-
-- Las rutas `/alertas` y `/notificaciones` no se registran (llevan al inicio).
-- El header no muestra la campana ni "Mis alertas", y no se consulta el contador.
-- El cliente entra a `/ofertas` al iniciar sesión.
-- Los textos de login y registro no mencionan alertas.
-
-El código no se borró: solo queda oculto.
-
-Para reactivarlas:
-
-1. En Vercel, define `ENABLE_ALERTS=true`. Antes de `npm run build`, `scripts/set-env.mjs` escribe ese valor en `environment.ts`. Sin la variable, el archivo no se toca.
-2. En local, cambia `enableAlerts` a `true` en `src/environments/environment.ts`.
-3. Activa también `ENABLE_ALERTS=true` en el backend, para que se generen notificaciones.
 
 ## Recuperar la contraseña
 
@@ -79,9 +58,8 @@ La guía del panel de Supabase y las pruebas manuales están en [SUPABASE_AUTH.m
 - El token y el usuario se guardan en `localStorage`. Si esos datos están dañados o el navegador bloquea el almacenamiento, la app arranca sin sesión en vez de fallar.
 - Al iniciar, la app valida el token con `GET /api/auth/me` en segundo plano. Si la API no responde (por ejemplo, mientras Render despierta), la sesión se mantiene.
 - Un interceptor agrega el token a las llamadas a `/api` y, si la API responde 401, cierra la sesión y lleva al login con un aviso.
-- El panel es solo para cuentas de tienda; las alertas y la bandeja, solo para clientes. La API además comprueba los permisos en cada llamada.
-- Al entrar, la tienda va a `/admin` y el cliente a `/alertas`.
-- Con las alertas activadas, la campana del header muestra las notificaciones sin leer y se actualiza cada minuto (no consulta con la pestaña oculta).
+- El panel es solo para cuentas de tienda. La API además comprueba los permisos en cada llamada.
+- Al entrar, la tienda va a `/admin` y el cliente a `/ofertas`.
 
 ## Formatos
 
@@ -91,6 +69,21 @@ La guía del panel de Supabase y las pruebas manuales están en [SUPABASE_AUTH.m
 ## Validación de formularios
 
 `src/app/validation/rules.ts` replica las reglas de la API (que es la autoridad) con los mismos mensajes en español. Cada formulario muestra el error debajo del campo al salir de él y deja el botón de envío deshabilitado mientras haya errores.
+
+### Contraseñas
+
+Todos los campos de contraseña (inicio de sesión, registro, recuperación con enlace o con código, y perfil) usan `<app-password-field>`, que envuelve el `<input>` de cada pantalla y le agrega un botón de ojo:
+
+- `type="button"`, así nunca envía el formulario; `aria-label` "Mostrar contraseña" u "Ocultar contraseña", `aria-pressed` y `aria-controls`; foco visible en los dos temas.
+- Con el mouse, el campo conserva el foco y la posición del cursor; con el teclado se llega al botón con Tab y se alterna con Enter o Espacio.
+- Solo cambia el tipo del campo: el valor, la validación y el `autocomplete` (`current-password` o `new-password`) siguen siendo los de cada pantalla. Ícono SVG propio, sin librerías.
+
+### Correos
+
+- Todos los formularios guardan el correo sin espacios y en minúsculas al salir del campo.
+- El registro y el cambio de correo no aceptan alias con `+` ("No uses alias con +; escribe tu correo normal."); el login y la recuperación sí, por las cuentas viejas.
+- Antes de registrar, la app llama a `POST /api/auth/check-email`, que compara el buzón (las variantes de Gmail con puntos o `googlemail.com` cuentan como el mismo). Si ya tiene cuenta, muestra "Este correo ya está vinculado a una cuenta. Inicia sesión o recupera tu contraseña." con los dos enlaces.
+- En modo supabase, si Supabase responde con un usuario ofuscado (sin `identities`), se muestra ese mismo mensaje. Si la cuenta ya existía sin confirmar, la app dice que ya se envió el correo de confirmación y ofrece reenviarlo.
 
 ## Asistente
 
@@ -185,7 +178,7 @@ docker run -p 4200:80 -e API_URL=http://host.docker.internal:3000 stockbarrio-fr
 | Script | Qué hace |
 | --- | --- |
 | `npm start` | Servidor de desarrollo |
-| `npm run build` | Compila para producción en `dist/frontend/browser` (antes aplica `ENABLE_ALERTS`, `AUTH_PROVIDER`, `SUPABASE_URL` y `SUPABASE_ANON_KEY` si están definidas) |
+| `npm run build` | Compila para producción en `dist/frontend/browser` (antes aplica `AUTH_PROVIDER`, `SUPABASE_URL` y `SUPABASE_ANON_KEY` si están definidas) |
 | `npm run watch` | Compila en modo desarrollo y vuelve a compilar con cada cambio |
 | `npm test` | Pruebas unitarias y de componentes con Karma, que se vuelven a correr con cada cambio |
 | `npm run test:ci` | Una sola pasada de las pruebas en Chrome headless |
@@ -207,18 +200,21 @@ Cómo correr las pruebas, qué cubre cada suite y la cobertura actual: [TESTING.
 2. **Header:** baja en cualquier página: se compacta. En el celular abre y cierra el menú, también con Escape.
 3. **Inicio:** se ven el mensaje, los locales afiliados y las ofertas destacadas. Con la base vacía, los dos estados vacíos con sus botones.
 4. **Ofertas:** elige una categoría (cambia la URL), mira las etiquetas destacadas y la fecha "Oferta hasta…".
-5. **Catálogo:** no aparece ningún producto en oferta; cada local tiene su encabezado. Desde el inicio, un local lleva a su grupo.
+5. **Catálogo:** aparecen todos los productos; los que están en oferta muestran "En oferta" y el precio original tachado. Cada local tiene su encabezado y desde el inicio un local lleva a su grupo.
 6. **Asistente:** "Tiendas cercanas" → responde con un barrio → aparecen las tiendas y "Buscando en …"; luego pregunta por un producto y "Cambiar barrio".
 7. **Panel:** crea "Local 2", cámbiate entre locales, renombra y elimina (confirma). Crea un producto con descuento y fechas; prueba un inicio de ayer y un fin después del vencimiento.
 8. **Sugerencias:** aprueba una cambiando la fecha de fin; la tabla muestra el rango y "Oferta activa".
 9. **Responsive y teclado:** a 320 px no hay scroll horizontal; recorre el panel solo con Tab y Enter.
 10. **Movimiento reducido:** con `prefers-reduced-motion` activado no hay animaciones.
+11. **Contraseñas:** en login, registro, recuperación y perfil, el ojo muestra y oculta la contraseña sin enviar el formulario, en claro, en oscuro y en el celular; el cursor se queda donde estaba.
+12. **Correos:** el registro rechaza `ana+x@correo.co` y, para un buzón que ya tiene cuenta (también `nombreapellido@gmail.com` frente a `nombre.apellido@gmail.com`), muestra el mensaje con los enlaces a iniciar sesión y recuperar la contraseña.
+13. **Eliminar un local:** la confirmación avisa que también se quitarán sus productos; después ya no aparecen en Ofertas, el catálogo ni el chat.
 
 ## Estructura
 
-- `src/app/pages`: páginas (`home`, `catalog`, `chat`, `admin`, `alerts`, `notifications`, `login`, `register`).
-- `src/app/components`: header, etiqueta de precio, filtro de categorías, íconos, ilustraciones y la directiva de entrada al hacer scroll.
-- `src/app/services`: tema claro y oscuro, conversación del chat en memoria, Supabase y contador de notificaciones (pausado con las alertas).
+- `src/app/pages`: páginas (`home`, `offers`, `catalog`, `chat`, `admin`, `account`, `login`, `register`).
+- `src/app/components`: header, etiqueta de precio, filtro de categorías, campo de contraseña, íconos, ilustraciones y la directiva de entrada al hacer scroll.
+- `src/app/services`: tema claro y oscuro, conversación del chat en memoria y Supabase.
 - `src/app/banners.ts` y `public/img/CREDITOS.md`: banners fotográficos (vacíos) y créditos.
 - `public/fonts`: fuentes autohospedadas con sus licencias.
 - `src/app/validation`: reglas de validación de los formularios.

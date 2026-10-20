@@ -6,7 +6,7 @@ import { CopCurrencyPipe } from '../../pipes/cop-currency.pipe';
 import { IconComponent } from '../icon/icon.component';
 import { iconForCategory } from './category-icon';
 
-// A product shown as a price tag. Offers say until when they last; the rest say when the product expires.
+// Un producto mostrado como etiqueta de precio. Las ofertas dicen hasta cuándo duran; los demás, cuándo vence el producto.
 @Component({
   selector: 'app-product-card',
   imports: [CopCurrencyPipe, CalendarDatePipe, IconComponent],
@@ -19,6 +19,7 @@ import { iconForCategory } from './category-icon';
     <span class="stamp" [attr.data-tone]="icon().tone"><app-icon [name]="icon().icon" /></span>
     <span class="category">{{ product().category }}</span>
   </div>
+  @if (onOffer() && offerTag()) { <span class="offer-tag">En oferta</span> }
   <h3>{{ product().name }}</h3>
   @if (showStore() && product().storeName) { <p class="store"><app-icon name="store" />{{ product().storeName }} · {{ product().neighborhood }}</p> }
   <p class="price">
@@ -37,9 +38,11 @@ import { iconForCategory } from './category-icon';
 })
 export class ProductCardComponent {
   readonly product = input.required<Product>();
-  // Bigger and brighter: used for the biggest discounts.
+  // Más grande y llamativa: se usa para los descuentos más grandes.
   readonly featured = input(false);
   readonly showStore = input(true);
+  // Etiqueta "En oferta", para las listas que mezclan productos con oferta y sin ella (el catálogo).
+  readonly offerTag = input(false);
   protected readonly icon = computed(() => iconForCategory(this.product().category));
   protected readonly onOffer = computed(() => this.product().discountPercent > 0);
   protected readonly days = computed(() => daysUntil(this.product().expirationDate));
@@ -48,7 +51,7 @@ export class ProductCardComponent {
   protected readonly offerLabel = computed(() => offerUntilLabel(this.product().offerEndsOn ?? '', this.offerDays()));
 }
 
-// "Oferta hasta hoy", "Oferta hasta mañana" or "Oferta hasta el 24/10".
+// "Oferta solo por hoy", "Oferta hasta mañana" u "Oferta hasta el 24/10".
 export const offerUntilLabel = (endsOn: string, days: number) => {
   if (days <= 0) return 'Oferta solo por hoy';
   if (days === 1) return 'Oferta hasta mañana';

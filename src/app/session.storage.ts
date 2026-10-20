@@ -15,14 +15,14 @@ const isAuthUser = (value: unknown): value is AuthUser => {
   return typeof user['id'] === 'string' && typeof user['name'] === 'string' && roles.includes(user['role'] as AuthUser['role']);
 };
 
-// localStorage can throw (private mode, blocked storage) or hold corrupted data: never let that break the app.
+// localStorage puede fallar (modo privado, almacenamiento bloqueado) o tener datos dañados: eso nunca debe romper la app.
 export const readSession = (): StoredSession | null => {
   try {
     const token = localStorage.getItem(tokenKey);
     const user: unknown = JSON.parse(localStorage.getItem(userKey) ?? 'null');
     if (token && isAuthUser(user)) return { token, user };
   } catch {
-    // Falls through to clearing the broken session.
+    // Sigue hasta borrar la sesión dañada.
   }
   clearSession();
   return null;
@@ -33,7 +33,7 @@ export const writeSession = (session: StoredSession): void => {
     localStorage.setItem(tokenKey, session.token);
     localStorage.setItem(userKey, JSON.stringify(session.user));
   } catch {
-    // The session still lives in memory for this tab.
+    // La sesión sigue en memoria para esta pestaña.
   }
 };
 
@@ -42,6 +42,6 @@ export const clearSession = (): void => {
     localStorage.removeItem(tokenKey);
     localStorage.removeItem(userKey);
   } catch {
-    // Nothing else to clean.
+    // No hay nada más que limpiar.
   }
 };

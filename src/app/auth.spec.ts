@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router, UrlTree, type ActivatedRouteSnapshot, type RouterStateSnapshot } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { customerGuard, signedInGuard, storeGuard } from './auth.guard';
+import { signedInGuard, storeGuard } from './auth.guard';
 import { authInterceptor } from './auth.interceptor';
 import { AuthService } from './auth.service';
 import type { AuthUser } from './models';
@@ -42,23 +42,28 @@ describe('storeGuard', () => {
   });
 });
 
-describe('customerGuard and signedInGuard', () => {
+describe('signedInGuard', () => {
   afterEach(() => localStorage.clear());
 
-  it('keeps stores out of the customer pages and visitors out of both', () => {
+  it('lets any signed-in account in and sends visitors to the login', () => {
     let { router } = setup(storeUser);
-    expect(router.serializeUrl(runGuard(customerGuard) as UrlTree)).toBe('/');
     expect(runGuard(signedInGuard)).toBeTrue();
     TestBed.resetTestingModule();
     ({ router } = setup(null));
-    expect(router.serializeUrl(runGuard(customerGuard) as UrlTree)).toBe('/login');
     expect(router.serializeUrl(runGuard(signedInGuard) as UrlTree)).toBe('/login');
   });
 
-  it('lets customers in and keeps them out of the store panel', () => {
+  it('keeps customers out of the store panel', () => {
     const { router } = setup(customer);
-    expect(runGuard(customerGuard)).toBeTrue();
+    expect(runGuard(signedInGuard)).toBeTrue();
     expect(router.serializeUrl(runGuard(storeGuard) as UrlTree)).toBe('/');
+  });
+
+  it('has no customer-only pages left: alerts and the inbox were removed', async () => {
+    const { routes } = await import('./app.routes');
+    const paths = routes.map((route) => route.path);
+    expect(paths).not.toContain('alertas');
+    expect(paths).not.toContain('notificaciones');
   });
 });
 
@@ -155,6 +160,15 @@ describe('AuthService sessions', () => {
     expect(auth.isStore()).toBeTrue();
     expect(localStorage.getItem('stockbarrios-token')).toBe('nuevo');
     expect(navigate).toHaveBeenCalledWith(['/admin']);
+  });
+
+  it('sends customers to Offers after signing in', async () => {
+    const { auth, backend, router } = setup(null);
+    const navigate = spyOn(router, 'navigate').and.resolveTo(true);
+    const pending = auth.login('cliente@correo.co', 'cliente12345');
+    backend.expectOne('/api/auth/login').flush({ token: 't', user: customer });
+    await pending;
+    expect(navigate).toHaveBeenCalledWith(['/ofertas']);
   });
 
   it('keeps no session when the login fails', async () => {

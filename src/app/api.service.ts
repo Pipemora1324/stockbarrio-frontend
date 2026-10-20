@@ -1,17 +1,17 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom, type Observable } from 'rxjs';
-import type { AccountProfile, SessionUpdate, ChatResponse, ChatTurn, Offer, OfferQuery, AlertInput, AlertSubscription, AppNotification, AppliedDiscount, AuthUser, CatalogGroup, DiscountSuggestion, InventoryProduct, OwnedStore, Product, Store, StoreInput } from './models';
+import type { AccountProfile, SessionUpdate, ChatResponse, ChatTurn, Offer, OfferQuery, AppliedDiscount, AuthUser, CatalogGroup, DiscountSuggestion, InventoryProduct, OwnedStore, Product, Store, StoreInput } from './models';
 
-// Offer dates are 'YYYY-MM-DD' days (Bogota); null when the product has no discount.
+// Las fechas de oferta son días 'AAAA-MM-DD' (Bogotá); null cuando el producto no tiene descuento.
 export type ProductInput = Pick<Product, 'name' | 'category' | 'description' | 'price' | 'stock' | 'expirationDate' | 'discountPercent'> & { offerStartsOn: string | null; offerEndsOn: string | null };
 export interface OfferRange { offerStartsOn: string; offerEndsOn: string; }
 export interface Inventory { products: InventoryProduct[]; store: OwnedStore; stores: OwnedStore[]; today: string; }
 
-// ?storeId= for the store chosen in the panel (the API uses the main store without it).
+// ?storeId= para el local elegido en el panel (sin él, la API usa el principal).
 const storeParams = (storeId?: string) => (storeId ? { params: { storeId } } : {});
 
-// Turns any HTTP failure into an Error with a Spanish message the UI can show as is.
+// Convierte cualquier falla HTTP en un Error con un mensaje en español que la interfaz puede mostrar tal cual.
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -54,28 +54,21 @@ export class ApiService {
     return this.request(this.http.post<{ data: Offer[]; total: number }>(`${this.baseUrl}/offers/search`, query), 'No se pudieron cargar las ofertas.');
   }
 
-  async getNeighborhoods(): Promise<string[]> {
-    return (await this.request(this.http.get<{ data: string[] }>(`${this.baseUrl}/stores/neighborhoods`), 'No se pudieron cargar los barrios.')).data;
-  }
-
-  // Sends the last turns of the conversation and the neighborhood the customer gave earlier in the chat (kept in memory only).
+  // Envía los últimos turnos de la conversación y el barrio que el cliente dio antes en el chat (guardado solo en memoria).
   async chat(payload: { messages: ChatTurn[]; neighborhood?: string }): Promise<ChatResponse> {
     return (await this.request(this.http.post<{ data: ChatResponse }>(`${this.baseUrl}/assistant/chat`, payload), 'El asistente no pudo responder. Inténtalo de nuevo.')).data;
   }
 
-  // Catalog grouped by store, without the products on offer (those are in Ofertas). One filter: the category.
+  // Catálogo agrupado por local, con todos los productos (los que están en oferta, con su precio de hoy). Un solo filtro: la categoría.
   async getCatalog(category?: string): Promise<{ groups: CatalogGroup[]; total: number }> {
     const params = category ? { category } : undefined;
     const response = await this.request(this.http.get<{ data: CatalogGroup[]; total: number }>(`${this.baseUrl}/products/catalog`, { params }), 'No se pudo cargar el catálogo.');
     return { groups: response.data, total: response.total };
   }
 
-  async getProducts(filters: { neighborhood?: string; category?: string; search?: string } = {}): Promise<Product[]> {
-    const params: Record<string, string> = {};
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value?.trim()) params[key] = value.trim();
-    });
-    return (await this.request(this.http.get<{ data: Product[] }>(`${this.baseUrl}/products`, { params }), 'No se pudieron cargar los productos.')).data;
+  // Si el correo (u otra dirección del mismo buzón, como Gmail con puntos) ya tiene una cuenta.
+  checkEmail(email: string): Promise<{ available: boolean; message?: string }> {
+    return this.request(this.http.post<{ available: boolean; message?: string }>(`${this.baseUrl}/auth/check-email`, { email }), 'No se pudo revisar el correo.');
   }
 
   register(payload: Record<string, unknown>): Promise<{ token: string; user: AuthUser }> {
@@ -98,7 +91,7 @@ export class ApiService {
     return (await this.request(this.http.get<{ data: AccountProfile }>(`${this.baseUrl}/account`), 'No se pudo cargar tu perfil.')).data;
   }
 
-  // In the supabase mode the answer has no token: the session token does not change.
+  // En el modo supabase la respuesta no trae token: el de la sesión no cambia.
   updateName(name: string): Promise<SessionUpdate | Omit<SessionUpdate, 'token'>> {
     return this.request(this.http.patch<SessionUpdate>(`${this.baseUrl}/account/name`, { name }), 'No se pudo actualizar el nombre.');
   }
@@ -115,7 +108,7 @@ export class ApiService {
     return this.request(this.http.post<{ message: string }>(`${this.baseUrl}/account/email/confirm`, { token }), 'No se pudo confirmar el correo.');
   }
 
-  // With a token (Supabase mode, before the session is saved) it is sent as is; otherwise the interceptor adds it.
+  // Con un token (modo supabase, antes de guardar la sesión) se envía tal cual; si no, lo agrega el interceptor.
   async me(token?: string): Promise<AuthUser> {
     const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
     return (await this.request(this.http.get<{ user: AuthUser }>(`${this.baseUrl}/auth/me`, { headers }), 'No se pudo validar la sesión.')).user;
@@ -162,7 +155,7 @@ export class ApiService {
     return (await this.request(this.http.get<{ data: DiscountSuggestion[] }>(`${this.baseUrl}/suggestions`, storeParams(storeId)), 'No se pudieron cargar las sugerencias de descuento.')).data;
   }
 
-  // The store approves with the range it chose (by default from today until the expiration date).
+  // La tienda aprueba con el rango que eligió (por defecto, de hoy al vencimiento).
   approveSuggestion(id: string, range?: OfferRange, storeId?: string): Promise<{ data: AppliedDiscount; message: string }> {
     return this.request(this.http.post<{ data: AppliedDiscount; message: string }>(`${this.baseUrl}/suggestions/${id}/approve`, range ?? {}, storeParams(storeId)), 'No se pudo aplicar el descuento.');
   }
@@ -173,33 +166,5 @@ export class ApiService {
 
   approveAllSuggestions(storeId?: string): Promise<{ data: AppliedDiscount[]; message: string }> {
     return this.request(this.http.post<{ data: AppliedDiscount[]; message: string }>(`${this.baseUrl}/suggestions/approve-all`, {}, storeParams(storeId)), 'No se pudieron aplicar los descuentos.');
-  }
-
-  async getAlerts(): Promise<AlertSubscription[]> {
-    return (await this.request(this.http.get<{ data: AlertSubscription[] }>(`${this.baseUrl}/alerts`), 'No se pudieron cargar tus alertas.')).data;
-  }
-
-  createAlert(alert: AlertInput): Promise<{ data: AlertSubscription; message: string }> {
-    return this.request(this.http.post<{ data: AlertSubscription; message: string }>(`${this.baseUrl}/alerts`, alert), 'No se pudo crear la alerta.');
-  }
-
-  async deleteAlert(id: string): Promise<void> {
-    await this.request(this.http.delete(`${this.baseUrl}/alerts/${id}`), 'No se pudo eliminar la alerta.');
-  }
-
-  getNotifications(): Promise<{ data: AppNotification[]; unread: number }> {
-    return this.request(this.http.get<{ data: AppNotification[]; unread: number }>(`${this.baseUrl}/notifications`), 'No se pudieron cargar tus notificaciones.');
-  }
-
-  async getUnreadCount(): Promise<number> {
-    return (await this.request(this.http.get<{ unread: number }>(`${this.baseUrl}/notifications/unread-count`), 'No se pudo consultar las notificaciones.')).unread;
-  }
-
-  async markNotificationRead(id: string): Promise<number> {
-    return (await this.request(this.http.post<{ unread: number }>(`${this.baseUrl}/notifications/${id}/read`, {}), 'No se pudo marcar como leída.')).unread;
-  }
-
-  async markAllNotificationsRead(): Promise<number> {
-    return (await this.request(this.http.post<{ unread: number }>(`${this.baseUrl}/notifications/read-all`, {}), 'No se pudieron marcar como leídas.')).unread;
   }
 }

@@ -8,7 +8,7 @@ import { ProductCardComponent } from '../../components/product-card/product-card
 import { RevealDirective } from '../../components/reveal.directive';
 import type { CatalogGroup } from '../../models';
 
-// Products without an active offer (those are in Ofertas), grouped by store, with one filter: the category.
+// Todos los productos de los locales, agrupados por local, con un solo filtro: la categoría. Las ofertas muestran su precio con descuento.
 @Component({
   selector: 'app-catalog',
   imports: [RouterLink, ProductCardComponent, CategoryFilterComponent, IconComponent, IllustrationComponent, RevealDirective],
@@ -19,7 +19,7 @@ import type { CatalogGroup } from '../../models';
   <header class="page-header">
     <span class="eyebrow"><app-icon name="catalog" />Catálogo</span>
     <h1>Todo lo que hay en las tiendas</h1>
-    <p>Los productos de cada local a su precio normal. Lo que está en descuento lo encuentras en <a routerLink="/ofertas">Ofertas</a>.</p>
+    <p>Todos los productos de cada local. Los que están en oferta muestran el precio con descuento; si solo quieres ver descuentos, entra a <a routerLink="/ofertas">Ofertas</a>.</p>
   </header>
 
   <app-category-filter label="Filtrar el catálogo por categoría" [categories]="categories()" [value]="category()" (valueChange)="choose($event)" />
@@ -41,7 +41,7 @@ import type { CatalogGroup } from '../../models';
           <div class="state-actions"><button class="button" type="button" (click)="choose('')">Ver todo el catálogo</button></div>
         } @else {
           <h3>El catálogo está vacío por ahora</h3>
-          <p>Todavía no hay productos publicados fuera de las ofertas. Revisa las ofertas de hoy o registra tu tienda.</p>
+          <p>Todavía no hay productos publicados. Cuando las tiendas los agreguen aparecerán aquí; mientras tanto, registra tu tienda.</p>
           <div class="state-actions"><a class="button" routerLink="/ofertas"><app-icon name="tag" />Ver ofertas</a><a class="button button-light" routerLink="/register" [queryParams]="{ tipo: 'tienda' }"><app-icon name="store" />Registrar mi tienda</a></div>
         }
       </div>
@@ -57,7 +57,7 @@ import type { CatalogGroup } from '../../models';
             <span class="count">{{ group.products.length }} {{ group.products.length === 1 ? 'producto' : 'productos' }}</span>
           </header>
           <ul class="cards-grid">
-            @for (product of group.products; track product.id) { <li><app-product-card [product]="product" [showStore]="false" /></li> }
+            @for (product of group.products; track product.id) { <li><app-product-card [product]="product" [showStore]="false" [offerTag]="true" /></li> }
           </ul>
         </section>
       }
@@ -108,7 +108,7 @@ export class CatalogComponent implements OnInit {
     }
   }
 
-  // Links from the home page point to one store (#local-<id>); the groups arrive after the navigation.
+  // Los enlaces del inicio apuntan a un local (#local-<id>); los grupos llegan después de la navegación.
   private scrollToStore() {
     const fragment = this.route.snapshot.fragment;
     if (!fragment) return;

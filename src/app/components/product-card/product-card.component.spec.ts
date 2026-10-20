@@ -84,5 +84,8 @@ describe('ProductCardComponent', () => {
     expect(render({}, { featured: true }).querySelector('.price-tag.featured')).not.toBeNull();
     expect(render({}, { showStore: false }).querySelector('.store')).toBeNull();
     expect(render({ stock: 0 }).querySelector('.stock')?.textContent).toBe('Agotado');
+    expect(render().querySelector('.offer-tag')).toBeNull();
+    expect(render({}, { offerTag: true }).querySelector('.offer-tag')?.textContent).toBe('En oferta');
+    expect(render({ discountPercent: 0 }, { offerTag: true }).querySelector('.offer-tag')).toBeNull();
   });
 });

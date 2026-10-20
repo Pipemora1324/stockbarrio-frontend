@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { PasswordFieldComponent } from '../../components/password-field/password-field.component';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../api.service';
 import { AuthService } from '../../auth.service';
@@ -17,7 +18,7 @@ const idle = (): FormState => ({ busy: false, message: '', failure: '' });
 
 @Component({
   selector: 'app-profile',
-  imports: [FormsModule],
+  imports: [PasswordFieldComponent, FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './profile.component.scss',
   template: `
@@ -46,12 +47,12 @@ const idle = (): FormState => ({ busy: false, message: '', failure: '' });
     <p class="hint">Al cambiarla cerramos tus otras sesiones abiertas; esta sigue activa.</p>
     <form (ngSubmit)="savePassword()" novalidate>
       <label for="profile-current">Contraseña actual</label>
-      <input id="profile-current" name="currentPassword" type="password" autocomplete="current-password" maxlength="200" [ngModel]="currentPassword()" (ngModelChange)="currentPassword.set($event)">
+      <app-password-field><input id="profile-current" name="currentPassword" type="password" autocomplete="current-password" maxlength="200" [ngModel]="currentPassword()" (ngModelChange)="currentPassword.set($event)"></app-password-field>
       <label for="profile-new">Contraseña nueva</label>
-      <input id="profile-new" name="newPassword" type="password" autocomplete="new-password" maxlength="72" [ngModel]="newPassword()" (ngModelChange)="newPassword.set($event)" (blur)="newTouched.set(true)" [attr.aria-invalid]="newTouched() && newPasswordError() ? true : null" aria-describedby="profile-new-help">
+      <app-password-field><input id="profile-new" name="newPassword" type="password" autocomplete="new-password" maxlength="72" [ngModel]="newPassword()" (ngModelChange)="newPassword.set($event)" (blur)="newTouched.set(true)" [attr.aria-invalid]="newTouched() && newPasswordError() ? true : null" aria-describedby="profile-new-help"></app-password-field>
       <small class="field-help" id="profile-new-help">@if (newTouched() && newPasswordError()) { <span class="field-error">{{ newPasswordError() }}</span> } @else { Entre 8 y 72 caracteres, con al menos una letra y un número. }</small>
       <label for="profile-confirm">Repite la contraseña nueva</label>
-      <input id="profile-confirm" name="confirmPassword" type="password" autocomplete="new-password" maxlength="72" [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)" [attr.aria-invalid]="confirmPassword() && confirmError() ? true : null" aria-describedby="profile-confirm-error">
+      <app-password-field><input id="profile-confirm" name="confirmPassword" type="password" autocomplete="new-password" maxlength="72" [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)" [attr.aria-invalid]="confirmPassword() && confirmError() ? true : null" aria-describedby="profile-confirm-error"></app-password-field>
       @if (confirmPassword() && confirmError()) { <small class="field-error" id="profile-confirm-error">{{ confirmError() }}</small> }
       <div class="actions"><button class="button" type="submit" [disabled]="passwordState().busy || passwordInvalid()">{{ passwordState().busy ? 'Guardando…' : 'Cambiar contraseña' }}</button></div>
       @if (passwordState().message) { <p class="form-message success" role="status">{{ passwordState().message }}</p> }
@@ -65,10 +66,10 @@ const idle = (): FormState => ({ busy: false, message: '', failure: '' });
     @if (profile()?.pendingEmail) { <p class="form-message success" role="status">Hay un cambio pendiente a {{ profile()?.pendingEmail }}. Revisa ese correo.</p> }
     <form (ngSubmit)="saveEmail()" novalidate>
       <label for="profile-email">Correo nuevo</label>
-      <input id="profile-email" name="newEmail" type="email" autocomplete="email" maxlength="254" [ngModel]="newEmail()" (ngModelChange)="newEmail.set($event)" (blur)="emailTouched.set(true)" [attr.aria-invalid]="emailTouched() && newEmailError() ? true : null" aria-describedby="profile-email-error">
+      <input id="profile-email" name="newEmail" type="email" autocomplete="email" maxlength="254" [ngModel]="newEmail()" (ngModelChange)="newEmail.set($event)" (blur)="newEmail.set(normalize(newEmail())); emailTouched.set(true)" [attr.aria-invalid]="emailTouched() && newEmailError() ? true : null" aria-describedby="profile-email-error">
       @if (emailTouched() && newEmailError()) { <small class="field-error" id="profile-email-error">{{ newEmailError() }}</small> }
       <label for="profile-email-password">Contraseña actual</label>
-      <input id="profile-email-password" name="emailPassword" type="password" autocomplete="current-password" maxlength="200" [ngModel]="emailPassword()" (ngModelChange)="emailPassword.set($event)">
+      <app-password-field><input id="profile-email-password" name="emailPassword" type="password" autocomplete="current-password" maxlength="200" [ngModel]="emailPassword()" (ngModelChange)="emailPassword.set($event)"></app-password-field>
       <div class="actions"><button class="button" type="submit" [disabled]="emailState().busy || !!newEmailError() || !emailPassword()">{{ emailState().busy ? 'Enviando…' : 'Enviar enlace de confirmación' }}</button></div>
       @if (emailState().message) { <p class="form-message success" role="status">{{ emailState().message }}</p> }
       @if (emailState().failure) { <p class="form-message failure" role="alert">{{ emailState().failure }}</p> }
@@ -98,7 +99,8 @@ export class ProfileComponent implements OnInit {
   readonly newPasswordError = computed(() => rules.password(this.newPassword(), this.profile()?.email ?? ''));
   readonly confirmError = computed(() => (this.confirmPassword() === this.newPassword() ? '' : 'Las contraseñas no coinciden.'));
   readonly passwordInvalid = computed(() => !this.currentPassword() || Boolean(this.newPasswordError() || this.confirmError()));
-  readonly newEmailError = computed(() => rules.email(this.newEmail()) || (this.newEmail().trim().toLowerCase() === this.profile()?.email ? 'Es el mismo correo que ya tienes.' : ''));
+  protected readonly normalize = rules.normalizeEmail;
+  readonly newEmailError = computed(() => rules.newEmail(this.newEmail()) || (this.newEmail().trim().toLowerCase() === this.profile()?.email ? 'Es el mismo correo que ya tienes.' : ''));
 
   async ngOnInit() {
     try {
@@ -135,7 +137,10 @@ export class ProfileComponent implements OnInit {
   async saveEmail() {
     if (this.newEmailError() || !this.emailPassword()) return;
     await this.run(this.emailState, async () => {
-      const email = this.newEmail().trim().toLowerCase();
+      const email = rules.normalizeEmail(this.newEmail());
+      // En el modo supabase el cambio va directo a Supabase, así que antes la API revisa el buzón.
+      const check = await this.api.checkEmail(email);
+      if (!check.available) throw new Error(check.message ?? rules.emailTakenMessage);
       const message = await this.auth.requestEmailChange(email, this.emailPassword());
       this.profile.update((profile) => (profile ? { ...profile, pendingEmail: email } : profile));
       this.emailPassword.set('');

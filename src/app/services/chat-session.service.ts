@@ -11,8 +11,8 @@ export interface ConversationMessage {
   isError?: boolean;
 }
 
-// The conversation and the neighborhood the customer gave in it. Only in memory: they survive moving between
-// pages, but a reload or a new tab starts over, and nothing is written to the browser storage.
+// La conversación y el barrio que dio el cliente en ella. Solo en memoria: sobreviven al cambiar de página,
+// pero al recargar o en otra pestaña empiezan de cero, y no se escribe nada en el almacenamiento del navegador.
 @Injectable({ providedIn: 'root' })
 export class ChatSessionService {
   readonly messages = signal<ConversationMessage[]>([]);
@@ -23,7 +23,7 @@ export class ChatSessionService {
     this.messages.update((items) => [...items, { ...message, id: this.nextId++ }]);
   }
 
-  // The API answers with the neighborhood it used; a new one replaces the remembered one.
+  // La API responde con el barrio que usó; uno nuevo reemplaza al recordado.
   remember(neighborhood: string | null) {
     if (neighborhood) this.neighborhood.set(neighborhood);
   }

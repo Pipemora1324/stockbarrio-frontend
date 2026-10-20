@@ -37,7 +37,7 @@ describe('HomeComponent', () => {
     expect(homeMessage).toBe('Ayudamos al ciudadano a encontrar el mejor producto al mejor precio y con los mejores descuentos cerca de su barrio.');
     expect(page.querySelector('.hero-actions a[href="/ofertas"]')).not.toBeNull();
     expect(page.querySelector('.hero-actions a[href="/chat"]')).not.toBeNull();
-    // Own illustration, since there is no photo banner configured.
+    // Ilustración propia, porque no hay ningún banner fotográfico configurado.
     expect(page.querySelector('app-illustration.illustration-stall')).not.toBeNull();
     expect(page.querySelector('.hero img')).toBeNull();
   });

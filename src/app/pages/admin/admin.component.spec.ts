@@ -88,7 +88,7 @@ describe('AdminComponent (store panel)', () => {
     expect([...page.querySelectorAll('.status')].map((cell) => cell.textContent)).toEqual(['Sin oferta', 'Oferta activa', 'Oferta programada']);
     expect(page.querySelector('.description')?.textContent).toBe('Bolsa de 1 L');
     expect(page.querySelector('.data-table img')).toBeNull();
-    // Each cell has a label, so the rows become readable cards on a phone.
+    // Cada celda tiene una etiqueta, así las filas se vuelven tarjetas legibles en el celular.
     expect([...bread.querySelectorAll('td[data-label]')].length).toBe(6);
   });
 

@@ -64,7 +64,7 @@ describe('validation rules', () => {
     expect(rules.expirationDate('2028-02-29', true, now)).toBe('');
     expect(rules.expirationDate('2027-02-29', false, now)).toBe('La fecha no es válida.');
     expect(rules.expirationDate('18/10/2026', true, now)).toContain('AAAA-MM-DD');
-    // 22:00 in Bogota on the 18th is already the 19th in UTC: the 18th is still today.
+    // Las 22:00 del 18 en Bogotá ya son el 19 en UTC: el 18 sigue siendo hoy.
     expect(rules.expirationDate('2026-10-18', true, new Date('2026-10-19T03:00:00Z'))).toBe('');
     expect(rules.expirationDate('2026-10-18', true, new Date('2026-10-19T05:00:00Z'))).toContain('en el pasado');
   });
@@ -133,5 +133,16 @@ describe('offer range rules (same messages as the API)', () => {
     expect(rules.offerOnExpired(10, '2026-10-18', today)).toContain('Un producto vencido no puede tener oferta');
     expect(rules.offerOnExpired(0, '2026-10-18', today)).toBe('');
     expect(rules.offerOnExpired(10, today, today)).toBe('');
+  });
+});
+
+describe('email rules for new accounts', () => {
+  it('normalizes and rejects "+" aliases only for new accounts', () => {
+    expect(rules.normalizeEmail('  Ana@Correo.CO ')).toBe('ana@correo.co');
+    expect(rules.normalizeEmail(null)).toBe('');
+    expect(rules.newEmail('ana+x@correo.co')).toBe(rules.plusAliasMessage);
+    expect(rules.newEmail('ana@correo.co')).toBe('');
+    expect(rules.newEmail('no-es-correo')).toBe('El correo electrónico no es válido.');
+    expect(rules.email('ana+x@correo.co')).toBe('', 'login and recovery still accept older addresses');
   });
 });

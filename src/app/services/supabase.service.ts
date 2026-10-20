@@ -4,8 +4,8 @@ import { environment } from '../../environments/environment';
 
 export const supabaseEnabled = () => environment.authProvider === 'supabase';
 
-// Thin wrapper so the app (and the tests) use one Supabase Auth client. supabase-js is downloaded on first use,
-// only in the supabase mode, so the legacy build does not carry it; the client uses the public anon key.
+// Capa delgada para que la app (y las pruebas) usen un solo cliente de Supabase Auth. supabase-js se descarga al usarlo
+// por primera vez, solo en el modo supabase, así el build legacy no lo carga; el cliente usa la clave pública anon.
 @Injectable({ providedIn: 'root' })
 export class SupabaseService {
   private client: Promise<SupabaseClient> | null = null;
@@ -16,7 +16,7 @@ export class SupabaseService {
         auth: {
           persistSession: true,
           autoRefreshToken: true,
-          // Confirmation links come back to /login only to show a notice; the person signs in with the password.
+          // Los enlaces de confirmación vuelven a /login solo para mostrar un aviso; la persona entra con la contraseña.
           detectSessionInUrl: false,
           storageKey: 'stockbarrio-supabase',
         },
@@ -26,7 +26,7 @@ export class SupabaseService {
   }
 }
 
-// Spanish messages for the Supabase Auth error codes the app can meet.
+// Mensajes en español para los códigos de error de Supabase Auth que puede encontrar la app.
 const messages: Record<string, string> = {
   invalid_credentials: 'El correo o la contraseña son incorrectos.',
   email_not_confirmed: 'Todavía no has confirmado tu correo. Abre el enlace que te enviamos o pide otro.',
@@ -55,7 +55,7 @@ export class SupabaseAuthFailure extends Error {
   }
 }
 
-// Turns a Supabase error (or a network failure) into a SupabaseAuthFailure with a Spanish message.
+// Convierte un error de Supabase (o una falla de red) en un SupabaseAuthFailure con un mensaje en español.
 export const toAuthFailure = (error: unknown): SupabaseAuthFailure => {
   const { code, status, name } = (error ?? {}) as { code?: string; status?: number; name?: string };
   if (code && messages[code]) return new SupabaseAuthFailure(messages[code], code);

@@ -39,7 +39,7 @@ describe('CatalogComponent', () => {
     expect(sections[0].querySelectorAll('app-product-card').length).toBe(2);
     expect(sections[0].querySelector('.count')?.textContent).toBe('2 productos');
     expect(page.querySelector('#catalog-count')?.textContent).toContain('3 productos en 2 locales');
-    // The store is already in the header, so the cards do not repeat it.
+    // El local ya está en el encabezado, así que las tarjetas no lo repiten.
     expect(sections[0].querySelector('.price-tag .store')).toBeNull();
   });
 
@@ -57,10 +57,17 @@ describe('CatalogComponent', () => {
     expect(api.getCatalog).toHaveBeenCalledWith(undefined);
   });
 
-  it('says the catalog has no offers and links to them', async () => {
-    const { page } = await setup();
+  it('shows the products on offer with the "En oferta" label, the discounted price and the original one crossed out', async () => {
+    const onOffer = product({ id: 'p9', name: 'Atún en lata', category: 'Despensa', price: 10000, offerPrice: 9000, discountPercent: 10, offerStartsOn: '2099-01-01', offerEndsOn: '2099-01-05' });
+    const { page } = await setup({}, [{ ...groups[0], products: [product({}), onOffer] }]);
+    const cards = [...page.querySelectorAll('.price-tag')];
+    expect(cards[0].querySelector('.offer-tag')).toBeNull();
+    expect(cards[0].querySelector('s')).toBeNull();
+    expect(cards[1].querySelector('.offer-tag')?.textContent).toBe('En oferta');
+    expect(cards[1].querySelector('.price strong')?.textContent).toContain('9.000');
+    expect(cards[1].querySelector('s')?.textContent).toContain('10.000');
+    expect(cards[1].querySelector('.ribbon')?.textContent?.trim()).toBe('-10%');
     expect(page.querySelector('.page-header a[href="/ofertas"]')).not.toBeNull();
-    expect(page.querySelector('.ribbon')).toBeNull();
   });
 
   it('shows empty states for the whole catalog and for one category', async () => {

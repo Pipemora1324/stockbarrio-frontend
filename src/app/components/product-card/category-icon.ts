@@ -1,6 +1,6 @@
 import type { IconName } from '../icon/icon.component';
 
-// Tone of the category stamp: a palette color, so it adapts to the light and dark themes.
+// Tono del sello de la categoría: un color de la paleta, para que se adapte a los temas claro y oscuro.
 export type CategoryTone = 'tomato' | 'corn' | 'blue' | 'cream';
 
 export interface CategoryIcon {
@@ -15,7 +15,7 @@ const normalize = (value: string) =>
     .toLowerCase()
     .trim();
 
-// Keyword → icon. The first keyword found in the category wins, so more specific words go first.
+// Palabra clave → ícono. Gana la primera palabra que aparece en la categoría, así que las más específicas van primero.
 const icons: Array<{ keywords: string[]; icon: CategoryIcon }> = [
   { keywords: ['huevo'], icon: { icon: 'egg', tone: 'corn' } },
   { keywords: ['lacteo', 'leche', 'queso', 'yogur'], icon: { icon: 'milk', tone: 'blue' } },

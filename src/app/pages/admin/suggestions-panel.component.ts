@@ -95,7 +95,7 @@ export class SuggestionsPanelComponent {
   readonly busy = signal(false);
   readonly error = signal('');
   readonly message = signal('');
-  // The suggestion being approved and the range proposed for it.
+  // La sugerencia que se está aprobando y el rango propuesto para ella.
   readonly editingId = signal<string | null>(null);
   readonly range = signal<Range>({ offerStartsOn: '', offerEndsOn: '' });
   private readonly editing = computed(() => this.suggestions().find((item) => item.id === this.editingId()) ?? null);
@@ -107,7 +107,7 @@ export class SuggestionsPanelComponent {
   });
 
   constructor() {
-    // Loads again whenever the panel switches to another store.
+    // Vuelve a cargar cada vez que el panel cambia de local.
     effect(() => {
       this.storeId();
       untracked(() => void this.load());
@@ -133,7 +133,7 @@ export class SuggestionsPanelComponent {
     }
   }
 
-  // Proposes from today until the expiration date; the store can change both before applying.
+  // Propone de hoy al vencimiento; la tienda puede cambiar las dos fechas antes de aplicar.
   startApproval(suggestion: DiscountSuggestion) {
     this.range.set({ offerStartsOn: suggestion.proposedStartsOn || this.today, offerEndsOn: suggestion.proposedEndsOn || suggestion.expirationDate });
     this.editingId.set(suggestion.id);
@@ -171,7 +171,7 @@ export class SuggestionsPanelComponent {
     } finally {
       this.busy.set(false);
     }
-    // Reload either way (another tab may have changed things), then show the failure on top.
+    // Recarga en cualquier caso (otra pestaña pudo cambiar algo) y luego muestra la falla encima.
     await this.load();
     if (failure) this.error.set(failure);
   }

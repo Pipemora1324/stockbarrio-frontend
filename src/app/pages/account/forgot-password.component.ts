@@ -22,7 +22,7 @@ import * as rules from '../../validation/rules';
     } @else {
       <form (ngSubmit)="submit()" novalidate>
         <label for="forgot-email">Correo electrónico</label>
-        <input id="forgot-email" name="email" type="email" autocomplete="email" maxlength="254" [ngModel]="email()" (ngModelChange)="email.set($event)" (blur)="touched.set(true)" [attr.aria-invalid]="showError() ? true : null" aria-describedby="forgot-email-error">
+        <input id="forgot-email" name="email" type="email" autocomplete="email" maxlength="254" [ngModel]="email()" (ngModelChange)="email.set($event)" (blur)="email.set(normalize(email())); touched.set(true)" [attr.aria-invalid]="showError() ? true : null" aria-describedby="forgot-email-error">
         @if (showError()) { <small class="field-error" id="forgot-email-error">{{ error() }}</small> }
         <button class="button" type="submit" [disabled]="loading() || !!error()">{{ loading() ? 'Enviando…' : 'Enviar enlace' }}</button>
         @if (failure()) { <p class="form-message failure" role="alert">{{ failure() }}</p> }
@@ -40,6 +40,7 @@ export class ForgotPasswordComponent {
   readonly sent = signal('');
   readonly failure = signal('');
   readonly error = computed(() => rules.email(this.email()));
+  protected readonly normalize = rules.normalizeEmail;
   readonly showError = computed(() => this.touched() && Boolean(this.error()));
 
   async submit() {

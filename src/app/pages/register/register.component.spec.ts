@@ -1,19 +1,25 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
-import { ApiError } from '../../api.service';
+import { ApiError, ApiService } from '../../api.service';
+import { emailTakenMessage, plusAliasMessage } from '../../validation/rules';
 import { AuthService } from '../../auth.service';
 import { RegisterComponent } from './register.component';
 
 describe('RegisterComponent', () => {
   let register: jasmine.Spy;
+  let checkEmail: jasmine.Spy;
+  let resendConfirmation: jasmine.Spy;
 
   const setup = (tipo?: string) => {
     register = jasmine.createSpy('register').and.resolveTo();
+    checkEmail = jasmine.createSpy('checkEmail').and.resolveTo({ available: true });
+    resendConfirmation = jasmine.createSpy('resendConfirmation').and.resolveTo();
     TestBed.configureTestingModule({
       imports: [RegisterComponent],
       providers: [
         provideRouter([]),
-        { provide: AuthService, useValue: { register } },
+        { provide: AuthService, useValue: { register, resendConfirmation } },
+        { provide: ApiService, useValue: { checkEmail } },
         { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap(tipo ? { tipo } : {}) } } },
       ],
     });
@@ -107,5 +113,62 @@ describe('RegisterComponent', () => {
   it('does not mention alerts while they are paused', () => {
     const { page } = setup();
     expect(page.textContent).not.toMatch(/alerta|aviso/i);
+  });
+
+  describe('one email, one account', () => {
+    it('checks the email before creating the account and stops when it already has one', async () => {
+      const { fixture, component, page } = setup();
+      fillCustomer(component);
+      checkEmail.and.resolveTo({ available: false, message: emailTakenMessage });
+      await component.submit();
+      fixture.detectChanges();
+      expect(checkEmail).toHaveBeenCalledWith('ana@correo.co');
+      expect(register).not.toHaveBeenCalled();
+      expect(page.querySelector('[role=alert]')?.textContent).toBe(emailTakenMessage);
+      expect(page.querySelector('.taken-actions a[href="/login"]')).not.toBeNull();
+      expect(page.querySelector('.taken-actions a[href="/forgot-password"]')).not.toBeNull();
+    });
+
+    it('shows the same message and the links when the sign up itself says the email is taken', async () => {
+      const { fixture, component, page } = setup();
+      fillCustomer(component);
+      register.and.rejectWith(new Error(emailTakenMessage));
+      await component.submit();
+      fixture.detectChanges();
+      expect(page.querySelector('.taken-actions')).not.toBeNull();
+    });
+
+    it('does not accept "+" aliases', () => {
+      const { component } = setup();
+      component.set('email', 'ana+compras@correo.co');
+      expect(component.errors().email).toBe(plusAliasMessage);
+      component.set('email', 'ana@correo.co');
+      expect(component.errors().email).toBe('');
+    });
+
+    it('saves the email trimmed and in lowercase when leaving the field', async () => {
+      const { fixture, page, component } = setup();
+      await fixture.whenStable();
+      const input = page.querySelector<HTMLInputElement>('#register-email')!;
+      input.value = '  Ana.Perez@Gmail.COM ';
+      input.dispatchEvent(new Event('input'));
+      input.dispatchEvent(new Event('blur'));
+      fixture.detectChanges();
+      expect(component.values().email).toBe('ana.perez@gmail.com');
+    });
+
+    it('says the confirmation email was already sent for an account that exists unconfirmed, and resends it', async () => {
+      const { fixture, component, page } = setup();
+      fillCustomer(component);
+      register.and.resolveTo('already-pending');
+      await component.submit();
+      fixture.detectChanges();
+      expect(page.querySelector('.confirm-state h2')?.textContent).toBe('Ya te enviamos un correo de confirmación');
+      page.querySelector<HTMLButtonElement>('.confirm-state button')!.click();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(resendConfirmation).toHaveBeenCalledWith('ana@correo.co');
+      expect(page.textContent).toContain('Te enviamos de nuevo el correo de confirmación.');
+    });
   });
 });

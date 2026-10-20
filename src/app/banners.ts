@@ -1,12 +1,12 @@
-// Photo banners of the home page. Empty by default: the home page shows its own SVG illustration instead.
-// To add one, save the file in public/img (never link images from other sites), add it here and write its
-// author, source and license in public/img/CREDITOS.md. Only free licenses (Unsplash or Pexels).
+// Banners fotográficos del inicio. Vacío por defecto: el inicio muestra su propia ilustración en SVG.
+// Para agregar uno, guarda el archivo en public/img (nunca enlaces imágenes de otros sitios), agrégalo aquí y escribe
+// su autor, su fuente y su licencia en public/img/CREDITOS.md. Solo licencias libres (Unsplash o Pexels).
 export interface Banner {
-  // Path inside public, for example 'img/mercado-fruta.webp'.
+  // Ruta dentro de public, por ejemplo 'img/mercado-fruta.webp'.
   src: string;
-  // What the photo shows, in Spanish, for screen readers.
+  // Qué muestra la foto, en español, para los lectores de pantalla.
   alt: string;
-  // Short visible credit, for example 'Foto: Ana Pérez en Unsplash'.
+  // Crédito visible corto, por ejemplo 'Foto: Ana Pérez en Unsplash'.
   credit: string;
 }
 

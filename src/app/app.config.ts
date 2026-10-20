@@ -11,9 +11,9 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([authInterceptor])),
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
-    // Each page opens at the top, and the back button returns to where the person was.
+    // Cada página abre arriba, y el botón de volver regresa a donde estaba la persona.
     provideRouter(routes, withInMemoryScrolling({ scrollPositionRestoration: 'enabled', anchorScrolling: 'enabled' })),
-    // Validate the stored token in the background so a slow API never blocks the first render.
+    // Valida el token guardado en segundo plano, para que una API lenta nunca bloquee el primer pintado.
     provideAppInitializer(() => {
       void inject(AuthService).validateSession();
     }),

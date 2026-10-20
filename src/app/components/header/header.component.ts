@@ -2,13 +2,11 @@ import { ChangeDetectionStrategy, Component, computed, DestroyRef, HostListener,
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter } from 'rxjs';
-import { environment } from '../../../environments/environment';
 import { AuthService } from '../../auth.service';
-import { NotificationsService } from '../../services/notifications.service';
 import { ThemeService } from '../../services/theme.service';
 import { IconComponent } from '../icon/icon.component';
 
-// From this many pixels of scroll the header gets compact and solid.
+// A partir de estos píxeles de scroll el header se compacta y toma fondo sólido.
 export const compactAfterPx = 24;
 
 @Component({
@@ -42,15 +40,8 @@ export const compactAfterPx = 24;
       } @else if (auth.user()) {
         <a routerLink="/perfil" routerLinkActive="active" ariaCurrentWhenActive="page"><app-icon name="user" />Mi cuenta</a>
       }
-      @if (alertsEnabled && auth.isCustomer()) { <a routerLink="/alertas" routerLinkActive="active">Mis alertas</a> }
     </nav>
     <div class="header-actions">
-      @if (alertsEnabled && auth.isCustomer()) {
-        <a class="icon-button bell" routerLink="/notificaciones" [attr.aria-label]="notifications.unread() ? 'Notificaciones: ' + notifications.unread() + ' sin leer' : 'Notificaciones'">
-          <app-icon name="bell" />
-          @if (notifications.unread()) { <span class="bell-count" aria-hidden="true">{{ notifications.unread() > 99 ? '99+' : notifications.unread() }}</span> }
-        </a>
-      }
       @if (auth.user()) {
         <button class="button button-light button-small" type="button" (click)="auth.logout()"><app-icon name="logout" />Salir</button>
       } @else {
@@ -63,9 +54,7 @@ export const compactAfterPx = 24;
 })
 export class HeaderComponent {
   protected readonly auth = inject(AuthService);
-  protected readonly notifications = inject(NotificationsService);
   protected readonly theme = inject(ThemeService);
-  protected readonly alertsEnabled = environment.enableAlerts;
   readonly menuOpen = signal(false);
   readonly compact = signal(false);
   protected readonly themeLabel = computed(() => (this.theme.theme() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'));
