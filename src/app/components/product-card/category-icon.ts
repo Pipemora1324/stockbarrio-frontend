@@ -1,6 +1,11 @@
+import type { IconName } from '../icon/icon.component';
+
+// Tone of the category stamp: a palette color, so it adapts to the light and dark themes.
+export type CategoryTone = 'tomato' | 'corn' | 'blue' | 'cream';
+
 export interface CategoryIcon {
-  icon: string;
-  background: string;
+  icon: IconName;
+  tone: CategoryTone;
 }
 
 const normalize = (value: string) =>
@@ -12,18 +17,21 @@ const normalize = (value: string) =>
 
 // Keyword → icon. The first keyword found in the category wins, so more specific words go first.
 const icons: Array<{ keywords: string[]; icon: CategoryIcon }> = [
-  { keywords: ['huevo'], icon: { icon: '🥚', background: '#fff4dc' } },
-  { keywords: ['lacteo', 'leche', 'queso', 'yogur'], icon: { icon: '🥛', background: '#eaf3ff' } },
-  { keywords: ['panaderia', 'pan', 'arepa'], icon: { icon: '🍞', background: '#fbefe2' } },
-  { keywords: ['fruta', 'verdura', 'hortaliza'], icon: { icon: '🥬', background: '#e8f6ea' } },
-  { keywords: ['carne', 'pollo', 'embutido', 'pescado'], icon: { icon: '🥩', background: '#fdecec' } },
-  { keywords: ['grano', 'arroz', 'frijol', 'cereal'], icon: { icon: '🌾', background: '#f6f1e3' } },
-  { keywords: ['bebida', 'jugo', 'gaseosa'], icon: { icon: '🧃', background: '#eef3ff' } },
-  { keywords: ['aseo', 'limpieza'], icon: { icon: '🧴', background: '#eef6f7' } },
-  { keywords: ['despensa', 'abarrote', 'untable', 'enlatado'], icon: { icon: '🥫', background: '#f3efe8' } },
+  { keywords: ['huevo'], icon: { icon: 'egg', tone: 'corn' } },
+  { keywords: ['lacteo', 'leche', 'queso', 'yogur'], icon: { icon: 'milk', tone: 'blue' } },
+  { keywords: ['panaderia', 'pan', 'arepa'], icon: { icon: 'bread', tone: 'corn' } },
+  { keywords: ['fruta', 'verdura', 'hortaliza'], icon: { icon: 'leaf', tone: 'tomato' } },
+  { keywords: ['pescado', 'marisco'], icon: { icon: 'fish', tone: 'blue' } },
+  { keywords: ['carne', 'pollo', 'embutido'], icon: { icon: 'meat', tone: 'tomato' } },
+  { keywords: ['comida', 'preparad'], icon: { icon: 'basket', tone: 'tomato' } },
+  { keywords: ['grano', 'arroz', 'frijol', 'cereal'], icon: { icon: 'grain', tone: 'corn' } },
+  { keywords: ['bebida', 'jugo', 'gaseosa'], icon: { icon: 'drink', tone: 'blue' } },
+  { keywords: ['aseo', 'limpieza'], icon: { icon: 'soap', tone: 'blue' } },
+  { keywords: ['snack', 'dulce'], icon: { icon: 'candy', tone: 'tomato' } },
+  { keywords: ['despensa', 'abarrote', 'untable', 'enlatado'], icon: { icon: 'can', tone: 'cream' } },
 ];
 
-const fallbackIcon: CategoryIcon = { icon: '🛒', background: '#edf6f2' };
+const fallbackIcon: CategoryIcon = { icon: 'basket', tone: 'cream' };
 
 export const iconForCategory = (category: string | null | undefined): CategoryIcon => {
   const text = normalize(category ?? '');
