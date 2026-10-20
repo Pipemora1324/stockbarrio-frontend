@@ -72,6 +72,23 @@ describe('PasswordFieldComponent', () => {
     expect(fixture.componentInstance.value()).toBe('clave2026', 'the value never changes');
   });
 
+  it('puts the cursor back again on the next frame, because Chrome moves it after a real click', async () => {
+    const { fixture, input, button } = setup();
+    await fixture.whenStable();
+    let nextFrame: FrameRequestCallback | undefined;
+    spyOn(window, 'requestAnimationFrame').and.callFake((callback: FrameRequestCallback) => {
+      nextFrame = callback;
+      return 1;
+    });
+    input.value = 'clave2026';
+    input.focus();
+    input.setSelectionRange(7, 7);
+    button.click();
+    input.setSelectionRange(0, 0);
+    nextFrame!(0);
+    expect([input.selectionStart, input.selectionEnd]).toEqual([7, 7]);
+  });
+
   it('lets keyboard users reach the button with Tab, with a visible focus', () => {
     const { button } = setup();
     button.focus();

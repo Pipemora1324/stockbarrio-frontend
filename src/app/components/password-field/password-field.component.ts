@@ -48,6 +48,10 @@ export class PasswordFieldComponent implements AfterContentInit {
     const { selectionStart, selectionEnd } = input;
     this.visible.update((value) => !value);
     input.type = this.visible() ? 'text' : 'password';
-    if (focused && selectionStart !== null && selectionEnd !== null) input.setSelectionRange(selectionStart, selectionEnd);
+    if (!focused || selectionStart === null || selectionEnd === null) return;
+    const restore = () => input.setSelectionRange(selectionStart, selectionEnd);
+    restore();
+    // Con un clic real, Chrome vuelve a poner el cursor al inicio justo después del cambio de tipo: se restaura otra vez.
+    input.ownerDocument.defaultView?.requestAnimationFrame(restore);
   }
 }
