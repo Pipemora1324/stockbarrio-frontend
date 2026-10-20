@@ -306,3 +306,17 @@ Ninguna. Siguen `AUTH_PROVIDER`, `SUPABASE_URL`, `SUPABASE_ANON_KEY` y `ENABLE_A
 ### Pruebas
 
 208 pruebas (antes 158), 96,65 % de líneas y 80,66 % de ramas. Recorrido automático sin desbordes ni errores a 320, 360, 768, 1024, 1280 y 1920 px, en claro y oscuro, con datos y con la base vacía. Pruebas manuales en el README.
+
+## Ajustes al probar como usuario (rama `ajustes`)
+
+### Plan de limpieza (escrito antes de borrar)
+
+Se quita solo código que nadie usa, sin cambiar lo que ve la persona. Se conserva `AUTH_PROVIDER=legacy`.
+
+| Qué se quita | Por qué |
+| --- | --- |
+| Páginas `/alertas` y `/notificaciones`, `NotificationsService`, la campana del header, sus rutas, modelos y llamadas a la API, `alerts-flag.spec.ts` | Estaban apagadas con `enableAlerts` y no se van a reactivar |
+| La bandera `enableAlerts` de `environment.ts` y la variable `ENABLE_ALERTS` de `scripts/set-env.mjs` | Ya no hay nada que encender; los textos de login y registro que dependían de ella quedan con su versión actual |
+| `ApiService.getProducts` y `getNeighborhoods` | Ninguna pantalla los usa (el catálogo usa `getCatalog`; los barrios solo los usaban las alertas) |
+| Clases globales `.button-corn` y `label.field-label` | Ninguna plantilla las usa |
+| Comentarios obvios, y el resto pasa a español | Regla del proyecto: código en inglés; comentarios y textos en español |
