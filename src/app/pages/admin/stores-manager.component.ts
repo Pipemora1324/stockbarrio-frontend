@@ -6,6 +6,12 @@ import type { OwnedStore, StoreInput } from '../../models';
 import * as rules from '../../validation/rules';
 
 type StoreField = keyof StoreInput;
+
+// Deleting a store also removes all its products from Stock Barrio, so the question says it.
+export const deleteStoreQuestion = (store: OwnedStore) => {
+  const products = store.productCount === 1 ? 'su producto' : store.productCount ? `sus ${store.productCount} productos` : 'todos sus productos';
+  return `¿Eliminar el local «${store.name}»? También se quitarán ${products} de Stock Barrio (ofertas, catálogo y asistente).`;
+};
 const emptyStore = (): StoreInput => ({ name: '', neighborhood: '', address: '', phone: '' });
 
 // The seller's stores (Local 1, Local 2...): pick one, create, rename or delete it (with confirmation).
@@ -156,8 +162,7 @@ export class StoresManagerComponent {
   }
 
   async remove(store: OwnedStore) {
-    const products = store.productCount ? ` y sus ${store.productCount} productos dejarán de verse` : '';
-    if (!window.confirm(`¿Eliminar el local «${store.name}»? El local${products} en Stock Barrio.`)) return;
+    if (!window.confirm(deleteStoreQuestion(store))) return;
     await this.run(async () => ({ message: (await this.api.deleteStore(store.id)).message, selectId: null }));
   }
 
