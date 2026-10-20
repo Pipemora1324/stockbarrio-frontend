@@ -121,3 +121,23 @@ export const expirationDate = (value: string, creating: boolean, now: Date = new
 };
 
 export const hasErrors = (errors: Record<string, string>) => Object.values(errors).some(Boolean);
+
+// Offer range, with the same rules and messages as the API. Dates are 'YYYY-MM-DD' (Bogota) compared as text.
+// A start that is not being changed (an offer that is already running) may be in the past.
+export const offerStart = (value: string, today: string, savedStart: string | null = null): string => {
+  if (!value) return 'Elige la fecha de inicio de la oferta.';
+  if (value !== savedStart && value < today) return 'La fecha de inicio de la oferta no puede ser anterior a hoy.';
+  return '';
+};
+
+export const offerEnd = (value: string, start: string, expirationDate: string, today: string, savedEnd: string | null = null): string => {
+  if (!value) return 'Elige la fecha de finalización de la oferta.';
+  if (start && value < start) return 'La fecha de finalización no puede ser anterior a la fecha de inicio.';
+  if (value !== savedEnd && value < today) return 'La fecha de finalización de la oferta no puede ser anterior a hoy.';
+  if (expirationDate && value > expirationDate) return `La oferta no puede terminar después del vencimiento del producto (${expirationDate.split('-').reverse().join('/')}).`;
+  return '';
+};
+
+// An expired product cannot have an offer.
+export const offerOnExpired = (discountPercent: number, expirationDate: string, today: string): string =>
+  discountPercent > 0 && expirationDate && expirationDate < today ? 'Un producto vencido no puede tener oferta. Quita el descuento o corrige la fecha de vencimiento.' : '';
