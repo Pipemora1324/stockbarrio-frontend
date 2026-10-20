@@ -2,10 +2,25 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <title>StockBarrio</title>
+  <title>Stock Barrio</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <meta name="description" content="Encuentra el mejor producto al mejor precio y con los mejores descuentos en las tiendas de tu barrio.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#FBF6EC" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14161C" media="(prefers-color-scheme: dark)">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preload" href="fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/figtree.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- Applies the saved theme before the first paint, so the page never flashes in the other one. -->
+  <script>
+    (function () {
+      try {
+        var theme = localStorage.getItem('stockbarrio-theme');
+        if (theme === 'light' || theme === 'dark') document.documentElement.setAttribute('data-theme', theme);
+      } catch (error) {}
+    })();
+  </script>
 </head>
 <body>
   <app-root></app-root>
