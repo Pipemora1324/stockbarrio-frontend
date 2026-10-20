@@ -277,3 +277,32 @@ El backend de la rama `mejoras` (ofertas, chat, cuenta y categorías).
 - **supabase-js 2.117.2:** se carga solo en este modo, así que el bundle inicial del modo `legacy` no crece.
 - **Pruebas:** 158 en verde (95,2 % de líneas, 79,1 % de ramas), con supabase-js simulado.
 - **Variables nuevas en Vercel:** `AUTH_PROVIDER`, `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
+
+## Rediseño completo (rama `rediseno`)
+
+### Qué cambió
+
+- **Identidad nueva, sin verde:** mercado de barrio moderno con rojo tomate, amarillo maíz, azul tinta y crema (carbón en oscuro), tokens por tema en `styles.scss`, fuentes autohospedadas (Bricolage Grotesque y Figtree), tarjetas con forma de etiqueta de precio, íconos e ilustraciones propias en SVG. Se quitaron los emojis.
+- **Tema claro y oscuro** con la preferencia del sistema por defecto, botón en el header, elección guardada con try/catch y sin parpadeo (script en `index.html`). Contraste AA comprobado en una prueba.
+- **Animaciones suaves** (hover, entrada al hacer scroll) que respetan `prefers-reduced-motion`.
+- **Header:** "SB" + "Stock Barrio", sin "Inicio" ni "IA", compacto al hacer scroll, menú móvil, y Mi tienda o Mi cuenta según el rol. Título de la pestaña: "Stock Barrio".
+- **Inicio:** mensaje "Ayudamos al ciudadano a encontrar el mejor producto al mejor precio y con los mejores descuentos cerca de su barrio.", locales afiliados y ofertas destacadas, con estados vacíos.
+- **Ofertas:** solo filtro por categoría, mayor descuento primero, los más rebajados destacados y "Oferta hasta…".
+- **Catálogo:** sin ofertas, agrupado por local, solo filtro por categoría.
+- **Asistente:** sin selector de barrio, botones "Ofertas de hoy" y "Tiendas cercanas"; el barrio se pregunta en el chat y se recuerda en memoria.
+- **Panel:** varios locales (crear, renombrar, eliminar), inventario en tabla que pasa a tarjetas en el celular (sin imágenes), sugerencias con rango de fechas y aviso de que los no perecederos no se sugieren, y formulario con "Fecha de inicio" y "Fecha de finalización".
+- **Datos desde cero:** la app ya no menciona tiendas de demostración; todas las pantallas tienen estados vacíos.
+- **Banners:** lugar preparado en `src/app/banners.ts` (vacío) y reglas de licencia y créditos en `public/img/CREDITOS.md`.
+- Se quitó `favicon.ico` (era el de Angular) y se agregó `favicon.svg` con el isotipo.
+
+### Requiere
+
+El backend de la rama `rediseno` (catálogo agrupado, locales, fechas de oferta y "tiendas cercanas"). El backend nuevo sigue sirviendo al frontend anterior, así que el orden es backend primero.
+
+### Variables nuevas
+
+Ninguna. Siguen `AUTH_PROVIDER`, `SUPABASE_URL`, `SUPABASE_ANON_KEY` y `ENABLE_ALERTS` (apagada).
+
+### Pruebas
+
+208 pruebas (antes 158), 96,65 % de líneas y 80,66 % de ramas. Recorrido automático sin desbordes ni errores a 320, 360, 768, 1024, 1280 y 1920 px, en claro y oscuro, con datos y con la base vacía. Pruebas manuales en el README.
