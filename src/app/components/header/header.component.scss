@@ -22,7 +22,7 @@
   background: var(--color-bg);
   transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
-// Scrolled: smaller, solid background and a line underneath.
+// Con scroll: más pequeño, fondo sólido y una línea debajo.
 :host(.compact) .site-header {
   padding-top: 0.55rem;
   padding-bottom: 0.55rem;
