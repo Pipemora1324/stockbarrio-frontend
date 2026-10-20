@@ -15,7 +15,8 @@ describe('account pages', () => {
 
   const setup = (token = '') => {
     localStorage.clear();
-    api = jasmine.createSpyObj<ApiService>('ApiService', ['forgotPassword', 'resetPassword', 'getAccount', 'updateName', 'changePassword', 'requestEmailChange', 'confirmEmailChange', 'me']);
+    api = jasmine.createSpyObj<ApiService>('ApiService', ['forgotPassword', 'resetPassword', 'getAccount', 'updateName', 'changePassword', 'requestEmailChange', 'confirmEmailChange', 'me', 'checkEmail']);
+    api.checkEmail.and.resolveTo({ available: true });
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
@@ -156,6 +157,20 @@ describe('account pages', () => {
     expect(page.profile()?.pendingEmail).toBe('nuevo@correo.co');
     expect(page.emailPassword()).toBe('');
     expect(page.emailState().message).toContain('Te enviamos un enlace');
+  });
+
+  it('does not change to an email of another account (Gmail variants included) nor to a "+" alias', async () => {
+    setup();
+    const { page } = await openProfile();
+    page.newEmail.set('otra+x@correo.co');
+    expect(page.newEmailError()).toBe('No uses alias con +; escribe tu correo normal.');
+    api.checkEmail.and.resolveTo({ available: false, message: 'Este correo ya está vinculado a una cuenta. Inicia sesión o recupera tu contraseña.' });
+    page.newEmail.set('luz.marina@gmail.com');
+    page.emailPassword.set('cliente12345');
+    await page.saveEmail();
+    expect(api.checkEmail).toHaveBeenCalledWith('luz.marina@gmail.com');
+    expect(api.requestEmailChange).not.toHaveBeenCalled();
+    expect(page.emailState().failure).toContain('ya está vinculado');
   });
 
   it('shows the API errors of each form and of loading the profile', async () => {
