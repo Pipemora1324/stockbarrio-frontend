@@ -17,6 +17,13 @@ type Field = 'name' | 'email' | 'password' | 'storeName' | 'neighborhood' | 'add
     <button type="button" role="radio" [attr.aria-checked]="!isStore()" [class.active]="!isStore()" (click)="accountType.set('customer')">Soy cliente</button>
     <button type="button" role="radio" [attr.aria-checked]="isStore()" [class.active]="isStore()" (click)="accountType.set('store')">Tengo una tienda</button>
   </div>
+  @if (confirmEmail()) {
+  <div class="confirm-state" role="status">
+    <h2>Revisa tu correo</h2>
+    <p>Te enviamos un enlace a <strong>{{ confirmEmail() }}</strong> para confirmar tu cuenta. Ábrelo y luego inicia sesión. Si no llega en unos minutos, revisa la carpeta de spam.</p>
+    <a class="button" routerLink="/login">Ir a iniciar sesión</a>
+  </div>
+  } @else {
   <form (ngSubmit)="submit()" novalidate>
     <label for="register-name">Nombre completo</label>
     <input id="register-name" name="name" autocomplete="name" maxlength="60" [ngModel]="values().name" (ngModelChange)="set('name', $event)" (blur)="touch('name')" [attr.aria-invalid]="show('name') ? true : null" aria-describedby="register-name-error">
@@ -50,6 +57,7 @@ type Field = 'name' | 'email' | 'password' | 'storeName' | 'neighborhood' | 'add
     <button class="button" type="submit" [disabled]="loading() || invalid()">{{ loading() ? 'Creando cuenta…' : 'Crear cuenta' }}</button>
     @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
   </form>
+  }
   <a routerLink="/login">¿Ya tienes cuenta? Entra</a>
 </section></main>`, styleUrl: './register.component.scss' })
 export class RegisterComponent {
@@ -61,6 +69,8 @@ export class RegisterComponent {
   private readonly touched = signal<ReadonlySet<Field>>(new Set());
   readonly loading = signal(false);
   readonly error = signal('');
+  // Supabase mode: the account is ready after the person opens the confirmation link sent to this address.
+  readonly confirmEmail = signal('');
 
   readonly errors = computed<Record<Field, string>>(() => {
     const value = this.values();
@@ -97,9 +107,10 @@ export class RegisterComponent {
     const value = this.values();
     const account = { name: value.name.trim(), email: value.email.trim().toLowerCase(), password: value.password };
     try {
-      await this.auth.register(this.isStore()
+      const result = await this.auth.register(this.isStore()
         ? { ...account, accountType: 'store', storeName: value.storeName.trim(), neighborhood: value.neighborhood.trim(), address: value.address.trim(), ...(value.phone.trim() ? { phone: value.phone.trim() } : {}) }
         : { ...account, accountType: 'customer' });
+      if (result === 'confirm-email') this.confirmEmail.set(account.email);
     } catch (caught) {
       this.error.set(caught instanceof Error ? caught.message : 'No se pudo crear la cuenta.');
     } finally {
