@@ -2,8 +2,8 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 export type IllustrationName = 'stall' | 'empty-basket' | 'empty-store' | 'empty-tag' | 'chat';
 
-// Own illustrations drawn with the palette variables, so they follow the light and dark themes.
-// They are decorative: the text next to them always says the same thing.
+// Ilustraciones propias dibujadas con las variables de la paleta, así siguen los temas claro y oscuro.
+// Son decorativas: el texto de al lado siempre dice lo mismo.
 @Component({
   selector: 'app-illustration',
   changeDetection: ChangeDetectionStrategy.OnPush,

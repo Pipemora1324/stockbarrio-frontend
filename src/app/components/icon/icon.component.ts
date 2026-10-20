@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-// Own icon set: 24×24 strokes that use the text color, so they work in both themes. No emoji, no icon font.
+// Set propio de íconos: trazos de 24×24 con el color del texto, así funcionan en los dos temas. Sin emojis ni fuentes de íconos.
 export const iconPaths = {
   tag: 'M3 12V4h8l10 10-8 8L3 12Z M7.5 7.5h.01',
   store: 'M4 10v10h16V10 M3 4h18l-1.5 6H4.5L3 4Z M9 20v-6h6v6',
@@ -28,7 +28,7 @@ export const iconPaths = {
   eyeOff: 'M3 3l18 18 M10.6 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.1 M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.6 9.6 0 0 0 5.4-1.6 M9.9 9.9a3 3 0 0 0 4.2 4.2',
   bell: 'M6 16V11a6 6 0 0 1 12 0v5l2 2H4l2-2Z M10 20a2 2 0 0 0 4 0',
   box: 'M3 7.5 12 3l9 4.5v9L12 21l-9-4.5v-9Z M3 7.5 12 12l9-4.5 M12 12v9',
-  // Categories.
+  // Categorías.
   milk: 'M9 3h6v3l2 3v12H7V9l2-3V3Z M7 13h10',
   bread: 'M5 11a4 4 0 0 1 2-7h10a4 4 0 0 1 2 7v9H5v-9Z M9 11v5 M15 11v5',
   egg: 'M12 21a6 6 0 0 0 6-6c0-5-3-11-6-11S6 10 6 15a6 6 0 0 0 6 6Z',

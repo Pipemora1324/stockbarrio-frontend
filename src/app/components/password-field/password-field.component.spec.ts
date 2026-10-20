@@ -91,12 +91,12 @@ describe('password fields of every screen', () => {
 
   for (const [name, component, autocomplete] of screens) {
     it(`${name}: every password field has the eye button and the right autocomplete`, () => {
-      // The reset page only shows its form with a token in the address.
+      // La página de nueva contraseña solo muestra su formulario con un token en la dirección.
       const route = { snapshot: { queryParamMap: convertToParamMap({ token: 'a'.repeat(43) }), fragment: null } };
       TestBed.configureTestingModule({ providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: ActivatedRoute, useValue: route }] });
       const fixture = TestBed.createComponent(component as never);
       const instance = fixture.componentInstance as { step?: { set: (value: string) => void } };
-      // The code recovery shows its passwords in the second step.
+      // La recuperación con código muestra sus contraseñas en el segundo paso.
       instance.step?.set('code');
       fixture.detectChanges();
       const page = fixture.nativeElement as HTMLElement;

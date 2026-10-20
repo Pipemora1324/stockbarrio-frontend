@@ -1,7 +1,7 @@
 import { DestroyRef, Directive, ElementRef, inject, OnInit } from '@angular/core';
 
-// Fades content in when it scrolls into view. Without IntersectionObserver, or with prefers-reduced-motion,
-// the content is shown at once (styles.scss also disables the movement for reduced motion).
+// Hace aparecer el contenido cuando entra en pantalla. Sin IntersectionObserver, o con prefers-reduced-motion,
+// el contenido se muestra de una vez (styles.scss también quita el movimiento con movimiento reducido).
 @Directive({ selector: '[appReveal]', host: { class: 'reveal' } })
 export class RevealDirective implements OnInit {
   private readonly element = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;

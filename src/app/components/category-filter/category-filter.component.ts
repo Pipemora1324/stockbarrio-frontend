@@ -2,8 +2,8 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 
 let nextId = 0;
 
-// The single filter of Ofertas and Catálogo: one category or all of them. Radio buttons underneath, shown as pills,
-// so the arrow keys move between options and screen readers announce the choice.
+// El único filtro de Ofertas y Catálogo: una categoría o todas. Botones de radio debajo, mostrados como píldoras,
+// para que las flechas del teclado pasen entre opciones y los lectores de pantalla anuncien la elección.
 @Component({
   selector: 'app-category-filter',
   changeDetection: ChangeDetectionStrategy.OnPush,

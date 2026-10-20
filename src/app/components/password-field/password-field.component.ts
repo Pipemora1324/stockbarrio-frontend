@@ -1,8 +1,8 @@
 import { AfterContentInit, ChangeDetectionStrategy, Component, ElementRef, inject, signal } from '@angular/core';
 import { IconComponent } from '../icon/icon.component';
 
-// Wraps a password <input> (projected as is, with its own bindings, validation and autocomplete) and adds an eye
-// button to show or hide it. The button only switches the input type, so the form value never changes.
+// Envuelve un <input> de contraseña (proyectado tal cual, con sus enlaces, su validación y su autocomplete) y le agrega
+// un botón de ojo para verla u ocultarla. El botón solo cambia el tipo del campo, así el valor del formulario nunca cambia.
 @Component({
   selector: 'app-password-field',
   imports: [IconComponent],
@@ -36,7 +36,7 @@ export class PasswordFieldComponent implements AfterContentInit {
     this.inputId.set(this.input?.id || null);
   }
 
-  // With the mouse the input keeps the focus (and the cursor) instead of moving it to the button.
+  // Con el mouse, el campo conserva el foco (y el cursor) en vez de pasarlo al botón.
   keepFocus(event: MouseEvent) {
     if (this.input && this.host.nativeElement.ownerDocument.activeElement === this.input) event.preventDefault();
   }

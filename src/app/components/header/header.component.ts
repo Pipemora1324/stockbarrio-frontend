@@ -6,7 +6,7 @@ import { AuthService } from '../../auth.service';
 import { ThemeService } from '../../services/theme.service';
 import { IconComponent } from '../icon/icon.component';
 
-// From this many pixels of scroll the header gets compact and solid.
+// A partir de estos píxeles de scroll el header se compacta y toma fondo sólido.
 export const compactAfterPx = 24;
 
 @Component({
