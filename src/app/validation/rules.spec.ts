@@ -110,3 +110,28 @@ describe('validation rules', () => {
     expect(rules.hasErrors({ name: '', email: 'El correo electrónico no es válido.' })).toBeTrue();
   });
 });
+
+describe('offer range rules (same messages as the API)', () => {
+  const today = '2026-10-19';
+
+  it('starts today or later, unless the saved start of a running offer stays the same', () => {
+    expect(rules.offerStart('', today)).toBe('Elige la fecha de inicio de la oferta.');
+    expect(rules.offerStart(today, today)).toBe('');
+    expect(rules.offerStart('2026-10-18', today)).toBe('La fecha de inicio de la oferta no puede ser anterior a hoy.');
+    expect(rules.offerStart('2026-10-15', today, '2026-10-15')).toBe('');
+  });
+
+  it('ends after the start, not in the past and at the latest on the expiration day', () => {
+    expect(rules.offerEnd('', today, '2026-10-25', today)).toBe('Elige la fecha de finalización de la oferta.');
+    expect(rules.offerEnd('2026-10-25', today, '2026-10-25', today)).toBe('');
+    expect(rules.offerEnd('2026-10-20', '2026-10-21', '2026-10-25', today)).toBe('La fecha de finalización no puede ser anterior a la fecha de inicio.');
+    expect(rules.offerEnd('2026-10-18', '2026-10-10', '2026-10-25', today)).toBe('La fecha de finalización de la oferta no puede ser anterior a hoy.');
+    expect(rules.offerEnd('2026-10-26', today, '2026-10-25', today)).toBe('La oferta no puede terminar después del vencimiento del producto (25/10/2026).');
+  });
+
+  it('does not allow an offer on an expired product', () => {
+    expect(rules.offerOnExpired(10, '2026-10-18', today)).toContain('Un producto vencido no puede tener oferta');
+    expect(rules.offerOnExpired(0, '2026-10-18', today)).toBe('');
+    expect(rules.offerOnExpired(10, today, today)).toBe('');
+  });
+});

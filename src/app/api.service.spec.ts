@@ -75,10 +75,15 @@ describe('ApiService', () => {
       [() => api.requestEmailChange('n@correo.co', 'clave1234'), 'POST', '/api/account/email', { newEmail: 'n@correo.co', currentPassword: 'clave1234' }, { message: 'ok' }],
       [() => api.confirmEmailChange('tok'), 'POST', '/api/account/email/confirm', { token: 'tok' }, { message: 'ok' }],
       [() => api.getMyInventory(), 'GET', '/api/products/mine', null, { data: [], store: {} }],
-      [() => api.saveProduct({ name: 'Leche', category: 'Lácteos', description: '', price: 1, stock: 1, expirationDate: '2099-01-01', discountPercent: 0 }), 'POST', '/api/products', jasmine.objectContaining({ name: 'Leche' }), { data: {} }],
+      [() => api.saveProduct({ name: 'Leche', category: 'Lácteos', description: '', price: 1, stock: 1, expirationDate: '2099-01-01', discountPercent: 0, offerStartsOn: null, offerEndsOn: null }), 'POST', '/api/products', jasmine.objectContaining({ name: 'Leche', offerStartsOn: null }), { data: {} }],
+      [() => api.getMyStores(), 'GET', '/api/stores/mine', null, { data: [], max: 10 }],
+      [() => api.createStore({ name: 'Local Dos', neighborhood: 'Bosa', address: 'Calle 1 # 2-3', phone: '' }), 'POST', '/api/stores', { name: 'Local Dos', neighborhood: 'Bosa', address: 'Calle 1 # 2-3', phone: '' }, { data: {}, message: 'ok' }],
+      [() => api.updateStore('s2', { name: 'Local Tres' }), 'PATCH', '/api/stores/s2', { name: 'Local Tres' }, { data: {}, message: 'ok' }],
+      [() => api.deleteStore('s2'), 'DELETE', '/api/stores/s2', null, { message: 'ok' }],
       [() => api.updateProduct('p1', { stock: 3 }), 'PUT', '/api/products/p1', { stock: 3 }, { data: {} }],
       [() => api.deleteProduct('p1'), 'DELETE', '/api/products/p1', null, {}],
       [() => api.approveSuggestion('s1'), 'POST', '/api/suggestions/s1/approve', {}, { data: {}, message: 'ok' }],
+      [() => api.approveSuggestion('s1', { offerStartsOn: '2026-10-20', offerEndsOn: '2026-10-22' }), 'POST', '/api/suggestions/s1/approve', { offerStartsOn: '2026-10-20', offerEndsOn: '2026-10-22' }, { data: {}, message: 'ok' }],
       [() => api.rejectSuggestion('s1'), 'POST', '/api/suggestions/s1/reject', {}, { message: 'ok' }],
       [() => api.approveAllSuggestions(), 'POST', '/api/suggestions/approve-all', {}, { data: [], message: 'ok' }],
       [() => api.getNeighborhoods(), 'GET', '/api/stores/neighborhoods', null, { data: [] }],
@@ -94,9 +99,49 @@ describe('ApiService', () => {
     }
   });
 
+  it('sends the chosen store as ?storeId= and the new product with it', async () => {
+    const inventory = api.getMyInventory('s2');
+    const request = backend.expectOne((candidate) => candidate.url === '/api/products/mine');
+    expect(request.request.params.get('storeId')).toBe('s2');
+    request.flush({ data: [], store: { id: 's2' }, stores: [{ id: 's1' }, { id: 's2' }], today: '2026-10-19' });
+    expect((await inventory).stores.length).toBe(2);
+
+    const suggestions = api.getSuggestions('s2');
+    const suggestionsRequest = backend.expectOne((candidate) => candidate.url === '/api/suggestions');
+    expect(suggestionsRequest.request.params.get('storeId')).toBe('s2');
+    suggestionsRequest.flush({ data: [] });
+    await suggestions;
+
+    const approve = api.approveAllSuggestions('s2');
+    const approveRequest = backend.expectOne((candidate) => candidate.url === '/api/suggestions/approve-all');
+    expect(approveRequest.request.params.get('storeId')).toBe('s2');
+    approveRequest.flush({ data: [], message: 'ok' });
+    await approve;
+
+    const saved = api.saveProduct({ name: 'Leche', category: 'Lácteos', description: '', price: 1, stock: 1, expirationDate: '2099-01-01', discountPercent: 10, offerStartsOn: '2099-01-01', offerEndsOn: '2099-01-01' }, 's2');
+    const saveRequest = backend.expectOne('/api/products');
+    expect(saveRequest.request.body).toEqual(jasmine.objectContaining({ storeId: 's2', offerStartsOn: '2099-01-01', offerEndsOn: '2099-01-01' }));
+    saveRequest.flush({ data: {} });
+    await saved;
+  });
+
+  it('asks for the catalog grouped by store, with the category as the only filter', async () => {
+    const all = api.getCatalog();
+    const allRequest = backend.expectOne((candidate) => candidate.url === '/api/products/catalog');
+    expect(allRequest.request.params.keys()).toEqual([]);
+    allRequest.flush({ data: [{ store: { id: 's1' }, products: [] }], total: 0 });
+    expect(await all).toEqual({ groups: [jasmine.objectContaining({ store: jasmine.objectContaining({ id: 's1' }) })], total: 0 });
+
+    const dairy = api.getCatalog('Lácteos');
+    const dairyRequest = backend.expectOne((candidate) => candidate.url === '/api/products/catalog');
+    expect(dairyRequest.request.params.get('category')).toBe('Lácteos');
+    dairyRequest.flush({ data: [], total: 0 });
+    await dairy;
+  });
+
   it('unwraps the data the pages use', async () => {
     const inventory = api.getMyInventory();
-    backend.expectOne('/api/products/mine').flush({ data: [{ id: 'p1' }], store: { id: 's1' } });
+    backend.expectOne('/api/products/mine').flush({ data: [{ id: 'p1' }], store: { id: 's1' }, stores: [{ id: 's1' }], today: '2026-10-19' });
     expect(await inventory).toEqual(jasmine.objectContaining({ products: [jasmine.objectContaining({ id: 'p1' })], store: jasmine.objectContaining({ id: 's1' }) }));
 
     const neighborhoods = api.getNeighborhoods();
