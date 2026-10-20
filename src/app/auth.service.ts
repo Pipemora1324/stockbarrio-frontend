@@ -1,12 +1,16 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { environment } from '../environments/environment';
+import { emailTakenMessage } from './validation/rules';
 import { ApiError, ApiService } from './api.service';
 import type { AuthUser } from './models';
 import { SupabaseAuthFailure, SupabaseService, supabaseEnabled, toAuthFailure } from './services/supabase.service';
 import { clearSession, readSession, writeSession } from './session.storage';
 
-export type RegisterResult = 'signed-in' | 'confirm-email';
+// already-pending: the account exists but its email is not confirmed; Supabase sent the confirmation again.
+export type RegisterResult = 'signed-in' | 'confirm-email' | 'already-pending';
+// A user created more than this long ago was not created by this sign up.
+export const existingUserAfterMs = 10_000;
 
 // Where Supabase sends people back after they open a confirmation link.
 const backTo = (path: string) => `${globalThis.location?.origin ?? ''}${path}`;
@@ -45,8 +49,13 @@ export class AuthService {
       return 'signed-in';
     }
     const { email, password, ...profile } = payload as { email: string; password: string } & Record<string, unknown>;
-    const { error } = await (await this.supabase.auth()).signUp({ email, password, options: { data: profile, emailRedirectTo: backTo('/login?confirmado=1') } });
+    const { data, error } = await (await this.supabase.auth()).signUp({ email, password, options: { data: profile, emailRedirectTo: backTo('/login?confirmado=1') } });
     if (error) throw toAuthFailure(error);
+    // With "Confirm email" on, Supabase answers a confirmed address with an obfuscated user without identities
+    // instead of an error, so nobody can learn which emails exist from the API alone.
+    if (data?.user && Array.isArray(data.user.identities) && !data.user.identities.length) throw new SupabaseAuthFailure(emailTakenMessage, 'email_taken');
+    const createdAt = data?.user?.created_at ? Date.parse(data.user.created_at) : NaN;
+    if (data?.user && !data.user.email_confirmed_at && Date.now() - createdAt > existingUserAfterMs) return 'already-pending';
     return 'confirm-email';
   }
 
