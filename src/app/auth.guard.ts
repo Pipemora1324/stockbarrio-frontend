@@ -2,7 +2,7 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from './auth.service';
 
-// The store panel is only for store owners; the API also checks that each product belongs to their store.
+// El panel es solo para dueños de tiendas; la API además comprueba que cada producto sea de sus locales.
 export const storeGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
@@ -11,7 +11,7 @@ export const storeGuard: CanActivateFn = () => {
   return true;
 };
 
-// Any signed-in account (profile page).
+// Cualquier cuenta con sesión (página de perfil).
 export const signedInGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   return auth.user() ? true : inject(Router).createUrlTree(['/login']);

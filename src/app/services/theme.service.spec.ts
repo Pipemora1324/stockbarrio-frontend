@@ -56,7 +56,7 @@ describe('ThemeService', () => {
   });
 });
 
-// The palette must keep at least WCAG AA (4.5:1) for normal text, in both themes.
+// La paleta debe mantener al menos WCAG AA (4,5:1) para texto normal, en los dos temas.
 describe('theme colors', () => {
   const root = document.documentElement;
   const toRgb = (value: string) => {

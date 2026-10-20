@@ -64,7 +64,7 @@ describe('validation rules', () => {
     expect(rules.expirationDate('2028-02-29', true, now)).toBe('');
     expect(rules.expirationDate('2027-02-29', false, now)).toBe('La fecha no es válida.');
     expect(rules.expirationDate('18/10/2026', true, now)).toContain('AAAA-MM-DD');
-    // 22:00 in Bogota on the 18th is already the 19th in UTC: the 18th is still today.
+    // Las 22:00 del 18 en Bogotá ya son el 19 en UTC: el 18 sigue siendo hoy.
     expect(rules.expirationDate('2026-10-18', true, new Date('2026-10-19T03:00:00Z'))).toBe('');
     expect(rules.expirationDate('2026-10-18', true, new Date('2026-10-19T05:00:00Z'))).toContain('en el pasado');
   });

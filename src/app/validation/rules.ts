@@ -1,5 +1,5 @@
-// Mirrors the API rules (the API stays the authority) so users see each problem next to its field before sending.
-// Every rule returns '' when the value is valid, or a Spanish message.
+// Repite las reglas de la API (la API sigue siendo la autoridad) para que cada problema se vea junto a su campo antes de enviar.
+// Cada regla devuelve '' cuando el valor es válido, o un mensaje en español.
 import { todayInBogota } from '../dates';
 
 export const productCategories = [
@@ -55,7 +55,7 @@ export const phone = (value: string): string => {
   return /^3\d{9}$/.test(digits) || /^60[1-8]\d{7}$/.test(digits) ? '' : 'El teléfono debe ser un celular colombiano de 10 dígitos que empiece por 3, o un fijo como 601 2345678.';
 };
 
-// Every form saves the email trimmed and in lowercase.
+// Todos los formularios guardan el correo sin espacios y en minúsculas.
 export const normalizeEmail = (value: string | null | undefined) => (value ?? '').trim().toLowerCase();
 export const plusAliasMessage = 'No uses alias con +; escribe tu correo normal.';
 export const emailTakenMessage = 'Este correo ya está vinculado a una cuenta. Inicia sesión o recupera tu contraseña.';
@@ -114,11 +114,11 @@ export const discount = (value: unknown): string => {
   return '';
 };
 
-// When creating, the date cannot be in the past (Bogota calendar). When editing, any real date is accepted.
+// Al crear, la fecha no puede estar en el pasado (calendario de Bogotá). Al editar se acepta cualquier fecha real.
 export const expirationDate = (value: string, creating: boolean, now: Date = new Date()): string => {
   if (!value) return 'La fecha de vencimiento es obligatoria.';
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return 'La fecha debe tener el formato AAAA-MM-DD.';
-  // Same check as the API: days like 2026-02-30 do not exist.
+  // La misma comprobación de la API: días como 2026-02-30 no existen.
   const [year, month, day] = value.split('-').map(Number);
   if (new Date(Date.UTC(year, month - 1, day)).toISOString().slice(0, 10) !== value) return 'La fecha no es válida.';
   if (creating && value < todayInBogota(now)) return 'La fecha de vencimiento no puede estar en el pasado.';
@@ -127,8 +127,8 @@ export const expirationDate = (value: string, creating: boolean, now: Date = new
 
 export const hasErrors = (errors: Record<string, string>) => Object.values(errors).some(Boolean);
 
-// Offer range, with the same rules and messages as the API. Dates are 'YYYY-MM-DD' (Bogota) compared as text.
-// A start that is not being changed (an offer that is already running) may be in the past.
+// Rango de la oferta, con las mismas reglas y mensajes de la API. Las fechas son 'AAAA-MM-DD' (Bogotá) comparadas como texto.
+// Un inicio que no se está cambiando (una oferta que ya empezó) puede estar en el pasado.
 export const offerStart = (value: string, today: string, savedStart: string | null = null): string => {
   if (!value) return 'Elige la fecha de inicio de la oferta.';
   if (value !== savedStart && value < today) return 'La fecha de inicio de la oferta no puede ser anterior a hoy.';
@@ -143,9 +143,9 @@ export const offerEnd = (value: string, start: string, expirationDate: string, t
   return '';
 };
 
-// An expired product cannot have an offer.
+// Un producto vencido no puede tener oferta.
 export const offerOnExpired = (discountPercent: number, expirationDate: string, today: string): string =>
   discountPercent > 0 && expirationDate && expirationDate < today ? 'Un producto vencido no puede tener oferta. Quita el descuento o corrige la fecha de vencimiento.' : '';
 
-// For new accounts and email changes (login and recovery accept older addresses with "+").
+// Para cuentas nuevas y cambios de correo (el login y la recuperación aceptan direcciones viejas con "+").
 export const newEmail = (value: string): string => email(value) || (normalizeEmail(value).split('@')[0].includes('+') ? plusAliasMessage : '');

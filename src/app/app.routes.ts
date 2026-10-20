@@ -5,21 +5,21 @@ import { HomeComponent } from './pages/home/home.component';
 
 const supabaseAuth = environment.authProvider === 'supabase';
 
-// Own login: recovery by link and email confirmation pages of the API.
+// Login propio: recuperación por enlace y confirmación de correo de la API.
 const legacyAccountRoutes: Routes = [
   { path: 'forgot-password', loadComponent: () => import('./pages/account/forgot-password.component').then((m) => m.ForgotPasswordComponent), title: 'Recuperar contraseña · Stock Barrio' },
   { path: 'reset-password', loadComponent: () => import('./pages/account/reset-password.component').then((m) => m.ResetPasswordComponent), title: 'Nueva contraseña · Stock Barrio' },
   { path: 'confirm-email', loadComponent: () => import('./pages/account/confirm-email.component').then((m) => m.ConfirmEmailComponent), title: 'Confirmar correo · Stock Barrio' },
 ];
 
-// Supabase Auth: recovery with a 6 digit code; old links to the legacy pages lead to the new flow.
+// Supabase Auth: recuperación con un código de 6 dígitos; los enlaces viejos a las páginas legacy llevan al flujo nuevo.
 const supabaseAccountRoutes: Routes = [
   { path: 'forgot-password', loadComponent: () => import('./pages/account/recover-with-code.component').then((m) => m.RecoverWithCodeComponent), title: 'Recuperar contraseña · Stock Barrio' },
   { path: 'reset-password', redirectTo: 'forgot-password' },
   { path: 'confirm-email', redirectTo: 'login' },
 ];
 
-// The home page ships in the main bundle for a fast first paint; every other page is loaded on demand.
+// El inicio va en el bundle principal para pintar rápido; las demás páginas se cargan cuando se necesitan.
 export const routes: Routes = [
   { path: '', component: HomeComponent, title: 'Stock Barrio' },
   { path: 'catalogo', loadComponent: () => import('./pages/catalog/catalog.component').then((m) => m.CatalogComponent), title: 'Catálogo · Stock Barrio' },

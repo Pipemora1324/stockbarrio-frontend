@@ -1,4 +1,4 @@
-// Calendar days in America/Bogota, matching how the API treats expiration dates.
+// Días de calendario en America/Bogota, igual que la API trata las fechas de vencimiento.
 const bogotaDay = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' });
 
 const toUtcMidnight = (day: string) => {

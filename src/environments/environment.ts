@@ -1,13 +1,13 @@
-// Build-time settings. scripts/set-env.mjs rewrites this file from the Vercel variables
-// AUTH_PROVIDER, SUPABASE_URL and SUPABASE_ANON_KEY, so they change without editing code.
+// Configuración del build. scripts/set-env.mjs reescribe este archivo con las variables de Vercel
+// AUTH_PROVIDER, SUPABASE_URL y SUPABASE_ANON_KEY, así cambian sin tocar el código.
 export const environment: {
   authProvider: 'legacy' | 'supabase';
   supabaseUrl: string;
   supabaseAnonKey: string;
 } = {
-  // "legacy": the API's own login. "supabase": Supabase Auth (sign up, login and password recovery with a code).
+  // "legacy": el login propio de la API. "supabase": Supabase Auth (registro, login y recuperación de contraseña con un código).
   authProvider: 'legacy',
-  // Public values of the Supabase project (the anon key is meant to be public; the service_role key never goes here).
+  // Valores públicos del proyecto de Supabase (la clave anon es pública por diseño; la service_role nunca va aquí).
   supabaseUrl: '',
   supabaseAnonKey: '',
 };

@@ -73,7 +73,7 @@ describe('Supabase Auth mode', () => {
     localStorage.clear();
   });
 
-  // Lets the awaited supabase promises settle so the next HTTP request is sent.
+  // Deja que se resuelvan las promesas de supabase para que se envíe la siguiente petición HTTP.
   const settle = () => new Promise((resolve) => setTimeout(resolve));
 
   describe('login', () => {
