@@ -78,6 +78,11 @@ export class ApiService {
     return (await this.request(this.http.get<{ data: Product[] }>(`${this.baseUrl}/products`, { params }), 'No se pudieron cargar los productos.')).data;
   }
 
+  // Whether the email (or another address of the same mailbox, like Gmail with dots) already has an account.
+  checkEmail(email: string): Promise<{ available: boolean; message?: string }> {
+    return this.request(this.http.post<{ available: boolean; message?: string }>(`${this.baseUrl}/auth/check-email`, { email }), 'No se pudo revisar el correo.');
+  }
+
   register(payload: Record<string, unknown>): Promise<{ token: string; user: AuthUser }> {
     return this.request(this.http.post<{ token: string; user: AuthUser }>(`${this.baseUrl}/auth/register`, payload), 'No se pudo crear la cuenta.');
   }
