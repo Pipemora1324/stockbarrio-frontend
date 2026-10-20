@@ -9,7 +9,7 @@ type AccountType = 'customer' | 'store';
 type Field = 'name' | 'email' | 'password' | 'storeName' | 'neighborhood' | 'address' | 'phone';
 
 @Component({ selector: 'app-register', imports: [FormsModule, RouterLink], changeDetection: ChangeDetectionStrategy.OnPush, template: `
-<main class="register-page"><section class="register-card">
+<main class="register-page"><section class="card register-card">
   <span class="eyebrow">{{ isStore() ? 'Registro de tienda' : 'Registro de cliente' }}</span>
   <h1>{{ isStore() ? 'Conecta tu negocio' : 'Ahorra en tu barrio' }}</h1>
   <p>{{ isStore() ? 'Crea una cuenta para controlar el inventario de tu tienda y sus ofertas.' : (alertsEnabled ? 'Crea una cuenta para recibir avisos cuando haya descuentos en lo que te interesa.' : 'Crea una cuenta para guardar tu perfil y encontrar las ofertas de tu barrio.') }}</p>

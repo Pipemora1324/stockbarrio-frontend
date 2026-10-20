@@ -1,0 +1,84 @@
+.stores {
+  display: grid;
+  gap: 0.9rem;
+}
+.stores-head,
+.store-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem 1rem;
+}
+.stores-head h2 {
+  margin: 0;
+}
+.store-actions .muted {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  --icon-size: 1rem;
+}
+.store-tabs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 13rem), 1fr));
+  gap: 0.6rem;
+}
+.store-tab {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+  padding: 0.75rem 0.9rem;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s var(--ease);
+}
+.store-tab:hover {
+  border-color: var(--color-ink);
+  transform: translateY(-2px);
+}
+.store-tab.selected {
+  border-color: var(--color-ink);
+  background: var(--color-ink);
+  color: var(--color-bg);
+}
+.store-tab strong {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tab-number {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.store-tab small {
+  opacity: 0.85;
+}
+.inline-form,
+.new-store {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  align-items: end;
+  gap: 0.9rem;
+}
+.new-store h3,
+.new-store .inline-actions {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.new-store {
+  border-top: 6px solid var(--color-primary);
+}
+.inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}

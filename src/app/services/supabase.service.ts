@@ -35,7 +35,7 @@ const messages: Record<string, string> = {
   weak_password: 'La contraseña es muy débil. Usa entre 8 y 72 caracteres, con al menos una letra y un número.',
   same_password: 'La contraseña nueva debe ser distinta de la anterior.',
   otp_expired: 'El código no es válido o ya venció. Pide otro.',
-  otp_disabled: 'La recuperación con código no está activada. Escríbele al equipo de StockBarrio.',
+  otp_disabled: 'La recuperación con código no está activada. Escríbele al equipo de Stock Barrio.',
   over_email_send_rate_limit: 'Ya te enviamos varios correos. Espera unos minutos antes de pedir otro.',
   over_request_rate_limit: 'Hiciste demasiados intentos. Espera unos minutos e inténtalo de nuevo.',
   session_not_found: 'Tu sesión expiró. Vuelve a iniciar sesión.',

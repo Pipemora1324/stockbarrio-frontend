@@ -32,30 +32,37 @@ Hay dos archivos que no se miden:
 | `session.storage.spec.ts` | Sesión guardada válida, JSON dañado, rol desconocido y almacenamiento que falla |
 | `app.routes.spec.ts` | Guards en `/admin` y `/perfil`, carga de cada página y su título, redirecciones de visitantes y clientes, direcciones desconocidas |
 | `alerts-flag.spec.ts` | Con `enableAlerts` apagada: sin campana, sin rutas de alertas y el cliente entra a Ofertas |
-| `api.service.spec.ts` | Contrato con la API: método, ruta y cuerpo de cada llamada; ofertas y chat nunca envían coordenadas; ya no existen las llamadas de ubicación de la tienda ni de combos; los filtros vacíos no se envían; errores con mensaje en español, mensaje por defecto y sin conexión |
-| `validation/rules.spec.ts` | Todas las reglas de los formularios, con sus bordes: precios, stock, descuento, fechas reales (no 30 de febrero), calendario de Bogotá a medianoche, bisiestos, teléfonos fijos, contraseñas con tildes contadas en bytes |
+| `api.service.spec.ts` | Contrato con la API: método, ruta y cuerpo de cada llamada (locales, catálogo agrupado, fechas de oferta, rango al aprobar); `storeId` en la query y en el producto nuevo; ofertas y chat nunca envían coordenadas; errores con mensaje en español, mensaje por defecto y sin conexión |
+| `services/theme.service.spec.ts` | Tema del sistema por defecto, elección guardada y aplicada, alternar, valor guardado roto, almacenamiento bloqueado; **contraste AA** de los pares de texto y fondo en los dos temas, leído de los estilos reales, y sin verde como color principal |
+| `components/header` | Solo "SB" y "Stock Barrio" (sin "Inicio" ni "IA"), Mi tienda o Mi cuenta según el rol, salir, menú móvil con Escape, botón de tema con su etiqueta, compacto al hacer scroll |
+| `validation/rules.spec.ts` | Todas las reglas de los formularios, con sus bordes: precios, stock, descuento, fechas reales (no 30 de febrero), calendario de Bogotá a medianoche, bisiestos, teléfonos fijos, contraseñas con tildes contadas en bytes, y el rango de la oferta (inicio desde hoy, fin hasta el vencimiento, producto vencido) |
 | `pipes/format.pipes.spec.ts` | Pesos sin decimales (y vacío cuando falta el valor), fechas sin correrse de día, etiquetas de vencimiento |
 | `pages/login` | Botón deshabilitado, error de la API, estado de carga, aviso de sesión vencida, sin textos de alertas |
 | `pages/register` | Cliente y tienda (`?tipo=tienda`), datos recortados y en minúscula, teléfono opcional, mensajes al salir del campo, contraseña igual al correo, error 409 |
-| `pages/catalog` | Debounce de 350 ms con una sola búsqueda, búsqueda inmediata con el botón, una respuesta vieja no pisa a la nueva, error con reintento, barrio desde la URL |
-| `pages/offers` | Filtros desde la URL, solo filtro por barrio (sin ubicación, radio ni orden por cercanía), respuestas tardías, error y "Quitar filtros", texto de una letra |
-| `pages/chat` | Historial de seis turnos, modo básico, barrio como filtro, sin botón de ubicación ni distancias, aviso de privacidad bajo el campo, envíos dobles, máximo de 500 caracteres |
-| `pages/admin` | Panel de la tienda (datos solo como texto y sin sección de ubicación, totales, filtro, tienda no asociada, error y reintento, borrar con confirmación, fallo al borrar, formulario nuevo por producto), formulario de producto, sugerencias de descuento |
+| `pages/home` | Mensaje de la app, locales afiliados con sus ofertas y enlace a su grupo del catálogo, las 4 ofertas de mayor descuento (la primera destacada), estados vacíos con llamadas a la acción, error con reintento por sección; directiva de entrada (movimiento reducido y `IntersectionObserver`) e ilustraciones decorativas |
+| `pages/catalog` | Agrupado por local con encabezado y ancla, un único filtro por categoría desde y hacia la URL, sin ofertas, estados vacíos, error con reintento, una respuesta vieja no pisa a la nueva |
+| `pages/offers` | Un único filtro por categoría (sin barrio, búsqueda ni orden), mayor descuento primero, los más rebajados destacados, "Oferta hasta…", estados vacíos, error con reintento, respuestas tardías; filtro de categorías con radios y leyenda |
+| `pages/chat` | Sin selector de barrio, botones "Ofertas de hoy" y "Tiendas cercanas", el bot pregunta el barrio y la app lo recuerda en memoria (y se puede cambiar), tarjetas de tiendas y de productos, indicador de "escribiendo", historial al volver a la página, errores locales fuera del historial, línea de privacidad |
+| `pages/admin` | Locales como Local 1, Local 2 (elegir, `?local=`, crear con validación, renombrar, eliminar con confirmación, máximo, sin locales), inventario en tabla con descripción, precio, rango de la oferta, estado y stock, sin imágenes y con etiquetas para el celular, filtro, borrar con confirmación, sugerencias por local con rango editable y aviso de perecederos, formulario con fechas de inicio y fin validadas |
 | `pages/account` | Recuperar la contraseña (correo válido, mensaje genérico, pedir otro enlace, 503 sin correo configurado), restablecerla (contraseña nueva y repetida, enlace incompleto o cortado, enlace vencido o usado con botón para pedir otro, token fuera de la URL, aviso en el login), confirmar el correo, cambiar nombre y correo, errores de cada formulario |
-| `components/product-card`, `services/notifications.service.spec.ts`, `pages/alerts` | Tarjeta de producto y la parte de alertas (pausada) |
+| `components/product-card` | Etiqueta de precio: cinta, precios, "Oferta hasta…", vencimiento, agotado, destacada, íconos SVG propios por categoría (nunca emojis) |
+| `services/notifications.service.spec.ts`, `pages/alerts` | La parte de alertas (pausada) |
 
 ## Resultado actual
 
-158 pruebas, todas en verde (unos 2 s de ejecución en Chrome headless, más la compilación).
+208 pruebas, todas en verde (unos 2 s de ejecución en Chrome headless, más la compilación).
 
-| Métrica | Recuperación por correo | Ahora (Supabase Auth) |
+| Métrica | Supabase Auth | Ahora (rediseño) |
 | --- | --- | --- |
-| Líneas | 95,3 % | 95,2 % |
-| Ramas | 81,2 % | 79,1 % |
+| Pruebas | 158 | 208 |
+| Líneas | 95,2 % | 96,65 % |
+| Ramas | 79,1 % | 80,66 % |
+| Funciones | | 90,32 % |
+
+Además del recorrido automático de responsive (320 a 1920 px, claro y oscuro, todas las rutas y la base vacía), que no es parte de `npm test` porque necesita la API y un navegador real; ver las pruebas manuales del README.
 
 Lo que queda sin cubrir es sobre todo:
 
-- la página de inicio y el menú del header, que son de presentación;
 - la parte de alertas, que está pausada;
 - algunas ramas de mensajes por defecto, cuando un error no trae texto.
 

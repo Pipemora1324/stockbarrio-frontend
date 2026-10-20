@@ -1,1 +1,18 @@
-#main-content:focus { outline: none; }
+#main-content:focus {
+  outline: none;
+}
+.site-footer {
+  max-width: calc(var(--page-max) + 2 * var(--page-gutter));
+  margin: 0 auto;
+  padding: 2rem var(--page-gutter) 2.5rem;
+  border-top: 2px solid var(--color-ink);
+  color: var(--color-muted);
+  font-size: 0.92rem;
+}
+.site-footer strong {
+  color: var(--color-ink);
+  font-family: var(--font-display);
+}
+.site-footer p {
+  margin: 0 0 0.3rem;
+}

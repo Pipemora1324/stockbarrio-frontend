@@ -31,7 +31,7 @@ describe('app routes', () => {
   it('loads every lazy page and gives each one a Spanish title', async () => {
     for (const route of routes.filter((item) => item.loadComponent)) {
       expect(typeof (await route.loadComponent!())).withContext(route.path!).toBe('function');
-      expect(String(route.title)).withContext(route.path!).toMatch(/· StockBarrio$/);
+      expect(String(route.title)).withContext(route.path!).toMatch(/· Stock Barrio$/);
     }
   });
 

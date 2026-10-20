@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { IllustrationComponent } from '../../components/illustration/illustration.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../auth.service';
@@ -14,14 +15,14 @@ const linkNotices: Record<string, string> = {
 
 @Component({
   selector: 'app-login',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, IllustrationComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './login.component.scss',
   template: `
 <main class="login-page">
-  <section class="login-card">
+  <section class="card login-card">
     <span class="eyebrow">Acceso</span>
-    <h1>Bienvenido a StockBarrio</h1>
+    <h1>Bienvenido a Stock Barrio</h1>
     <p>{{ alertsEnabled ? 'Inicia sesión para gestionar tu tienda o para ver tus alertas de descuentos.' : 'Inicia sesión para gestionar tu tienda o tu cuenta de cliente.' }}</p>
     @if (auth.sessionNotice()) { <p class="notice" role="status">{{ auth.sessionNotice() }}</p> }
     @if (linkNotice()) { <p class="notice" role="status">{{ linkNotice() }}</p> }
@@ -37,7 +38,7 @@ const linkNotices: Record<string, string> = {
     <a routerLink="/register">¿No tienes cuenta? Regístrate</a>
   </section>
   <aside class="login-visual" aria-hidden="true">
-    <span>SB</span>
+    <app-illustration name="stall" />
     <h2>Tu barrio, siempre informado.</h2>
     <p>{{ alertsEnabled ? 'Controla stock, precios y ofertas, o recibe avisos cuando lo que buscas baje de precio.' : 'Controla stock, precios y ofertas, o encuentra los descuentos de las tiendas de tu barrio.' }}</p>
   </aside>
