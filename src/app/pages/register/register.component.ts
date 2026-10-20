@@ -3,6 +3,7 @@ import { PasswordFieldComponent } from '../../components/password-field/password
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
+import { ApiService } from '../../api.service';
 import { AuthService } from '../../auth.service';
 import * as rules from '../../validation/rules';
 
@@ -24,6 +25,14 @@ type Field = 'name' | 'email' | 'password' | 'storeName' | 'neighborhood' | 'add
     <p>Te enviamos un enlace a <strong>{{ confirmEmail() }}</strong> para confirmar tu cuenta. Ábrelo y luego inicia sesión. Si no llega en unos minutos, revisa la carpeta de spam.</p>
     <a class="button" routerLink="/login">Ir a iniciar sesión</a>
   </div>
+  } @else if (pendingEmail()) {
+  <div class="confirm-state" role="status">
+    <h2>Ya te enviamos un correo de confirmación</h2>
+    <p>La cuenta de <strong>{{ pendingEmail() }}</strong> ya existe, pero falta confirmar el correo. Abre el enlace que te enviamos; si no lo encuentras, revisa el spam o pide otro.</p>
+    <button class="button" type="button" [disabled]="resending()" (click)="resend()">{{ resending() ? 'Enviando…' : 'Reenviar correo de confirmación' }}</button>
+    @if (resent()) { <p>{{ resent() }}</p> }
+    <a routerLink="/login">Ir a iniciar sesión</a>
+  </div>
   } @else {
   <form (ngSubmit)="submit()" novalidate>
     <label for="register-name">Nombre completo</label>
@@ -31,7 +40,7 @@ type Field = 'name' | 'email' | 'password' | 'storeName' | 'neighborhood' | 'add
     @if (show('name')) { <small class="field-error" id="register-name-error">{{ errors().name }}</small> }
 
     <label for="register-email">Correo electrónico</label>
-    <input id="register-email" name="email" type="email" autocomplete="email" maxlength="254" [ngModel]="values().email" (ngModelChange)="set('email', $event)" (blur)="touch('email')" [attr.aria-invalid]="show('email') ? true : null" aria-describedby="register-email-error">
+    <input id="register-email" name="email" type="email" autocomplete="email" maxlength="254" [ngModel]="values().email" (ngModelChange)="set('email', $event)" (blur)="set('email', normalize(values().email)); touch('email')" [attr.aria-invalid]="show('email') ? true : null" aria-describedby="register-email-error">
     @if (show('email')) { <small class="field-error" id="register-email-error">{{ errors().email }}</small> }
 
     <label for="register-password">Contraseña</label>
@@ -56,13 +65,17 @@ type Field = 'name' | 'email' | 'password' | 'storeName' | 'neighborhood' | 'add
       @if (show('phone')) { <small class="field-error" id="register-phone-error">{{ errors().phone }}</small> }
     }
     <button class="button" type="submit" [disabled]="loading() || invalid()">{{ loading() ? 'Creando cuenta…' : 'Crear cuenta' }}</button>
-    @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+    @if (error()) {
+      <p class="error" role="alert">{{ error() }}</p>
+      @if (emailTaken()) { <p class="taken-actions"><a routerLink="/login">Iniciar sesión</a> · <a routerLink="/forgot-password">Recuperar mi contraseña</a></p> }
+    }
   </form>
   }
   <a routerLink="/login">¿Ya tienes cuenta? Entra</a>
 </section></main>`, styleUrl: './register.component.scss' })
 export class RegisterComponent {
   private readonly auth = inject(AuthService);
+  private readonly api = inject(ApiService);
   protected readonly alertsEnabled = environment.enableAlerts;
   readonly accountType = signal<AccountType>(inject(ActivatedRoute).snapshot.queryParamMap.get('tipo') === 'tienda' ? 'store' : 'customer');
   readonly isStore = computed(() => this.accountType() === 'store');
@@ -72,13 +85,19 @@ export class RegisterComponent {
   readonly error = signal('');
   // Supabase mode: the account is ready after the person opens the confirmation link sent to this address.
   readonly confirmEmail = signal('');
+  // Supabase mode: the account already existed without a confirmed email.
+  readonly pendingEmail = signal('');
+  readonly emailTaken = signal(false);
+  readonly resending = signal(false);
+  readonly resent = signal('');
+  protected readonly normalize = rules.normalizeEmail;
 
   readonly errors = computed<Record<Field, string>>(() => {
     const value = this.values();
     const store = this.isStore();
     return {
       name: rules.personName(value.name),
-      email: rules.email(value.email),
+      email: rules.newEmail(value.email),
       password: rules.password(value.password, value.email),
       storeName: store ? rules.storeName(value.storeName) : '',
       neighborhood: store ? rules.neighborhood(value.neighborhood) : '',
@@ -105,17 +124,39 @@ export class RegisterComponent {
     if (this.invalid()) return;
     this.loading.set(true);
     this.error.set('');
+    this.emailTaken.set(false);
     const value = this.values();
-    const account = { name: value.name.trim(), email: value.email.trim().toLowerCase(), password: value.password };
+    const account = { name: value.name.trim(), email: rules.normalizeEmail(value.email), password: value.password };
     try {
+      // One mailbox, one account: the API also catches Gmail variants with dots that Supabase would accept.
+      const check = await this.api.checkEmail(account.email);
+      if (!check.available) {
+        this.emailTaken.set(true);
+        this.error.set(check.message ?? rules.emailTakenMessage);
+        return;
+      }
       const result = await this.auth.register(this.isStore()
         ? { ...account, accountType: 'store', storeName: value.storeName.trim(), neighborhood: value.neighborhood.trim(), address: value.address.trim(), ...(value.phone.trim() ? { phone: value.phone.trim() } : {}) }
         : { ...account, accountType: 'customer' });
       if (result === 'confirm-email') this.confirmEmail.set(account.email);
+      if (result === 'already-pending') this.pendingEmail.set(account.email);
     } catch (caught) {
+      this.emailTaken.set(caught instanceof Error && caught.message === rules.emailTakenMessage);
       this.error.set(caught instanceof Error ? caught.message : 'No se pudo crear la cuenta.');
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  async resend() {
+    this.resending.set(true);
+    try {
+      await this.auth.resendConfirmation(this.pendingEmail());
+      this.resent.set('Te enviamos de nuevo el correo de confirmación.');
+    } catch (caught) {
+      this.resent.set(caught instanceof Error ? caught.message : 'No se pudo reenviar el correo.');
+    } finally {
+      this.resending.set(false);
     }
   }
 }
