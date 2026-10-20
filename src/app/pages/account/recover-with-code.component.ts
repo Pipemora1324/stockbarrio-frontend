@@ -25,7 +25,7 @@ export const genericCodeMessage = 'Si el correo está registrado, te enviamos un
       <p>Escribe el correo con el que creaste tu cuenta y te enviaremos un código de 6 dígitos para crear una contraseña nueva.</p>
       <form (ngSubmit)="sendCode()" novalidate>
         <label for="recover-email">Correo electrónico</label>
-        <input id="recover-email" name="email" type="email" autocomplete="email" maxlength="254" [ngModel]="email()" (ngModelChange)="email.set($event)" (blur)="emailTouched.set(true)" [attr.aria-invalid]="emailTouched() && emailError() ? true : null" aria-describedby="recover-email-error">
+        <input id="recover-email" name="email" type="email" autocomplete="email" maxlength="254" [ngModel]="email()" (ngModelChange)="email.set($event)" (blur)="email.set(normalize(email())); emailTouched.set(true)" [attr.aria-invalid]="emailTouched() && emailError() ? true : null" aria-describedby="recover-email-error">
         @if (emailTouched() && emailError()) { <small class="field-error" id="recover-email-error">{{ emailError() }}</small> }
         <button class="button" type="submit" [disabled]="busy() || !!emailError()">{{ busy() ? 'Enviando…' : 'Enviar código' }}</button>
       </form>
@@ -82,6 +82,7 @@ export class RecoverWithCodeComponent {
   }
 
   readonly emailError = computed(() => rules.email(this.email()));
+  protected readonly normalize = rules.normalizeEmail;
   readonly codeError = computed(() => (/^\d{6}$/.test(this.code()) ? '' : 'Escribe los 6 dígitos del código que te llegó al correo.'));
   readonly passwordError = computed(() => rules.password(this.password(), this.email()));
   readonly confirmError = computed(() => (this.confirm() === this.password() ? '' : 'Las contraseñas no coinciden.'));

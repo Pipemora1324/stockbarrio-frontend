@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { PasswordFieldComponent } from '../../components/password-field/password-field.component';
 import { FormsModule } from '@angular/forms';
+import * as rules from '../../validation/rules';
 import { IllustrationComponent } from '../../components/illustration/illustration.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
@@ -28,7 +29,7 @@ const linkNotices: Record<string, string> = {
     @if (auth.sessionNotice()) { <p class="notice" role="status">{{ auth.sessionNotice() }}</p> }
     @if (linkNotice()) { <p class="notice" role="status">{{ linkNotice() }}</p> }
     <form (ngSubmit)="submit()">
-      <label>Correo electrónico<input name="email" [(ngModel)]="email" type="email" autocomplete="email" required></label>
+      <label>Correo electrónico<input name="email" [(ngModel)]="email" (blur)="email.set(normalize(email()))" type="email" autocomplete="email" required></label>
       <div class="password-label"><label for="login-password">Contraseña</label><app-password-field><input id="login-password" name="password" [(ngModel)]="password" type="password" autocomplete="current-password" required></app-password-field></div>
       <a class="forgot" routerLink="/forgot-password">¿Olvidaste tu contraseña?</a>
       <button class="button" type="submit" [disabled]="loading() || !canSubmit()">{{ loading() ? 'Entrando…' : 'Iniciar sesión' }}</button>
@@ -55,6 +56,7 @@ export class LoginComponent implements OnInit {
   readonly resent = signal('');
   protected readonly alertsEnabled = environment.enableAlerts;
   readonly email = signal('');
+  protected readonly normalize = rules.normalizeEmail;
   readonly password = signal('');
   readonly loading = signal(false);
   readonly error = signal('');
@@ -78,7 +80,7 @@ export class LoginComponent implements OnInit {
     this.canResend.set(false);
     this.resent.set('');
     try {
-      await this.auth.login(this.email(), this.password());
+      await this.auth.login(rules.normalizeEmail(this.email()), this.password());
     } catch (caught) {
       this.error.set(caught instanceof Error ? caught.message : 'No se pudo iniciar sesión.');
       this.canResend.set(caught instanceof SupabaseAuthFailure && caught.code === 'email_not_confirmed');
@@ -90,7 +92,7 @@ export class LoginComponent implements OnInit {
   async resend() {
     this.resending.set(true);
     try {
-      await this.auth.resendConfirmation(this.email());
+      await this.auth.resendConfirmation(rules.normalizeEmail(this.email()));
       this.resent.set('Te enviamos otro enlace de confirmación. Revisa tu bandeja de entrada y la carpeta de spam.');
       this.canResend.set(false);
     } catch (caught) {

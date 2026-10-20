@@ -66,7 +66,7 @@ const idle = (): FormState => ({ busy: false, message: '', failure: '' });
     @if (profile()?.pendingEmail) { <p class="form-message success" role="status">Hay un cambio pendiente a {{ profile()?.pendingEmail }}. Revisa ese correo.</p> }
     <form (ngSubmit)="saveEmail()" novalidate>
       <label for="profile-email">Correo nuevo</label>
-      <input id="profile-email" name="newEmail" type="email" autocomplete="email" maxlength="254" [ngModel]="newEmail()" (ngModelChange)="newEmail.set($event)" (blur)="emailTouched.set(true)" [attr.aria-invalid]="emailTouched() && newEmailError() ? true : null" aria-describedby="profile-email-error">
+      <input id="profile-email" name="newEmail" type="email" autocomplete="email" maxlength="254" [ngModel]="newEmail()" (ngModelChange)="newEmail.set($event)" (blur)="newEmail.set(normalize(newEmail())); emailTouched.set(true)" [attr.aria-invalid]="emailTouched() && newEmailError() ? true : null" aria-describedby="profile-email-error">
       @if (emailTouched() && newEmailError()) { <small class="field-error" id="profile-email-error">{{ newEmailError() }}</small> }
       <label for="profile-email-password">Contraseña actual</label>
       <app-password-field><input id="profile-email-password" name="emailPassword" type="password" autocomplete="current-password" maxlength="200" [ngModel]="emailPassword()" (ngModelChange)="emailPassword.set($event)"></app-password-field>
@@ -99,7 +99,8 @@ export class ProfileComponent implements OnInit {
   readonly newPasswordError = computed(() => rules.password(this.newPassword(), this.profile()?.email ?? ''));
   readonly confirmError = computed(() => (this.confirmPassword() === this.newPassword() ? '' : 'Las contraseñas no coinciden.'));
   readonly passwordInvalid = computed(() => !this.currentPassword() || Boolean(this.newPasswordError() || this.confirmError()));
-  readonly newEmailError = computed(() => rules.email(this.newEmail()) || (this.newEmail().trim().toLowerCase() === this.profile()?.email ? 'Es el mismo correo que ya tienes.' : ''));
+  protected readonly normalize = rules.normalizeEmail;
+  readonly newEmailError = computed(() => rules.newEmail(this.newEmail()) || (this.newEmail().trim().toLowerCase() === this.profile()?.email ? 'Es el mismo correo que ya tienes.' : ''));
 
   async ngOnInit() {
     try {
