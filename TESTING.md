@@ -28,6 +28,7 @@ Hay dos archivos que no se miden:
 | Archivo | Qué prueba |
 | --- | --- |
 | `auth.spec.ts` | Guards de tienda, cliente y sesión. Interceptor: añade el token solo a `/api`, cierra la sesión con un 401, no la cierra en un login fallido ni cuando un 401 tardío llega con un token anterior. Servicio de sesión: login, registro, inicio por rol, cerrar sesión, aviso de sesión vencida |
+| `supabase-auth.spec.ts` | Modo `AUTH_PROVIDER=supabase` con supabase-js simulado (nada llama a Supabase): login con el token de Supabase hacia `/api/auth/me`, credenciales incorrectas, perfil rechazado por la API (cierra la sesión de Supabase), correo sin confirmar con reenvío, aviso al volver del enlace, registro con metadata y estado "Revisa tu correo", errores en español, recuperación con código correcto, incorrecto o vencido, validación del código y de la contraseña, espera de 60 s para pedir otro código, sesión expirada, token renovado, cierre de sesión, cambio de contraseña, correo y nombre desde el perfil |
 | `session.storage.spec.ts` | Sesión guardada válida, JSON dañado, rol desconocido y almacenamiento que falla |
 | `app.routes.spec.ts` | Guards en `/admin` y `/perfil`, carga de cada página y su título, redirecciones de visitantes y clientes, direcciones desconocidas |
 | `alerts-flag.spec.ts` | Con `enableAlerts` apagada: sin campana, sin rutas de alertas y el cliente entra a Ofertas |
@@ -45,12 +46,12 @@ Hay dos archivos que no se miden:
 
 ## Resultado actual
 
-141 pruebas, todas en verde (unos 2 s de ejecución en Chrome headless, más la compilación).
+158 pruebas, todas en verde (unos 2 s de ejecución en Chrome headless, más la compilación).
 
-| Métrica | Tras simplificar | Ahora (correo) |
+| Métrica | Recuperación por correo | Ahora (Supabase Auth) |
 | --- | --- | --- |
-| Líneas | 95,0 % | 95,3 % |
-| Ramas | 79,9 % | 81,2 % |
+| Líneas | 95,3 % | 95,2 % |
+| Ramas | 81,2 % | 79,1 % |
 
 Lo que queda sin cubrir es sobre todo:
 

@@ -1,0 +1,65 @@
+import { Injectable } from '@angular/core';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { environment } from '../../environments/environment';
+
+export const supabaseEnabled = () => environment.authProvider === 'supabase';
+
+// Thin wrapper so the app (and the tests) use one Supabase Auth client. supabase-js is downloaded on first use,
+// only in the supabase mode, so the legacy build does not carry it; the client uses the public anon key.
+@Injectable({ providedIn: 'root' })
+export class SupabaseService {
+  private client: Promise<SupabaseClient> | null = null;
+
+  async auth(): Promise<SupabaseClient['auth']> {
+    this.client ??= import('@supabase/supabase-js').then(({ createClient }) =>
+      createClient(environment.supabaseUrl, environment.supabaseAnonKey, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          // Confirmation links come back to /login only to show a notice; the person signs in with the password.
+          detectSessionInUrl: false,
+          storageKey: 'stockbarrio-supabase',
+        },
+      }),
+    );
+    return (await this.client).auth;
+  }
+}
+
+// Spanish messages for the Supabase Auth error codes the app can meet.
+const messages: Record<string, string> = {
+  invalid_credentials: 'El correo o la contraseña son incorrectos.',
+  email_not_confirmed: 'Todavía no has confirmado tu correo. Abre el enlace que te enviamos o pide otro.',
+  user_already_exists: 'Este correo electrónico ya está registrado.',
+  email_exists: 'Este correo electrónico ya está registrado.',
+  weak_password: 'La contraseña es muy débil. Usa entre 8 y 72 caracteres, con al menos una letra y un número.',
+  same_password: 'La contraseña nueva debe ser distinta de la anterior.',
+  otp_expired: 'El código no es válido o ya venció. Pide otro.',
+  otp_disabled: 'La recuperación con código no está activada. Escríbele al equipo de StockBarrio.',
+  over_email_send_rate_limit: 'Ya te enviamos varios correos. Espera unos minutos antes de pedir otro.',
+  over_request_rate_limit: 'Hiciste demasiados intentos. Espera unos minutos e inténtalo de nuevo.',
+  session_not_found: 'Tu sesión expiró. Vuelve a iniciar sesión.',
+  session_expired: 'Tu sesión expiró. Vuelve a iniciar sesión.',
+  refresh_token_not_found: 'Tu sesión expiró. Vuelve a iniciar sesión.',
+  email_address_invalid: 'El correo electrónico no es válido.',
+  signup_disabled: 'El registro está desactivado por ahora.',
+  validation_failed: 'Revisa los datos e inténtalo de nuevo.',
+};
+
+export class SupabaseAuthFailure extends Error {
+  constructor(
+    message: string,
+    readonly code: string,
+  ) {
+    super(message);
+  }
+}
+
+// Turns a Supabase error (or a network failure) into a SupabaseAuthFailure with a Spanish message.
+export const toAuthFailure = (error: unknown): SupabaseAuthFailure => {
+  const { code, status, name } = (error ?? {}) as { code?: string; status?: number; name?: string };
+  if (code && messages[code]) return new SupabaseAuthFailure(messages[code], code);
+  if (status === 429) return new SupabaseAuthFailure(messages['over_request_rate_limit'], 'over_request_rate_limit');
+  if (name === 'AuthRetryableFetchError' || status === 0) return new SupabaseAuthFailure('No se pudo conectar. Revisa tu conexión e inténtalo de nuevo.', 'network');
+  return new SupabaseAuthFailure('No se pudo completar la operación. Inténtalo de nuevo.', code ?? 'unknown');
+};

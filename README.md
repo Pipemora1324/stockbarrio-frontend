@@ -53,6 +53,27 @@ Para reactivarlas:
 
 En Vercel, la regla `{ "source": "/(.*)", "destination": "/index.html" }` de `vercel.json` hace que `/reset-password` abra la app aunque se entre directo desde el correo, también en el celular. El backend arma el enlace con su variable `APP_URL`, que debe ser la URL de Vercel.
 
+## Autenticación: legacy o Supabase Auth
+
+La variable de Vercel `AUTH_PROVIDER` elige el modo al compilar (`scripts/set-env.mjs` la escribe en `src/environments/environment.ts`):
+
+| Variable | Valor |
+| --- | --- |
+| `AUTH_PROVIDER` | `legacy` (por defecto) o `supabase` |
+| `SUPABASE_URL` | `https://<ref>.supabase.co` (solo con `supabase`) |
+| `SUPABASE_ANON_KEY` | la clave pública **anon** o **publishable**. El build se detiene si falta o si es una clave secreta |
+
+- **`legacy`:** login, registro y recuperación por enlace con la API, como siempre.
+- **`supabase`:**
+  - **Registro:** usa `supabase.auth.signUp`, con los datos del perfil en la metadata. Muestra "Revisa tu correo", y el enlace de confirmación vuelve a `/login` con el aviso "Tu correo quedó confirmado".
+  - **Login:** `signInWithPassword`. El access token de Supabase va como `Bearer` a la API, que devuelve el perfil y el rol desde `public.users`. Si el correo no está confirmado, el login ofrece "Reenviar correo de confirmación".
+  - **"¿Olvidaste tu contraseña?":** pide el correo, envía un código de 6 dígitos y deja escribirlo junto con la contraseña nueva. Con un código equivocado o vencido dice "El código no es válido o ya venció"; el botón "Pedir otro código" se habilita a los 60 segundos.
+  - **Perfil:** la contraseña y el correo se cambian en Supabase (se pide la contraseña actual) y el nombre en la API.
+  - **Sesión:** supabase-js renueva el token solo y la app usa siempre el más reciente. Si la sesión de Supabase termina, la app vuelve al login con un aviso.
+  - **Peso:** supabase-js se descarga solo en este modo, así que el build `legacy` no crece.
+
+La guía del panel de Supabase y las pruebas manuales están en [SUPABASE_AUTH.md](https://github.com/Pipemora1324/stockbarrio-backend/blob/main/SUPABASE_AUTH.md) del backend.
+
 ## Sesión
 
 - El token y el usuario se guardan en `localStorage`. Si esos datos están dañados o el navegador bloquea el almacenamiento, la app arranca sin sesión en vez de fallar.
@@ -135,7 +156,7 @@ docker run -p 4200:80 -e API_URL=http://host.docker.internal:3000 stockbarrio-fr
 | Script | Qué hace |
 | --- | --- |
 | `npm start` | Servidor de desarrollo |
-| `npm run build` | Compila para producción en `dist/frontend/browser` (antes aplica `ENABLE_ALERTS` si está definida) |
+| `npm run build` | Compila para producción en `dist/frontend/browser` (antes aplica `ENABLE_ALERTS`, `AUTH_PROVIDER`, `SUPABASE_URL` y `SUPABASE_ANON_KEY` si están definidas) |
 | `npm run watch` | Compila en modo desarrollo y vuelve a compilar con cada cambio |
 | `npm test` | Pruebas unitarias y de componentes con Karma, que se vuelven a correr con cada cambio |
 | `npm run test:ci` | Una sola pasada de las pruebas en Chrome headless |

@@ -263,3 +263,17 @@ El backend de la rama `mejoras` (ofertas, chat, cuenta y categorías).
   - No hubo errores, salvo el 400 esperado del enlace usado, ni desborde horizontal.
 - **Pruebas:** 141 en verde (95,3 % de líneas, 81,2 % de ramas).
 - **Variables nuevas:** ninguna.
+
+## Supabase Auth opcional (rama `supabase-auth`)
+
+- **`AUTH_PROVIDER`, `SUPABASE_URL` y `SUPABASE_ANON_KEY`:** se leen en el build desde Vercel. Con `legacy` (por defecto) todo sigue igual.
+- **Protecciones del build:** se detiene si falta configuración o si `SUPABASE_ANON_KEY` es una clave secreta (`service_role` o `sb_secret_…`).
+- **Modo `supabase`:**
+  - registro con confirmación por enlace y aviso al volver al login;
+  - login con `signInWithPassword` y reenvío de la confirmación;
+  - recuperación con código de 6 dígitos (`verifyOtp` de tipo `recovery` y `updateUser`), con espera de 60 s para pedir otro;
+  - cambio de contraseña y de correo con Supabase, y del nombre con la API;
+  - el token se renueva solo.
+- **supabase-js 2.117.2:** se carga solo en este modo, así que el bundle inicial del modo `legacy` no crece.
+- **Pruebas:** 158 en verde (95,2 % de líneas, 79,1 % de ramas), con supabase-js simulado.
+- **Variables nuevas en Vercel:** `AUTH_PROVIDER`, `SUPABASE_URL` y `SUPABASE_ANON_KEY`.

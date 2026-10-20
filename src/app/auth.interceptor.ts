@@ -10,7 +10,8 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const auth = inject(AuthService);
   const token = auth.token();
   const isApiCall = request.url.startsWith('/api/');
-  const authorized = token && isApiCall ? request.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : request;
+  // A request that already carries a token (the first /me in the supabase mode) keeps it.
+  const authorized = token && isApiCall && !request.headers.has('Authorization') ? request.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : request;
   return next(authorized).pipe(
     catchError((error: unknown) => {
       const isCredentialCall = credentialEndpoints.some((path) => request.url.startsWith(path));

@@ -8,6 +8,22 @@ const alertRoutes: Routes = [
   { path: 'notificaciones', canActivate: [customerGuard], loadComponent: () => import('./pages/notifications/notifications.component').then((m) => m.NotificationsComponent), title: 'Notificaciones · StockBarrio' },
 ];
 
+const supabaseAuth = environment.authProvider === 'supabase';
+
+// Own login: recovery by link and email confirmation pages of the API.
+const legacyAccountRoutes: Routes = [
+  { path: 'forgot-password', loadComponent: () => import('./pages/account/forgot-password.component').then((m) => m.ForgotPasswordComponent), title: 'Recuperar contraseña · StockBarrio' },
+  { path: 'reset-password', loadComponent: () => import('./pages/account/reset-password.component').then((m) => m.ResetPasswordComponent), title: 'Nueva contraseña · StockBarrio' },
+  { path: 'confirm-email', loadComponent: () => import('./pages/account/confirm-email.component').then((m) => m.ConfirmEmailComponent), title: 'Confirmar correo · StockBarrio' },
+];
+
+// Supabase Auth: recovery with a 6 digit code; old links to the legacy pages lead to the new flow.
+const supabaseAccountRoutes: Routes = [
+  { path: 'forgot-password', loadComponent: () => import('./pages/account/recover-with-code.component').then((m) => m.RecoverWithCodeComponent), title: 'Recuperar contraseña · StockBarrio' },
+  { path: 'reset-password', redirectTo: 'forgot-password' },
+  { path: 'confirm-email', redirectTo: 'login' },
+];
+
 // The home page ships in the main bundle for a fast first paint; every other page is loaded on demand.
 export const routes: Routes = [
   { path: '', component: HomeComponent, title: 'StockBarrio · Ofertas de tu barrio' },
@@ -19,9 +35,7 @@ export const routes: Routes = [
   { path: 'admin', canActivate: [storeGuard], loadComponent: () => import('./pages/admin/admin.component').then((m) => m.AdminComponent), title: 'Mi tienda · StockBarrio' },
   // Alerts and the inbox are paused (environment.enableAlerts); with the flag off these addresses go to the home page.
   ...(environment.enableAlerts ? alertRoutes : []),
-  { path: 'forgot-password', loadComponent: () => import('./pages/account/forgot-password.component').then((m) => m.ForgotPasswordComponent), title: 'Recuperar contraseña · StockBarrio' },
-  { path: 'reset-password', loadComponent: () => import('./pages/account/reset-password.component').then((m) => m.ResetPasswordComponent), title: 'Nueva contraseña · StockBarrio' },
-  { path: 'confirm-email', loadComponent: () => import('./pages/account/confirm-email.component').then((m) => m.ConfirmEmailComponent), title: 'Confirmar correo · StockBarrio' },
+  ...(supabaseAuth ? supabaseAccountRoutes : legacyAccountRoutes),
   { path: 'perfil', canActivate: [signedInGuard], loadComponent: () => import('./pages/account/profile.component').then((m) => m.ProfileComponent), title: 'Mi perfil · StockBarrio' },
   { path: '**', redirectTo: '' },
 ];

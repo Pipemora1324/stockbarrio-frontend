@@ -113,23 +113,22 @@ export class ProfileComponent implements OnInit {
   async saveName() {
     if (this.nameError()) return;
     await this.run(this.nameState, async () => {
-      const response = await this.api.updateName(this.name().trim());
-      this.auth.replaceSession(response.token, response.user);
-      this.profile.update((profile) => (profile ? { ...profile, name: response.user.name } : profile));
-      return response.message;
+      const name = this.name().trim();
+      const message = await this.auth.updateName(name);
+      this.profile.update((profile) => (profile ? { ...profile, name } : profile));
+      return message;
     });
   }
 
   async savePassword() {
     if (this.passwordInvalid()) return;
     await this.run(this.passwordState, async () => {
-      const response = await this.api.changePassword(this.currentPassword(), this.newPassword());
-      this.auth.replaceSession(response.token, response.user);
+      const message = await this.auth.changePassword(this.currentPassword(), this.newPassword());
       this.currentPassword.set('');
       this.newPassword.set('');
       this.confirmPassword.set('');
       this.newTouched.set(false);
-      return response.message;
+      return message;
     });
   }
 
@@ -137,10 +136,10 @@ export class ProfileComponent implements OnInit {
     if (this.newEmailError() || !this.emailPassword()) return;
     await this.run(this.emailState, async () => {
       const email = this.newEmail().trim().toLowerCase();
-      const response = await this.api.requestEmailChange(email, this.emailPassword());
+      const message = await this.auth.requestEmailChange(email, this.emailPassword());
       this.profile.update((profile) => (profile ? { ...profile, pendingEmail: email } : profile));
       this.emailPassword.set('');
-      return response.message;
+      return message;
     });
   }
 
