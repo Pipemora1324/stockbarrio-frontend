@@ -1,12 +1,7 @@
 import { Routes } from '@angular/router';
-import { customerGuard, signedInGuard, storeGuard } from './auth.guard';
+import { signedInGuard, storeGuard } from './auth.guard';
 import { environment } from '../environments/environment';
 import { HomeComponent } from './pages/home/home.component';
-
-const alertRoutes: Routes = [
-  { path: 'alertas', canActivate: [customerGuard], loadComponent: () => import('./pages/alerts/alerts.component').then((m) => m.AlertsComponent), title: 'Mis alertas · Stock Barrio' },
-  { path: 'notificaciones', canActivate: [customerGuard], loadComponent: () => import('./pages/notifications/notifications.component').then((m) => m.NotificationsComponent), title: 'Notificaciones · Stock Barrio' },
-];
 
 const supabaseAuth = environment.authProvider === 'supabase';
 
@@ -33,8 +28,6 @@ export const routes: Routes = [
   { path: 'login', loadComponent: () => import('./pages/login/login.component').then((m) => m.LoginComponent), title: 'Iniciar sesión · Stock Barrio' },
   { path: 'register', loadComponent: () => import('./pages/register/register.component').then((m) => m.RegisterComponent), title: 'Crear cuenta · Stock Barrio' },
   { path: 'admin', canActivate: [storeGuard], loadComponent: () => import('./pages/admin/admin.component').then((m) => m.AdminComponent), title: 'Mi tienda · Stock Barrio' },
-  // Alerts and the inbox are paused (environment.enableAlerts); with the flag off these addresses go to the home page.
-  ...(environment.enableAlerts ? alertRoutes : []),
   ...(supabaseAuth ? supabaseAccountRoutes : legacyAccountRoutes),
   { path: 'perfil', canActivate: [signedInGuard], loadComponent: () => import('./pages/account/profile.component').then((m) => m.ProfileComponent), title: 'Mi perfil · Stock Barrio' },
   { path: '**', redirectTo: '' },
