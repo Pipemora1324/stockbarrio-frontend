@@ -43,6 +43,16 @@ Para reactivarlas:
 2. En local, cambia `enableAlerts` a `true` en `src/environments/environment.ts`.
 3. Activa también `ENABLE_ALERTS=true` en el backend, para que se generen notificaciones.
 
+## Recuperar la contraseña
+
+1. En el login, "¿Olvidaste tu contraseña?" lleva a `/forgot-password`. Ahí se escribe el correo con el que se creó la cuenta.
+2. La respuesta es siempre la misma, exista o no la cuenta. Si el correo no llega, se puede pedir otro enlace; el anterior deja de servir.
+3. El enlace del correo abre `/reset-password?token=…`. La página quita el token de la barra de direcciones apenas carga, para que no quede en el historial ni se comparta por error.
+4. Se escribe la contraseña nueva dos veces, con las mismas reglas del registro. Al guardarla, se cierran las demás sesiones y la persona va al login con un aviso.
+5. Si el enlace venció (30 minutos), ya se usó o se pidió uno más nuevo, la página lo dice y muestra el botón "Pedir un enlace nuevo".
+
+En Vercel, la regla `{ "source": "/(.*)", "destination": "/index.html" }` de `vercel.json` hace que `/reset-password` abra la app aunque se entre directo desde el correo, también en el celular. El backend arma el enlace con su variable `APP_URL`, que debe ser la URL de Vercel.
+
 ## Sesión
 
 - El token y el usuario se guardan en `localStorage`. Si esos datos están dañados o el navegador bloquea el almacenamiento, la app arranca sin sesión en vez de fallar.
