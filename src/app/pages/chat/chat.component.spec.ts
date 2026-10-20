@@ -1,155 +1,169 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { ApiService } from '../../api.service';
+import { ApiError, ApiService } from '../../api.service';
 import type { ChatResponse } from '../../models';
-import { buildHistory, ChatComponent } from './chat.component';
+import { ChatSessionService, type ConversationMessage } from '../../services/chat-session.service';
+import { buildHistory, ChatComponent, expiresLabel, historyTurns, maxMessageLength, privacyNotice, quickActions } from './chat.component';
 
-const response = (overrides: Partial<ChatResponse> = {}): ChatResponse => ({
-  reply: 'El pollo asado más barato está en Tienda Doña Luz a $ 32.000.',
-  mode: 'ai',
-  intent: { product: 'pollo asado', terms: ['pollo', 'asado'], category: null, preference: 'cheapest', neighborhood: null, budget: null },
-  results: [{
-    productId: 'p1', name: 'Pollo asado entero', category: 'Comidas preparadas', price: 32000, offerPrice: 32000, discountPercent: 0, stock: 6,
-    expirationDate: '2026-10-19', daysToExpire: 1, store: { id: 's1', name: 'Tienda Doña Luz', neighborhood: 'Chapinero', address: 'Calle 57' },
-  }],
+const answer = (overrides: Partial<ChatResponse> = {}): ChatResponse => ({
+  reply: 'Encontré 1 opción.',
+  mode: 'rules',
+  intent: { product: null, terms: [], category: null, preference: 'relevance', neighborhood: null, budget: null },
+  results: [],
+  stores: [],
   ...overrides,
+});
+
+describe('buildHistory', () => {
+  it('sends only the last real turns, cut to the maximum length', () => {
+    const messages: ConversationMessage[] = Array.from({ length: 9 }, (_, index) => ({ id: index, role: index % 2 ? 'assistant' : 'user', content: `mensaje ${index}` }));
+    messages.push({ id: 99, role: 'assistant', content: 'Sin conexión', isError: true });
+    messages.push({ id: 100, role: 'user', content: 'x'.repeat(maxMessageLength + 20) });
+    const history = buildHistory(messages);
+    expect(history.length).toBe(historyTurns);
+    expect(history.some((turn) => turn.content === 'Sin conexión')).toBeFalse();
+    expect(history.at(-1)!.content.length).toBe(maxMessageLength);
+  });
+
+  it('describes the days left', () => {
+    expect([expiresLabel(0), expiresLabel(1), expiresLabel(4)]).toEqual(['vence hoy', 'vence mañana', 'vence en 4 días']);
+  });
+});
+
+describe('ChatSessionService', () => {
+  it('keeps the conversation and the neighborhood in memory only', () => {
+    const session = TestBed.inject(ChatSessionService);
+    const before = localStorage.length;
+    session.add({ role: 'user', content: 'hola' });
+    session.remember('Kennedy');
+    session.remember(null);
+    expect(session.neighborhood()).toBe('Kennedy');
+    expect(session.messages().map((message) => message.content)).toEqual(['hola']);
+    expect(localStorage.length).toBe(before);
+    session.forgetNeighborhood();
+    expect(session.neighborhood()).toBeNull();
+    session.remember('Bosa');
+    session.reset();
+    expect([session.messages(), session.neighborhood()]).toEqual([[], null]);
+  });
 });
 
 describe('ChatComponent', () => {
   let api: jasmine.SpyObj<ApiService>;
 
-  beforeEach(() => {
-    api = jasmine.createSpyObj<ApiService>('ApiService', ['getNeighborhoods', 'chat']);
-    api.getNeighborhoods.and.resolveTo(['Chapinero', 'Suba']);
-    api.chat.and.resolveTo(response());
+  const setup = () => {
+    api = jasmine.createSpyObj<ApiService>('ApiService', ['chat']);
     TestBed.configureTestingModule({ imports: [ChatComponent], providers: [provideRouter([]), { provide: ApiService, useValue: api }] });
-  });
-
-  it('sends the conversation without any location and shows the result cards without distances', async () => {
     const fixture = TestBed.createComponent(ChatComponent);
     fixture.detectChanges();
-    fixture.componentInstance.draft.set('pollo asado cerca');
-    await fixture.componentInstance.send();
+    return { fixture, component: fixture.componentInstance, page: fixture.nativeElement as HTMLElement, session: TestBed.inject(ChatSessionService) };
+  };
+  const settle = async (fixture: ReturnType<typeof setup>['fixture']) => {
+    await fixture.whenStable();
     fixture.detectChanges();
-    expect(api.chat).toHaveBeenCalledWith({ messages: [{ role: 'user', content: 'pollo asado cerca' }] });
-    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('Tienda Doña Luz · Chapinero');
-    expect(text).not.toMatch(/\d+ m\b| km\b/);
-    expect(text).not.toContain('modo básico');
+  };
+
+  it('has no neighborhood picker, only the quick buttons "Ofertas de hoy" and "Tiendas cercanas"', () => {
+    const { page } = setup();
+    expect(page.querySelector('select')).toBeNull();
+    expect(page.textContent).not.toContain('Tu barrio');
+    expect([...page.querySelectorAll('.quick button')].map((button) => button.textContent?.trim())).toEqual(quickActions.map((action) => action.label));
+    expect(quickActions.map((action) => action.label)).toEqual(['Ofertas de hoy', 'Tiendas cercanas']);
   });
 
-  it('has no location button and shows the privacy notice under the message box', () => {
-    const fixture = TestBed.createComponent(ChatComponent);
-    fixture.detectChanges();
-    const page = fixture.nativeElement as HTMLElement;
-    expect(page.textContent).not.toMatch(/ubicación/i);
-    expect(page.querySelector('app-combo-builder')).toBeNull();
-    const privacy = page.querySelector('.composer #chat-privacy');
-    expect(privacy?.textContent).toBe('Tu mensaje se procesa con un servicio de IA externo; no escribas datos personales.');
+  it('keeps the privacy line linked to the message box', () => {
+    const { page } = setup();
+    expect(page.querySelector('#chat-privacy')?.textContent).toBe(privacyNotice);
     expect(page.querySelector('#chat-message')?.getAttribute('aria-describedby')).toContain('chat-privacy');
-    expect(page.querySelector('label[for=chat-neighborhood]')?.textContent).toBe('Tu barrio');
   });
 
-  it('keeps the history of the conversation and warns when it answers in basic mode', async () => {
-    api.chat.and.returnValues(Promise.resolve(response()), Promise.resolve(response({ mode: 'basic', reply: 'Encontré 1 opción.' })));
-    const fixture = TestBed.createComponent(ChatComponent);
-    fixture.detectChanges();
-    fixture.componentInstance.neighborhood.set('Suba');
-    fixture.componentInstance.ask('pollo asado');
-    await fixture.whenStable();
-    fixture.componentInstance.draft.set('¿y más barato?');
+  it('"Tiendas cercanas" lets the bot ask for the neighborhood, then remembers the answer and shows the stores', async () => {
+    const { fixture, page, session } = setup();
+    api.chat.and.resolveTo(answer({ reply: 'Para mostrarte las tiendas cercanas, dime en qué barrio estás. Hay tiendas afiliadas en Kennedy.' }));
+    [...page.querySelectorAll<HTMLButtonElement>('.quick button')].find((button) => button.textContent?.includes('Tiendas cercanas'))!.click();
+    await settle(fixture);
+    expect(api.chat).toHaveBeenCalledWith({ messages: [{ role: 'user', content: 'Tiendas cercanas' }] });
+    expect(page.textContent).toContain('dime en qué barrio estás');
+
+    api.chat.and.resolveTo(
+      answer({
+        reply: 'En Kennedy hay 1 tienda afiliada.',
+        intent: { product: null, terms: [], category: null, preference: 'relevance', neighborhood: 'Kennedy', budget: null },
+        stores: [{ id: 's1', name: 'Tienda La Esquina', neighborhood: 'Kennedy', address: 'Calle 1', offerCount: 2 }],
+      }),
+    );
+    fixture.componentInstance.draft.set('Kennedy');
     await fixture.componentInstance.send();
     fixture.detectChanges();
-    expect(api.chat.calls.mostRecent().args[0]).toEqual({
-      messages: [
-        { role: 'user', content: 'pollo asado' },
-        { role: 'assistant', content: 'El pollo asado más barato está en Tienda Doña Luz a $ 32.000.' },
-        { role: 'user', content: '¿y más barato?' },
-      ],
-      neighborhood: 'Suba',
-    });
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('modo básico');
-  });
+    expect(session.neighborhood()).toBe('Kennedy');
+    expect(page.querySelector('.remembered')?.textContent).toContain('Kennedy');
+    expect(page.querySelector('.store-result strong')?.textContent).toBe('Tienda La Esquina');
+    expect(page.querySelector('.store-result .ribbon')?.textContent).toContain('2 ofertas');
 
-  it('does not warn about basic mode when the rules answered a clear question', async () => {
-    api.chat.and.resolveTo(response({ mode: 'rules', reply: 'Encontré 3 opciones de «pollo asado» en 3 tiendas.' }));
-    const fixture = TestBed.createComponent(ChatComponent);
+    // The remembered neighborhood goes with the next questions, until the person changes it.
+    api.chat.and.resolveTo(answer());
+    fixture.componentInstance.ask('leche');
+    await settle(fixture);
+    expect(api.chat.calls.mostRecent().args[0]).toEqual(jasmine.objectContaining({ neighborhood: 'Kennedy' }));
+    page.querySelector<HTMLButtonElement>('.remembered button')!.click();
     fixture.detectChanges();
-    fixture.componentInstance.draft.set('pollo asado');
-    await fixture.componentInstance.send();
+    expect(page.querySelector('.remembered')).toBeNull();
+    fixture.componentInstance.ask('pan');
+    await settle(fixture);
+    expect(api.chat.calls.mostRecent().args[0].neighborhood).toBeUndefined();
+  });
+
+  it('shows the typing indicator while waiting and the result cards after', async () => {
+    const { fixture, page } = setup();
+    let resolve!: (value: ChatResponse) => void;
+    api.chat.and.returnValue(new Promise((done) => (resolve = done)));
+    fixture.componentInstance.ask('Ofertas de hoy');
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('modo básico');
+    expect(page.querySelector('.typing')?.textContent).toContain('escribiendo');
+    expect(page.querySelector<HTMLButtonElement>('.quick button')!.disabled).toBeTrue();
+    resolve(
+      answer({
+        mode: 'basic',
+        results: [{ productId: 'p1', name: 'Leche', category: 'Lácteos', price: 5000, offerPrice: 4000, discountPercent: 20, stock: 3, expirationDate: '2099-01-01', daysToExpire: 1, store: { id: 's1', name: 'Tienda', neighborhood: 'Bosa', address: 'Calle 1' } }],
+      }),
+    );
+    await settle(fixture);
+    expect(page.querySelector('.typing')).toBeNull();
+    expect(page.querySelector('.result .ribbon')?.textContent).toBe('-20%');
+    expect(page.querySelector('.result .urgent')?.textContent).toBe('vence mañana');
+    expect(page.querySelector('.mode-note')).not.toBeNull();
   });
 
-  it('shows the API error without sending it back as history', async () => {
-    api.chat.and.rejectWith(new Error('Llegaste al límite de mensajes por minuto.'));
-    const fixture = TestBed.createComponent(ChatComponent);
-    fixture.detectChanges();
-    fixture.componentInstance.draft.set('pan');
-    await fixture.componentInstance.send();
-    const messages = fixture.componentInstance.messages();
-    expect(messages.at(-1)).toEqual(jasmine.objectContaining({ role: 'assistant', isError: true, content: 'Llegaste al límite de mensajes por minuto.' }));
-    expect(buildHistory(messages)).toEqual([{ role: 'user', content: 'pan' }]);
+  it('keeps the history between visits to the page in the same session', async () => {
+    const first = setup();
+    api.chat.and.resolveTo(answer({ reply: 'Hola' }));
+    first.component.ask('hola');
+    await settle(first.fixture);
+    first.fixture.destroy();
+    const again = TestBed.createComponent(ChatComponent);
+    again.detectChanges();
+    expect((again.nativeElement as HTMLElement).querySelectorAll('.message').length).toBe(2);
+    (again.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.chat-header button')!.click();
+    again.detectChanges();
+    expect((again.nativeElement as HTMLElement).querySelectorAll('.message').length).toBe(0);
   });
 
-  it('sends only the last six turns', () => {
-    const many = Array.from({ length: 9 }, (_, index) => ({ id: index, role: (index % 2 ? 'assistant' : 'user') as 'user' | 'assistant', content: `m${index}` }));
-    expect(buildHistory(many).map((turn) => turn.content)).toEqual(['m3', 'm4', 'm5', 'm6', 'm7', 'm8']);
+  it('shows the API error as a local message that is not sent back as history', async () => {
+    const { fixture, page, component } = setup();
+    api.chat.and.rejectWith(new ApiError('Llegaste al límite de mensajes por minuto.', 429));
+    component.ask('hola');
+    await settle(fixture);
+    expect(page.querySelector('.message.error')?.textContent).toContain('Llegaste al límite');
+    api.chat.and.resolveTo(answer());
+    component.ask('leche');
+    await settle(fixture);
+    expect(api.chat.calls.mostRecent().args[0].messages.map((turn) => turn.content)).toEqual(['hola', 'leche']);
   });
 
-  it('sends the chosen neighborhood as the search filter, and nothing when it is "Todos los barrios"', async () => {
-    const fixture = TestBed.createComponent(ChatComponent);
-    const component = fixture.componentInstance;
-    component.neighborhood.set('Suba');
-    component.ask('leche barata');
-    await fixture.whenStable();
-    expect(api.chat.calls.mostRecent().args[0]).toEqual({ messages: [{ role: 'user', content: 'leche barata' }], neighborhood: 'Suba' });
-    component.reset();
-    component.neighborhood.set('');
-    component.draft.set('huevos');
-    await component.send();
-    expect(api.chat.calls.mostRecent().args[0]).toEqual({ messages: [{ role: 'user', content: 'huevos' }] });
-  });
-
-  it('ignores empty or one-letter messages and a second send while waiting', async () => {
-    const fixture = TestBed.createComponent(ChatComponent);
-    const component = fixture.componentInstance;
-    component.draft.set('   a  ');
+  it('does not send empty or one-letter messages', async () => {
+    const { component } = setup();
+    component.draft.set(' a ');
     await component.send();
     expect(api.chat).not.toHaveBeenCalled();
-
-    let answer!: (value: ChatResponse) => void;
-    api.chat.and.returnValue(new Promise<ChatResponse>((resolve) => (answer = resolve)));
-    component.draft.set('pollo asado');
-    const first = component.send();
-    component.draft.set('otra cosa');
-    await component.send();
-    expect(api.chat).toHaveBeenCalledTimes(1);
-    answer(response());
-    await first;
-    expect(component.loading()).toBeFalse();
   });
-
-  it('cuts a pasted message to 500 characters before sending it', async () => {
-    const fixture = TestBed.createComponent(ChatComponent);
-    fixture.componentInstance.draft.set('leche '.repeat(200));
-    await fixture.componentInstance.send();
-    expect(api.chat.calls.mostRecent().args[0].messages[0].content.length).toBe(500);
-  });
-
-  it('starts over with "reset"', async () => {
-    const fixture = TestBed.createComponent(ChatComponent);
-    const component = fixture.componentInstance;
-    component.draft.set('pan');
-    await component.send();
-    component.reset();
-    expect(component.messages()).toEqual([]);
-    expect(component.draft()).toBe('');
-  });
-
-  it('writes expiration days in Spanish', () => {
-    const component = TestBed.createComponent(ChatComponent).componentInstance;
-    expect([0, 1, 4].map((days) => component.expiresLabel(days))).toEqual(['hoy', 'mañana', 'en 4 días']);
-  });
-
 });
