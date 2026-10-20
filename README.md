@@ -1,8 +1,8 @@
-# StockBarrio - Frontend
+# Stock Barrio - Frontend
 
 [![CI](https://github.com/Pipemora1324/stockbarrio-frontend/actions/workflows/ci.yml/badge.svg)](https://github.com/Pipemora1324/stockbarrio-frontend/actions/workflows/ci.yml)
 
-Interfaz web de StockBarrio, una aplicación para tiendas y clientes de barrio: las tiendas gestionan su inventario y aprueban descuentos sugeridos para lo que está por vencer, y los clientes buscan productos y ofertas en su barrio con ayuda de un chat. Está hecha con Angular 20 (componentes standalone, signals, SCSS).
+Interfaz web de Stock Barrio, una aplicación para tiendas y clientes de barrio: ayuda al ciudadano a encontrar el mejor producto al mejor precio y con los mejores descuentos cerca de su barrio. Las tiendas manejan uno o varios locales, su inventario y sus ofertas con fechas, y los clientes buscan productos y ofertas con ayuda de un chat. Está hecha con Angular 20 (componentes standalone, signals, SCSS).
 
 La API (Node.js + Express + PostgreSQL) está en un repositorio aparte: [stockbarrio-backend](https://github.com/Pipemora1324/stockbarrio-backend).
 
@@ -10,13 +10,13 @@ La API (Node.js + Express + PostgreSQL) está en un repositorio aparte: [stockba
 
 | Ruta | Qué muestra | Acceso |
 | --- | --- | --- |
-| `/` | Inicio con tiendas y ofertas | Público |
-| `/ofertas` | Productos con descuento, con filtros por barrio, categoría y texto, y orden por descuento o vencimiento (los filtros quedan en la URL) | Público |
-| `/catalogo` | Catálogo con filtros por barrio, categoría y nombre (`?barrio=` filtra al entrar) | Público |
-| `/chat` | Chat con el asistente ("¿dónde puedo encontrar pollo asado?", "ofertas de hoy") con historial, tarjetas de resultados y selector de barrio | Público |
+| `/` | Inicio: el mensaje de la app, los locales afiliados (con sus ofertas de hoy) y las ofertas con mayor descuento, con estados vacíos y llamadas a la acción | Público |
+| `/ofertas` | Ofertas activas hoy, con un único filtro por categoría (`?categoria=`), del mayor descuento al menor; los más rebajados destacan y cada oferta dice hasta cuándo dura | Público |
+| `/catalogo` | Productos sin oferta activa, agrupados por local con su encabezado (`#local-<id>` salta a uno), con un único filtro por categoría | Público |
+| `/chat` | Asistente con historial, indicador de "escribiendo", tarjetas de resultados y de tiendas, y botones "Ofertas de hoy" y "Tiendas cercanas" (sin selector de barrio) | Público |
 | `/login` | Inicio de sesión | Público |
 | `/register` | Registro de cliente o de tienda (`?tipo=tienda` abre el de tienda) | Público |
-| `/admin` | Panel de la tienda: datos de la tienda como texto, inventario y descuentos sugeridos | Rol `store` |
+| `/admin` | Panel del vendedor: sus locales (crear, renombrar, eliminar), inventario del local elegido (`?local=`) en tabla, descuentos sugeridos y formulario de producto con fechas de la oferta | Rol `store` |
 | `/alertas` | Alertas de descuento del cliente (pausada, ver abajo) | Rol `customer` |
 | `/notificaciones` | Bandeja de notificaciones, con enlace a la oferta (pausada, ver abajo) | Rol `customer` |
 | `/perfil` | Cambiar nombre, contraseña y correo | Con sesión |
@@ -94,30 +94,59 @@ La guía del panel de Supabase y las pruebas manuales están en [SUPABASE_AUTH.m
 
 ## Asistente
 
-El chat envía a la API los últimos 6 turnos (mensajes de hasta 500 caracteres) y muestra la respuesta con tarjetas de resultados.
+El chat envía a la API los últimos 6 turnos (mensajes de hasta 500 caracteres) y muestra la respuesta con tarjetas de productos y de tiendas.
 
+- **Accesos rápidos.** "Ofertas de hoy" pide las ofertas activas. "Tiendas cercanas" hace que el bot pregunte el barrio dentro del chat; la respuesta se usa como barrio y se muestran los locales de ahí con sus ofertas de hoy.
+- **Barrio recordado.** La API devuelve el barrio que usó (`intent.neighborhood`); la app lo recuerda **solo en memoria** (`ChatSessionService`) y lo manda con las preguntas siguientes. Se ve como "Buscando en …" con un botón "Cambiar barrio". El historial también vive en memoria: se conserva al cambiar de página y se pierde al recargar. Nada se guarda en el navegador.
 - **Modo básico.** Cuando la API responde sin IA, el mensaje lo indica.
-- **Datos reales.** La API valida que todo lo que dice el asistente exista en la base de datos.
+- **Datos reales.** La API valida que todo lo que dice el asistente exista en la base de datos y solo usa ofertas activas.
 
 ## Cercanía y privacidad
 
-- La app no usa la ubicación del navegador ni calcula distancias. La cercanía es por barrio: hay filtro de barrio en Ofertas y en el catálogo, y en el chat el cliente puede elegir "Tu barrio".
-- En el chat, "cerca de mí" busca en el barrio que el cliente escriba o elija; si no hay barrio, el asistente lo pregunta y dice en qué barrios hay tiendas.
+- La app no usa la ubicación del navegador ni calcula distancias. La cercanía es por barrio, y en el chat el barrio se pregunta en la conversación.
 - Bajo el campo del chat se muestra: "Tu mensaje se procesa con un servicio de IA externo; no escribas datos personales."
 
-## Diseño, rendimiento y accesibilidad
+## Ofertas con fechas y varios locales
 
-- **Estilos.** Tokens de color, tipografía y foco en `src/styles.scss`. Los colores de texto cumplen el contraste AA sobre blanco.
-- **Responsive, empezando por el móvil.** El header se convierte en menú desplegable, las cuadrículas se adaptan al ancho y la tabla del inventario pasa a tarjetas en el celular. Probado sin desbordamiento horizontal a 360, 768 y 1280 px.
-- **Tarjetas de producto** con ícono según la categoría, o imagen con `loading="lazy"` si el producto la tiene.
-- **Rendimiento.**
-  - Las páginas se cargan de forma diferida (salvo el inicio) y todos los componentes usan `ChangeDetectionStrategy.OnPush`.
-  - Las listas usan `@for` con `track` y la búsqueda del catálogo usa debounce.
-  - Hay estados de carga, vacío y error en todas las páginas.
+- Una oferta tiene **fecha de inicio** y **fecha de finalización** (días de Bogotá). Solo se ve en Ofertas mientras hoy esté entre las dos; antes y después el producto aparece en el catálogo a precio normal. No hay tareas programadas: la API lo decide con la fecha de cada consulta.
+- En el formulario de producto, al poner un descuento aparecen las dos fechas, con el rango propuesto de hoy al vencimiento. El inicio mínimo es hoy (salvo una oferta que ya empezó), el fin no puede ser antes del inicio ni después del vencimiento, y un producto vencido no puede tener oferta. Se valida en el formulario y otra vez en la API, con los mismos mensajes.
+- En el panel, cada producto muestra su estado: Oferta activa, Oferta programada, Oferta terminada, Sin oferta o Vencido.
+- Los descuentos sugeridos son solo para perecederos por vencer. El panel lo aclara: los no perecederos (enlatados, granos, bebidas...) nunca se sugieren, pero se pueden poner en oferta a mano. Al aprobar se eligen las fechas (por defecto, de hoy al vencimiento).
+- Un vendedor puede tener hasta 10 locales (Local 1, Local 2...). Al elegir uno se ve su inventario completo; eliminarlo pide confirmación. Sin locales, el panel muestra el formulario "Crea tu primer local".
+
+## Diseño
+
+**Dirección:** un mercado de barrio moderno y comercial, hecho a mano: nada de degradados morados o azules, vidrio esmerilado, emojis ni plantillas genéricas. Se eliminó el verde por completo.
+
+- **Paleta** (tokens en `src/styles.scss`, uno por tema):
+
+  | Token | Claro | Oscuro | Uso |
+  | --- | --- | --- | --- |
+  | `--color-primary` | rojo tomate `#c2341c` | `#ff6b4e` | botones, marca, acentos |
+  | `--color-corn` | amarillo maíz `#f5b700` | `#ffc93c` | cintas de descuento, ofertas destacadas |
+  | `--color-ink` | azul tinta `#1a2238` | crema `#f7f1e5` | títulos y texto fuerte |
+  | `--color-bg` | crema `#fbf6ec` | carbón `#14161c` | fondo |
+  | `--color-blue` | `#1f4e8c` | `#9cc0ff` | foco, avisos de éxito |
+
+  Todos los pares de texto y fondo cumplen **AA (4,5:1) en los dos temas**; `theme.service.spec.ts` lo comprueba sobre los valores reales.
+- **Tipografía con carácter, autohospedada** en `public/fonts`: Bricolage Grotesque para títulos y Figtree para el texto (SIL Open Font License). No se piden fuentes a servidores externos.
+- **Tarjetas con forma de etiqueta de precio** (esquinas cortadas y el agujero del cordel), cinta con el porcentaje y, para los descuentos más grandes, una etiqueta amarilla más grande.
+- **Íconos propios** en SVG (`components/icon`), con trazo del color del texto, e **ilustraciones propias** (`components/illustration`): el puesto de mercado del inicio y las de los estados vacíos. Usan las variables del tema, así que funcionan en claro y en oscuro.
+- **Banners fotográficos:** hay un lugar preparado en el inicio (`src/app/banners.ts`, vacío por defecto). Las fotos van descargadas en `public/img` (nunca enlazadas desde otro sitio), solo con licencia libre de Unsplash o Pexels, y con su crédito en `public/img/CREDITOS.md`.
+- **Tema claro y oscuro.** Por defecto sigue `prefers-color-scheme`; el botón del header guarda la elección (`localStorage`, con try/catch). `index.html` aplica el tema guardado antes de que Angular arranque, así que no hay parpadeo.
+- **Animaciones suaves:** transiciones de color, elevación de tarjetas y botones al pasar el mouse, y entrada al hacer scroll (`RevealDirective`). Con `prefers-reduced-motion` se apagan.
+- **Header:** solo el isotipo "SB" y "Stock Barrio". Se compacta y toma fondo sólido al hacer scroll, y en el celular se vuelve un menú. Navegación: Ofertas, Catálogo, Asistente y, según el rol, Mi tienda o Mi cuenta. La pestaña dice "Stock Barrio".
+
+## Rendimiento y accesibilidad
+
+- **Responsive, empezando por el móvil.** Revisado automáticamente a 320, 360, 768, 1024, 1280 y 1920 px, en claro y en oscuro, en todas las rutas y también con la base vacía: sin desbordes horizontales ni errores de consola. La tabla del inventario pasa a tarjetas en el celular y las píldoras de categorías se desplazan dentro de su fila.
+- **Rendimiento.** Las páginas se cargan de forma diferida (salvo el inicio), todos los componentes usan `OnPush`, las listas usan `@for` con `track` y el bundle inicial pesa unos 372 kB (106 kB comprimido).
 - **Accesibilidad.**
-  - Enlace "Saltar al contenido", etiquetas en todos los campos y foco visible.
-  - `aria-live` en resultados y avisos.
-  - `aria-expanded` en el menú y títulos de página por ruta.
+  - Enlace "Saltar al contenido" y foco visible en los dos temas.
+  - Etiquetas en todos los campos, `aria-invalid` y mensajes de error asociados.
+  - El filtro de categorías usa botones de radio con leyenda; los locales del panel son un `radiogroup`.
+  - `aria-live` en resultados y avisos, `aria-expanded` en el menú y `aria-current` en la navegación.
+  - Las ilustraciones son decorativas (`aria-hidden`) y nunca son la única forma de dar un mensaje.
 
 ## Requisitos
 
@@ -167,17 +196,31 @@ Cómo correr las pruebas, qué cubre cada suite y la cobertura actual: [TESTING.
 
 ## Cómo probar todo en local
 
-1. En el backend: `npm run seed` y `npm run dev` (puerto 3000).
+1. En el backend: `npm run seed:dev` (solo desarrollo; carga tiendas de ejemplo con correos `@stockbarrio.test`) y `npm run dev` (puerto 3000).
 2. Aquí: `npm start` y abre http://localhost:4200.
-3. Tienda: `tienda.donaluz@stockbarrio.test` / `tienda12345`. En `/admin` revisa el inventario y aprueba una sugerencia de descuento.
-4. Cliente: `cliente.demo@stockbarrio.test` / `tienda12345`. Revisa la campana y `/notificaciones`, y crea alertas en `/alertas`.
-5. Asistente: en `/chat`, pulsa "huevos baratos"; luego "pollo asado cerca" (te pide el barrio) y elige un barrio en "Tu barrio".
+3. Entra con una de las tiendas de ejemplo que lista el README del backend, o crea una cuenta de tienda.
+4. La app no depende de esos datos: con la base vacía todas las pantallas muestran su estado vacío.
+
+### Pruebas manuales
+
+1. **Tema:** cambia a oscuro con el botón del header, recarga (no debe parpadear) y revisa que el texto se lea bien. Con el sistema en oscuro y sin elección guardada, la app arranca en oscuro.
+2. **Header:** baja en cualquier página: se compacta. En el celular abre y cierra el menú, también con Escape.
+3. **Inicio:** se ven el mensaje, los locales afiliados y las ofertas destacadas. Con la base vacía, los dos estados vacíos con sus botones.
+4. **Ofertas:** elige una categoría (cambia la URL), mira las etiquetas destacadas y la fecha "Oferta hasta…".
+5. **Catálogo:** no aparece ningún producto en oferta; cada local tiene su encabezado. Desde el inicio, un local lleva a su grupo.
+6. **Asistente:** "Tiendas cercanas" → responde con un barrio → aparecen las tiendas y "Buscando en …"; luego pregunta por un producto y "Cambiar barrio".
+7. **Panel:** crea "Local 2", cámbiate entre locales, renombra y elimina (confirma). Crea un producto con descuento y fechas; prueba un inicio de ayer y un fin después del vencimiento.
+8. **Sugerencias:** aprueba una cambiando la fecha de fin; la tabla muestra el rango y "Oferta activa".
+9. **Responsive y teclado:** a 320 px no hay scroll horizontal; recorre el panel solo con Tab y Enter.
+10. **Movimiento reducido:** con `prefers-reduced-motion` activado no hay animaciones.
 
 ## Estructura
 
 - `src/app/pages`: páginas (`home`, `catalog`, `chat`, `admin`, `alerts`, `notifications`, `login`, `register`).
-- `src/app/components`: header y tarjeta de producto.
-- `src/app/services`: contador de notificaciones (pausado con las alertas).
+- `src/app/components`: header, etiqueta de precio, filtro de categorías, íconos, ilustraciones y la directiva de entrada al hacer scroll.
+- `src/app/services`: tema claro y oscuro, conversación del chat en memoria, Supabase y contador de notificaciones (pausado con las alertas).
+- `src/app/banners.ts` y `public/img/CREDITOS.md`: banners fotográficos (vacíos) y créditos.
+- `public/fonts`: fuentes autohospedadas con sus licencias.
 - `src/app/validation`: reglas de validación de los formularios.
 - `src/app/api.service.ts`: llamadas a la API, con mensajes de error en español.
 - `src/app/auth.service.ts`, `auth.guard.ts`, `auth.interceptor.ts` y `session.storage.ts`: sesión, protección de rutas y manejo del 401.
