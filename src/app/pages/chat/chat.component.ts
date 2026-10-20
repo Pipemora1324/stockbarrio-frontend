@@ -1,72 +1,83 @@
-import { afterNextRender, ChangeDetectionStrategy, Component, ElementRef, inject, Injector, OnInit, signal, viewChild } from '@angular/core';
+import { afterNextRender, ChangeDetectionStrategy, Component, ElementRef, inject, Injector, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../api.service';
-import type { AssistantResult, ChatMode, ChatTurn } from '../../models';
-import { CalendarDatePipe } from '../../pipes/calendar-date.pipe';
+import { IconComponent, type IconName } from '../../components/icon/icon.component';
+import { IllustrationComponent } from '../../components/illustration/illustration.component';
+import type { ChatTurn } from '../../models';
 import { CopCurrencyPipe } from '../../pipes/cop-currency.pipe';
+import { ChatSessionService, type ConversationMessage } from '../../services/chat-session.service';
 
-interface ConversationMessage {
-  id: number;
-  role: 'user' | 'assistant';
-  content: string;
-  results?: AssistantResult[];
-  mode?: ChatMode;
-  isError?: boolean;
-}
-
-export const quickQuestions = ['pollo asado cerca', 'ofertas de hoy', 'huevos baratos', 'leche por vencer'];
+// Quick buttons. "Tiendas cercanas" makes the bot ask for the neighborhood inside the chat (there is no location
+// nor picker) and then use it for the rest of the conversation.
+export const quickActions: ReadonlyArray<{ label: string; message: string; icon: IconName }> = [
+  { label: 'Ofertas de hoy', message: 'Ofertas de hoy', icon: 'tag' },
+  { label: 'Tiendas cercanas', message: 'Tiendas cercanas', icon: 'store' },
+];
 export const historyTurns = 6;
 export const maxMessageLength = 500;
+export const privacyNotice = 'Tu mensaje se procesa con un servicio de IA externo; no escribas datos personales.';
 
 // Only real exchanges go back to the API as history: errors are local messages.
 export const buildHistory = (messages: ConversationMessage[]): ChatTurn[] =>
   messages.filter((message) => !message.isError).slice(-historyTurns).map((message) => ({ role: message.role, content: message.content.slice(0, maxMessageLength) }));
 
+export const expiresLabel = (days: number) => (days <= 0 ? 'vence hoy' : days === 1 ? 'vence mañana' : `vence en ${days} días`);
+
 @Component({
   selector: 'app-chat',
-  imports: [FormsModule, RouterLink, CopCurrencyPipe, CalendarDatePipe],
+  imports: [FormsModule, RouterLink, CopCurrencyPipe, IconComponent, IllustrationComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './chat.component.scss',
   template: `
-<main class="chat-layout">
+<main class="page chat-page">
   <section class="chat-panel" aria-labelledby="chat-title">
-    <div class="chat-header">
-      <div><span class="eyebrow">Asistente de compras</span><h1 id="chat-title">¿Qué estás buscando?</h1></div>
-      @if (messages().length) { <button class="button button-light button-small" type="button" (click)="reset()">Nueva conversación</button> }
-    </div>
+    <header class="chat-header">
+      <div>
+        <span class="eyebrow"><app-icon name="chat" />Asistente</span>
+        <h1 id="chat-title">¿Qué necesitas hoy?</h1>
+      </div>
+      @if (session.messages().length) { <button class="button button-light button-small" type="button" (click)="reset()"><app-icon name="refresh" />Nueva conversación</button> }
+    </header>
 
-    <div class="neighborhood-bar">
-      <label for="chat-neighborhood">Tu barrio</label>
-      <select id="chat-neighborhood" [ngModel]="neighborhood()" (ngModelChange)="neighborhood.set($event)">
-        <option value="">Todos los barrios</option>
-        @for (item of neighborhoods(); track item) { <option [value]="item">{{ item }}</option> }
-      </select>
-      <small>Si lo eliges, busco solo en las tiendas de ese barrio.</small>
-    </div>
+    @if (session.neighborhood(); as place) {
+      <p class="remembered"><app-icon name="pin" />Buscando en <strong>{{ place }}</strong> <button class="link-button" type="button" (click)="session.forgetNeighborhood()">Cambiar barrio</button></p>
+    }
 
     <div class="messages" #messageList role="log" aria-live="polite" aria-label="Conversación con el asistente">
-      @if (!messages().length) {
-        <div class="message assistant">
-          Hola, te ayudo a encontrar productos en las tiendas de StockBarrio. Pregúntame, por ejemplo, «¿dónde puedo encontrar pollo asado?» y dime cómo lo prefieres: más barato, de mejor categoría, en oferta o por vencer. Para buscar cerca, elige tu barrio o escríbelo en el mensaje.
+      @if (!session.messages().length) {
+        <div class="welcome">
+          <app-illustration name="chat" />
+          <p>Hola, te ayudo a encontrar productos y descuentos en las tiendas de Stock Barrio. Escribe lo que buscas, por ejemplo «huevos baratos» o «leche por vencer», o usa los botones de abajo.</p>
         </div>
       }
-      @for (message of messages(); track message.id) {
-        <div class="message" [class.user]="message.role === 'user'" [class.assistant]="message.role === 'assistant'" [class.error]="message.isError">
+      @for (message of session.messages(); track message.id) {
+        <div class="message rise" [class.user]="message.role === 'user'" [class.assistant]="message.role === 'assistant'" [class.error]="message.isError">
           <span class="sr-only">{{ message.role === 'user' ? 'Tú dijiste:' : 'El asistente responde:' }}</span>{{ message.content }}
           @if (message.mode === 'basic') { <small class="mode-note">Respuesta en modo básico, con las reglas de la app.</small> }
         </div>
+        @if (message.stores?.length) {
+          <ul class="store-results" [attr.aria-label]="message.stores!.length + ' tiendas'">
+            @for (store of message.stores; track store.id) {
+              <li class="store-result">
+                <app-icon name="store" />
+                <span><strong>{{ store.name }}</strong><small>{{ store.neighborhood }} · {{ store.address }}</small></span>
+                @if (store.offerCount) { <span class="ribbon">{{ store.offerCount }} {{ store.offerCount === 1 ? 'oferta' : 'ofertas' }}</span> }
+              </li>
+            }
+          </ul>
+        }
         @if (message.results?.length) {
           <ul class="results" [attr.aria-label]="message.results!.length + ' resultados'">
             @for (result of message.results; track result.productId) {
               <li class="result">
                 <div class="result-head">
                   <strong>{{ result.name }}</strong>
-                  @if (result.discountPercent > 0) { <span class="badge">-{{ result.discountPercent }}%</span> }
+                  @if (result.discountPercent > 0) { <span class="ribbon">-{{ result.discountPercent }}%</span> }
                 </div>
                 <span class="store">{{ result.store.name }} · {{ result.store.neighborhood }}</span>
                 <span class="price"><strong>{{ result.offerPrice | cop }}</strong>@if (result.offerPrice < result.price) { <s><span class="sr-only">Antes </span>{{ result.price | cop }}</s> }</span>
-                <small [class.urgent]="result.daysToExpire <= 1">Vence {{ result.expirationDate | calendarDate }} · {{ expiresLabel(result.daysToExpire) }}</small>
+                <small [class.urgent]="result.daysToExpire <= 1">{{ expiresLabel(result.daysToExpire) }}</small>
               </li>
             }
           </ul>
@@ -75,53 +86,44 @@ export const buildHistory = (messages: ConversationMessage[]): ChatTurn[] =>
       @if (loading()) { <div class="message assistant typing" role="status"><span class="sr-only">El asistente está escribiendo</span><span class="dots" aria-hidden="true"><span></span><span></span><span></span></span> escribiendo…</div> }
     </div>
 
-    <div class="chips" aria-label="Sugerencias rápidas">
-      @for (question of quickQuestions; track question) { <button type="button" class="chip" [disabled]="loading()" (click)="ask(question)">{{ question }}</button> }
-      <a class="chip chip-link" routerLink="/ofertas">Ver todas las ofertas</a>
+    <div class="quick" role="group" aria-label="Accesos rápidos">
+      @for (action of quickActions; track action.label) {
+        <button type="button" class="button button-light button-small" [disabled]="loading()" (click)="ask(action.message)"><app-icon [name]="action.icon" />{{ action.label }}</button>
+      }
+      <a class="text-link" routerLink="/ofertas">Ver todas las ofertas <app-icon name="arrow" /></a>
     </div>
 
     <form class="composer" (ngSubmit)="send()">
       <label class="sr-only" for="chat-message">Escribe tu mensaje</label>
       <input id="chat-message" name="message" [ngModel]="draft()" (ngModelChange)="draft.set($event)" [maxlength]="maxMessageLength" autocomplete="off" placeholder="Escribe qué buscas" aria-describedby="chat-privacy chat-count">
-      <button class="button" type="submit" [disabled]="loading() || draft().trim().length < 2">Enviar</button>
+      <button class="button" type="submit" [disabled]="loading() || draft().trim().length < 2"><app-icon name="send" /><span>Enviar</span></button>
       <div class="composer-notes">
-        <small class="privacy" id="chat-privacy">Tu mensaje se procesa con un servicio de IA externo; no escribas datos personales.</small>
+        <small class="privacy" id="chat-privacy">{{ privacyNotice }}</small>
         <small class="count" id="chat-count" [class.near-limit]="draft().length > maxMessageLength - 50">{{ draft().length }}/{{ maxMessageLength }}</small>
       </div>
     </form>
   </section>
 </main>`,
 })
-export class ChatComponent implements OnInit {
+export class ChatComponent {
   private readonly api = inject(ApiService);
   private readonly injector = inject(Injector);
-  protected readonly quickQuestions = quickQuestions;
+  protected readonly session = inject(ChatSessionService);
+  protected readonly quickActions = quickActions;
   protected readonly maxMessageLength = maxMessageLength;
+  protected readonly privacyNotice = privacyNotice;
+  protected readonly expiresLabel = expiresLabel;
   private readonly messageList = viewChild<ElementRef<HTMLElement>>('messageList');
-  readonly messages = signal<ConversationMessage[]>([]);
-  readonly neighborhoods = signal<string[]>([]);
-  readonly neighborhood = signal('');
   readonly draft = signal('');
   readonly loading = signal(false);
-  private nextId = 1;
-
-  ngOnInit() {
-    this.api.getNeighborhoods().then((items) => this.neighborhoods.set(items), () => this.neighborhoods.set([]));
-  }
-
-  expiresLabel(days: number) {
-    if (days === 0) return 'hoy';
-    if (days === 1) return 'mañana';
-    return `en ${days} días`;
-  }
 
   reset() {
-    this.messages.set([]);
+    this.session.reset();
     this.draft.set('');
   }
 
-  ask(question: string) {
-    this.draft.set(question);
+  ask(message: string) {
+    this.draft.set(message);
     void this.send();
   }
 
@@ -132,8 +134,10 @@ export class ChatComponent implements OnInit {
     this.push({ role: 'user', content });
     this.loading.set(true);
     try {
-      const response = await this.api.chat({ messages: buildHistory(this.messages()), ...(this.neighborhood() ? { neighborhood: this.neighborhood() } : {}) });
-      this.push({ role: 'assistant', content: response.reply, results: response.results, mode: response.mode });
+      const neighborhood = this.session.neighborhood();
+      const response = await this.api.chat({ messages: buildHistory(this.session.messages()), ...(neighborhood ? { neighborhood } : {}) });
+      this.session.remember(response.intent?.neighborhood ?? null);
+      this.push({ role: 'assistant', content: response.reply, results: response.results, stores: response.stores, mode: response.mode });
     } catch (caught) {
       this.push({ role: 'assistant', content: caught instanceof Error ? caught.message : 'El asistente no pudo responder.', isError: true });
     } finally {
@@ -142,10 +146,13 @@ export class ChatComponent implements OnInit {
   }
 
   private push(message: Omit<ConversationMessage, 'id'>) {
-    this.messages.update((items) => [...items, { ...message, id: this.nextId++ }]);
-    afterNextRender(() => {
-      const list = this.messageList()?.nativeElement;
-      list?.scrollTo?.({ top: list.scrollHeight, behavior: 'smooth' });
-    }, { injector: this.injector });
+    this.session.add(message);
+    afterNextRender(
+      () => {
+        const list = this.messageList()?.nativeElement;
+        list?.scrollTo?.({ top: list.scrollHeight, behavior: 'smooth' });
+      },
+      { injector: this.injector },
+    );
   }
 }
