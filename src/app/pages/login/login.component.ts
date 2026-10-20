@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { PasswordFieldComponent } from '../../components/password-field/password-field.component';
 import { FormsModule } from '@angular/forms';
 import { IllustrationComponent } from '../../components/illustration/illustration.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -15,7 +16,7 @@ const linkNotices: Record<string, string> = {
 
 @Component({
   selector: 'app-login',
-  imports: [FormsModule, RouterLink, IllustrationComponent],
+  imports: [PasswordFieldComponent, FormsModule, RouterLink, IllustrationComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './login.component.scss',
   template: `
@@ -28,7 +29,7 @@ const linkNotices: Record<string, string> = {
     @if (linkNotice()) { <p class="notice" role="status">{{ linkNotice() }}</p> }
     <form (ngSubmit)="submit()">
       <label>Correo electrónico<input name="email" [(ngModel)]="email" type="email" autocomplete="email" required></label>
-      <label>Contraseña<input name="password" [(ngModel)]="password" type="password" autocomplete="current-password" required></label>
+      <div class="password-label"><label for="login-password">Contraseña</label><app-password-field><input id="login-password" name="password" [(ngModel)]="password" type="password" autocomplete="current-password" required></app-password-field></div>
       <a class="forgot" routerLink="/forgot-password">¿Olvidaste tu contraseña?</a>
       <button class="button" type="submit" [disabled]="loading() || !canSubmit()">{{ loading() ? 'Entrando…' : 'Iniciar sesión' }}</button>
       @if (error()) { <p class="error" role="alert">{{ error() }}</p> }

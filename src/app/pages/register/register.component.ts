@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { PasswordFieldComponent } from '../../components/password-field/password-field.component';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
@@ -8,7 +9,7 @@ import * as rules from '../../validation/rules';
 type AccountType = 'customer' | 'store';
 type Field = 'name' | 'email' | 'password' | 'storeName' | 'neighborhood' | 'address' | 'phone';
 
-@Component({ selector: 'app-register', imports: [FormsModule, RouterLink], changeDetection: ChangeDetectionStrategy.OnPush, template: `
+@Component({ selector: 'app-register', imports: [PasswordFieldComponent, FormsModule, RouterLink], changeDetection: ChangeDetectionStrategy.OnPush, template: `
 <main class="register-page"><section class="card register-card">
   <span class="eyebrow">{{ isStore() ? 'Registro de tienda' : 'Registro de cliente' }}</span>
   <h1>{{ isStore() ? 'Conecta tu negocio' : 'Ahorra en tu barrio' }}</h1>
@@ -34,7 +35,7 @@ type Field = 'name' | 'email' | 'password' | 'storeName' | 'neighborhood' | 'add
     @if (show('email')) { <small class="field-error" id="register-email-error">{{ errors().email }}</small> }
 
     <label for="register-password">Contraseña</label>
-    <input id="register-password" name="password" type="password" autocomplete="new-password" maxlength="72" [ngModel]="values().password" (ngModelChange)="set('password', $event)" (blur)="touch('password')" [attr.aria-invalid]="show('password') ? true : null" aria-describedby="register-password-help">
+    <app-password-field><input id="register-password" name="password" type="password" autocomplete="new-password" maxlength="72" [ngModel]="values().password" (ngModelChange)="set('password', $event)" (blur)="touch('password')" [attr.aria-invalid]="show('password') ? true : null" aria-describedby="register-password-help"></app-password-field>
     <small class="field-help" id="register-password-help">@if (show('password')) { <span class="field-error">{{ errors().password }}</span> } @else { Entre 8 y 72 caracteres, con al menos una letra y un número. }</small>
 
     @if (isStore()) {

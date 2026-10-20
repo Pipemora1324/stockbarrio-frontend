@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { PasswordFieldComponent } from '../../components/password-field/password-field.component';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiError, ApiService } from '../../api.service';
@@ -10,7 +11,7 @@ const minTokenLength = 20;
 
 @Component({
   selector: 'app-reset-password',
-  imports: [FormsModule, RouterLink],
+  imports: [PasswordFieldComponent, FormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
 <main class="auth-page">
@@ -28,10 +29,10 @@ const minTokenLength = 20;
       <p>Al cambiarla cerraremos las sesiones que tengas abiertas en otros dispositivos.</p>
       <form (ngSubmit)="submit()" novalidate>
         <label for="reset-password">Contraseña nueva</label>
-        <input id="reset-password" name="password" type="password" autocomplete="new-password" maxlength="72" [ngModel]="password()" (ngModelChange)="password.set($event)" (blur)="touched.set(true)" [attr.aria-invalid]="touched() && passwordError() ? true : null" aria-describedby="reset-password-help">
+        <app-password-field><input id="reset-password" name="password" type="password" autocomplete="new-password" maxlength="72" [ngModel]="password()" (ngModelChange)="password.set($event)" (blur)="touched.set(true)" [attr.aria-invalid]="touched() && passwordError() ? true : null" aria-describedby="reset-password-help"></app-password-field>
         <small class="field-help" id="reset-password-help">@if (touched() && passwordError()) { <span class="field-error">{{ passwordError() }}</span> } @else { Entre 8 y 72 caracteres, con al menos una letra y un número. }</small>
         <label for="reset-confirm">Repite la contraseña</label>
-        <input id="reset-confirm" name="confirm" type="password" autocomplete="new-password" maxlength="72" [ngModel]="confirm()" (ngModelChange)="confirm.set($event)" (blur)="confirmTouched.set(true)" [attr.aria-invalid]="confirmTouched() && confirmError() ? true : null" aria-describedby="reset-confirm-error">
+        <app-password-field><input id="reset-confirm" name="confirm" type="password" autocomplete="new-password" maxlength="72" [ngModel]="confirm()" (ngModelChange)="confirm.set($event)" (blur)="confirmTouched.set(true)" [attr.aria-invalid]="confirmTouched() && confirmError() ? true : null" aria-describedby="reset-confirm-error"></app-password-field>
         @if (confirmTouched() && confirmError()) { <small class="field-error" id="reset-confirm-error">{{ confirmError() }}</small> }
         <button class="button" type="submit" [disabled]="loading() || invalid()">{{ loading() ? 'Guardando…' : 'Cambiar contraseña' }}</button>
         @if (failure()) { <p class="form-message failure" role="alert">{{ failure() }}</p> }

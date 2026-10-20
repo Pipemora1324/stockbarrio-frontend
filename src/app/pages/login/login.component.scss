@@ -77,3 +77,10 @@
     display: none;
   }
 }
+.password-label {
+  display: grid;
+  gap: 0.35rem;
+}
+.password-label label {
+  display: block;
+}
