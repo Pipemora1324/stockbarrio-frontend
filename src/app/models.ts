@@ -13,9 +13,6 @@ export interface DiscountSuggestion { id: string; productId: string; productName
 export interface AppliedDiscount { productId: string; discountPercent: number; offerPrice: number; offerStartsOn: string; offerEndsOn: string; }
 export type SearchPreference = 'relevance' | 'cheapest' | 'best_deal' | 'best_grade' | 'expiring';
 export interface AssistantResult { productId: string; name: string; category: string; price: number; offerPrice: number; discountPercent: number; stock: number; expirationDate: string; daysToExpire: number; store: { id: string; name: string; neighborhood: string; address: string }; }
-export interface AlertSubscription { id: string; query: string | null; category: string | null; neighborhood: string | null; minDiscount: number; createdAt: string; }
-export interface AlertInput { query?: string; category?: string; neighborhood?: string; minDiscount: number; }
-export interface AppNotification { id: string; title: string; message: string; productId: string | null; productName?: string | null; createdAt: string; readAt: string | null; }
 export type OfferSort = 'discount' | 'expiring';
 export interface Offer { productId: string; name: string; category: string; description: string; imageUrl: string; price: number; offerPrice: number; discountPercent: number; stock: number; expirationDate: string; daysToExpire: number; offerStartsOn: string; offerEndsOn: string; offerDaysLeft: number; store: { id: string; name: string; neighborhood: string; address: string }; }
 export interface OfferQuery { neighborhood?: string; category?: string; search?: string; sort: OfferSort; }

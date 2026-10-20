@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom, type Observable } from 'rxjs';
-import type { AccountProfile, SessionUpdate, ChatResponse, ChatTurn, Offer, OfferQuery, AlertInput, AlertSubscription, AppNotification, AppliedDiscount, AuthUser, CatalogGroup, DiscountSuggestion, InventoryProduct, OwnedStore, Product, Store, StoreInput } from './models';
+import type { AccountProfile, SessionUpdate, ChatResponse, ChatTurn, Offer, OfferQuery, AppliedDiscount, AuthUser, CatalogGroup, DiscountSuggestion, InventoryProduct, OwnedStore, Product, Store, StoreInput } from './models';
 
 // Offer dates are 'YYYY-MM-DD' days (Bogota); null when the product has no discount.
 export type ProductInput = Pick<Product, 'name' | 'category' | 'description' | 'price' | 'stock' | 'expirationDate' | 'discountPercent'> & { offerStartsOn: string | null; offerEndsOn: string | null };
@@ -54,10 +54,6 @@ export class ApiService {
     return this.request(this.http.post<{ data: Offer[]; total: number }>(`${this.baseUrl}/offers/search`, query), 'No se pudieron cargar las ofertas.');
   }
 
-  async getNeighborhoods(): Promise<string[]> {
-    return (await this.request(this.http.get<{ data: string[] }>(`${this.baseUrl}/stores/neighborhoods`), 'No se pudieron cargar los barrios.')).data;
-  }
-
   // Sends the last turns of the conversation and the neighborhood the customer gave earlier in the chat (kept in memory only).
   async chat(payload: { messages: ChatTurn[]; neighborhood?: string }): Promise<ChatResponse> {
     return (await this.request(this.http.post<{ data: ChatResponse }>(`${this.baseUrl}/assistant/chat`, payload), 'El asistente no pudo responder. Inténtalo de nuevo.')).data;
@@ -68,14 +64,6 @@ export class ApiService {
     const params = category ? { category } : undefined;
     const response = await this.request(this.http.get<{ data: CatalogGroup[]; total: number }>(`${this.baseUrl}/products/catalog`, { params }), 'No se pudo cargar el catálogo.');
     return { groups: response.data, total: response.total };
-  }
-
-  async getProducts(filters: { neighborhood?: string; category?: string; search?: string } = {}): Promise<Product[]> {
-    const params: Record<string, string> = {};
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value?.trim()) params[key] = value.trim();
-    });
-    return (await this.request(this.http.get<{ data: Product[] }>(`${this.baseUrl}/products`, { params }), 'No se pudieron cargar los productos.')).data;
   }
 
   // Whether the email (or another address of the same mailbox, like Gmail with dots) already has an account.
@@ -178,33 +166,5 @@ export class ApiService {
 
   approveAllSuggestions(storeId?: string): Promise<{ data: AppliedDiscount[]; message: string }> {
     return this.request(this.http.post<{ data: AppliedDiscount[]; message: string }>(`${this.baseUrl}/suggestions/approve-all`, {}, storeParams(storeId)), 'No se pudieron aplicar los descuentos.');
-  }
-
-  async getAlerts(): Promise<AlertSubscription[]> {
-    return (await this.request(this.http.get<{ data: AlertSubscription[] }>(`${this.baseUrl}/alerts`), 'No se pudieron cargar tus alertas.')).data;
-  }
-
-  createAlert(alert: AlertInput): Promise<{ data: AlertSubscription; message: string }> {
-    return this.request(this.http.post<{ data: AlertSubscription; message: string }>(`${this.baseUrl}/alerts`, alert), 'No se pudo crear la alerta.');
-  }
-
-  async deleteAlert(id: string): Promise<void> {
-    await this.request(this.http.delete(`${this.baseUrl}/alerts/${id}`), 'No se pudo eliminar la alerta.');
-  }
-
-  getNotifications(): Promise<{ data: AppNotification[]; unread: number }> {
-    return this.request(this.http.get<{ data: AppNotification[]; unread: number }>(`${this.baseUrl}/notifications`), 'No se pudieron cargar tus notificaciones.');
-  }
-
-  async getUnreadCount(): Promise<number> {
-    return (await this.request(this.http.get<{ unread: number }>(`${this.baseUrl}/notifications/unread-count`), 'No se pudo consultar las notificaciones.')).unread;
-  }
-
-  async markNotificationRead(id: string): Promise<number> {
-    return (await this.request(this.http.post<{ unread: number }>(`${this.baseUrl}/notifications/${id}/read`, {}), 'No se pudo marcar como leída.')).unread;
-  }
-
-  async markAllNotificationsRead(): Promise<number> {
-    return (await this.request(this.http.post<{ unread: number }>(`${this.baseUrl}/notifications/read-all`, {}), 'No se pudieron marcar como leídas.')).unread;
   }
 }
