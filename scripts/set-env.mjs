@@ -1,13 +1,12 @@
-// Runs before `npm run build`. When any of ENABLE_ALERTS, AUTH_PROVIDER, SUPABASE_URL or SUPABASE_ANON_KEY exists
+// Runs before `npm run build`. When any of AUTH_PROVIDER, SUPABASE_URL or SUPABASE_ANON_KEY exists
 // (for example in Vercel), it writes src/environments/environment.ts from them. Without any of them the committed
-// file is left untouched (alerts off, legacy login).
+// file is left untouched (legacy login).
 import { writeFileSync } from 'node:fs';
 
-const names = ['ENABLE_ALERTS', 'AUTH_PROVIDER', 'SUPABASE_URL', 'SUPABASE_ANON_KEY'];
+const names = ['AUTH_PROVIDER', 'SUPABASE_URL', 'SUPABASE_ANON_KEY'];
 if (names.every((name) => process.env[name] === undefined)) process.exit(0);
 
 const read = (name) => (process.env[name] ?? '').trim();
-const enableAlerts = read('ENABLE_ALERTS').toLowerCase() === 'true';
 const authProvider = read('AUTH_PROVIDER').toLowerCase() === 'supabase' ? 'supabase' : 'legacy';
 const supabaseUrl = read('SUPABASE_URL').replace(/\/+$/, '');
 const supabaseAnonKey = read('SUPABASE_ANON_KEY');
@@ -26,16 +25,14 @@ writeFileSync(
   new URL('../src/environments/environment.ts', import.meta.url),
   `// Generated at build time by scripts/set-env.mjs.
 export const environment: {
-  enableAlerts: boolean;
   authProvider: 'legacy' | 'supabase';
   supabaseUrl: string;
   supabaseAnonKey: string;
 } = {
-  enableAlerts: ${enableAlerts},
   authProvider: ${JSON.stringify(authProvider)},
   supabaseUrl: ${JSON.stringify(supabaseUrl)},
   supabaseAnonKey: ${JSON.stringify(supabaseAnonKey)},
 };
 `,
 );
-console.info(`Build con alertas ${enableAlerts ? 'activadas' : 'apagadas'} y autenticación ${authProvider}.`);
+console.info(`Build con autenticación ${authProvider}.`);

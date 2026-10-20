@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { PasswordFieldComponent } from '../../components/password-field/password-field.component';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { environment } from '../../../environments/environment';
 import { ApiService } from '../../api.service';
 import { AuthService } from '../../auth.service';
 import * as rules from '../../validation/rules';
@@ -14,7 +13,7 @@ type Field = 'name' | 'email' | 'password' | 'storeName' | 'neighborhood' | 'add
 <main class="register-page"><section class="card register-card">
   <span class="eyebrow">{{ isStore() ? 'Registro de tienda' : 'Registro de cliente' }}</span>
   <h1>{{ isStore() ? 'Conecta tu negocio' : 'Ahorra en tu barrio' }}</h1>
-  <p>{{ isStore() ? 'Crea una cuenta para controlar el inventario de tu tienda y sus ofertas.' : (alertsEnabled ? 'Crea una cuenta para recibir avisos cuando haya descuentos en lo que te interesa.' : 'Crea una cuenta para guardar tu perfil y encontrar las ofertas de tu barrio.') }}</p>
+  <p>{{ isStore() ? 'Crea una cuenta para controlar el inventario de tu tienda y sus ofertas.' : 'Crea una cuenta para guardar tu perfil y encontrar las ofertas de tu barrio.' }}</p>
   <div class="account-type" role="radiogroup" aria-label="Tipo de cuenta">
     <button type="button" role="radio" [attr.aria-checked]="!isStore()" [class.active]="!isStore()" (click)="accountType.set('customer')">Soy cliente</button>
     <button type="button" role="radio" [attr.aria-checked]="isStore()" [class.active]="isStore()" (click)="accountType.set('store')">Tengo una tienda</button>
@@ -76,7 +75,6 @@ type Field = 'name' | 'email' | 'password' | 'storeName' | 'neighborhood' | 'add
 export class RegisterComponent {
   private readonly auth = inject(AuthService);
   private readonly api = inject(ApiService);
-  protected readonly alertsEnabled = environment.enableAlerts;
   readonly accountType = signal<AccountType>(inject(ActivatedRoute).snapshot.queryParamMap.get('tipo') === 'tienda' ? 'store' : 'customer');
   readonly isStore = computed(() => this.accountType() === 'store');
   readonly values = signal<Record<Field, string>>({ name: '', email: '', password: '', storeName: '', neighborhood: '', address: '', phone: '' });

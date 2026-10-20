@@ -1,6 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { environment } from '../environments/environment';
 import { emailTakenMessage } from './validation/rules';
 import { ApiError, ApiService } from './api.service';
 import type { AuthUser } from './models';
@@ -215,7 +214,7 @@ export class AuthService {
     writeSession({ token, user });
     this.session.set({ token, user });
     this.sessionNotice.set('');
-    const home: Record<AuthUser['role'], string> = { store: '/admin', customer: environment.enableAlerts ? '/alertas' : '/ofertas', admin: '/' };
+    const home: Record<AuthUser['role'], string> = { store: '/admin', customer: '/ofertas', admin: '/' };
     void this.router.navigate([home[user.role]]);
   }
 }
