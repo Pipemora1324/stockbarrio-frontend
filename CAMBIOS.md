@@ -244,3 +244,22 @@ El backend de la rama `mejoras` (ofertas, chat, cuenta y categorías).
   - perfil, registro de cliente y de tienda, y login de cliente que entra a Ofertas.
   - No hubo errores de consola ni desborde horizontal.
 - **Compatibilidad:** funciona con el backend actual y con el nuevo, porque ya no envía coordenadas ni llama a los combos.
+
+## Recuperación de contraseña por correo (rama `correo`)
+
+- **`/reset-password`:**
+  - si el enlace venció, ya se usó o fue reemplazado, se oculta el formulario y aparece el botón "Pedir un enlace nuevo";
+  - un token cortado por el cliente de correo se trata como enlace incompleto;
+  - el token se quita de la barra de direcciones al cargar la página.
+  - Las contraseñas se validan como en el registro y, al guardar, la persona va al login con un aviso.
+- **`/forgot-password`:** aclara que se usa el correo con el que se creó la cuenta y, tras el mensaje genérico, permite pedir otro enlace.
+- **Login:** el enlace "¿Olvidaste tu contraseña?" sigue visible.
+- **Verificación:** recorrí el flujo completo en un celular de 360 px con el build de producción, servido con las mismas reglas de `vercel.json`, contra la API local:
+  - pedí el enlace con el correo en mayúsculas;
+  - el enlace del correo abrió `/reset-password`;
+  - cambié la contraseña e inicié sesión con la nueva;
+  - el mismo enlace dejó de servir;
+  - llegó el aviso de contraseña cambiada.
+  - No hubo errores, salvo el 400 esperado del enlace usado, ni desborde horizontal.
+- **Pruebas:** 141 en verde (95,3 % de líneas, 81,2 % de ramas).
+- **Variables nuevas:** ninguna.

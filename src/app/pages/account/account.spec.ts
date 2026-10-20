@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { ApiError, ApiService } from '../../api.service';
 import { AuthService } from '../../auth.service';
 import { writeSession } from '../../session.storage';
@@ -177,5 +177,98 @@ describe('account pages', () => {
     const broken = TestBed.createComponent(ProfileComponent).componentInstance;
     await broken.ngOnInit();
     expect(broken.loadError()).toContain('Vuelve a iniciar sesión');
+  });
+
+  const validToken = 'Zx9mQ2_kLp4rT7vW1yB3nC5dF8gH0jK2lM4oP6qR8sU';
+
+  it('takes the token out of the address bar as soon as the page opens', () => {
+    setup(validToken);
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    const fixture = TestBed.createComponent(ResetPasswordComponent);
+    fixture.detectChanges();
+    expect(navigate).toHaveBeenCalledWith([], jasmine.objectContaining({ queryParams: {}, replaceUrl: true }));
+    expect((fixture.nativeElement as HTMLElement).querySelector('#reset-password')).not.toBeNull();
+  });
+
+  it('treats a cut token as an incomplete link', () => {
+    setup('abc123');
+    const fixture = TestBed.createComponent(ResetPasswordComponent);
+    fixture.detectChanges();
+    const page = fixture.nativeElement as HTMLElement;
+    expect(page.textContent).toContain('El enlace está incompleto');
+    expect(page.querySelector('a.button[href="/forgot-password"]')?.textContent).toBe('Pedir un enlace nuevo');
+    expect(page.querySelector('form')).toBeNull();
+  });
+
+  it('hides the form and offers a new link when the link expired or was already used', async () => {
+    setup(validToken);
+    api.resetPassword.and.rejectWith(new ApiError('El enlace no es válido o ya venció. Pide uno nuevo.', 400));
+    const fixture = TestBed.createComponent(ResetPasswordComponent);
+    fixture.detectChanges();
+    fixture.componentInstance.password.set('nuevaClave2026');
+    fixture.componentInstance.confirm.set('nuevaClave2026');
+    await fixture.componentInstance.submit();
+    fixture.detectChanges();
+    const page = fixture.nativeElement as HTMLElement;
+    expect(page.querySelector('[role=alert]')?.textContent).toBe('El enlace no es válido o ya venció. Pide uno nuevo.');
+    expect(page.querySelector('form')).toBeNull();
+    expect(page.querySelector('a.button[href="/forgot-password"]')).not.toBeNull();
+  });
+
+  it('keeps the form for a password the API rejects, so it can be fixed', async () => {
+    setup(validToken);
+    api.resetPassword.and.rejectWith(new ApiError('La contraseña no puede ser igual a tu correo.', 400));
+    const fixture = TestBed.createComponent(ResetPasswordComponent);
+    fixture.detectChanges();
+    fixture.componentInstance.password.set('ana2026@correo.co');
+    fixture.componentInstance.confirm.set('ana2026@correo.co');
+    await fixture.componentInstance.submit();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.linkExpired()).toBeFalse();
+    expect((fixture.nativeElement as HTMLElement).querySelector('form')).not.toBeNull();
+  });
+
+  it('shows clear messages for a weak password and a mismatch', () => {
+    setup(validToken);
+    const fixture = TestBed.createComponent(ResetPasswordComponent);
+    fixture.detectChanges();
+    const page = fixture.componentInstance;
+    page.password.set('corta');
+    expect(page.passwordError()).toContain('al menos 8 caracteres');
+    page.password.set('sololetras');
+    expect(page.passwordError()).toContain('un número');
+    page.password.set('nuevaClave2026');
+    page.confirm.set('nuevaClave2025');
+    expect(page.confirmError()).toBe('Las contraseñas no coinciden.');
+  });
+
+  it('lets the customer ask for another link and explains the 503 when email is not configured', async () => {
+    setup();
+    api.forgotPassword.and.resolveTo({ message: 'Si el correo está registrado, te enviamos un enlace.' });
+    const fixture = TestBed.createComponent(ForgotPasswordComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.email.set('ana@correo.co');
+    await component.submit();
+    fixture.detectChanges();
+    const page = fixture.nativeElement as HTMLElement;
+    expect(page.textContent).toContain('Usa el correo con el que creaste tu cuenta');
+    page.querySelector<HTMLButtonElement>('button.button-light')!.click();
+    fixture.detectChanges();
+    expect(page.querySelector('form')).not.toBeNull();
+
+    api.forgotPassword.and.rejectWith(new ApiError('El envío de correos no está configurado todavía. Escríbele al equipo de StockBarrio para recuperar tu cuenta.', 503));
+    await component.submit();
+    fixture.detectChanges();
+    expect(page.querySelector('[role=alert]')?.textContent).toContain('no está configurado');
+  });
+
+  it('does not send an invalid email', async () => {
+    setup();
+    const fixture = TestBed.createComponent(ForgotPasswordComponent);
+    fixture.componentInstance.email.set('ana@correo');
+    await fixture.componentInstance.submit();
+    expect(api.forgotPassword).not.toHaveBeenCalled();
+    expect(fixture.componentInstance.error()).toBe('El correo electrónico no es válido.');
   });
 });

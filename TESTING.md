@@ -40,19 +40,17 @@ Hay dos archivos que no se miden:
 | `pages/offers` | Filtros desde la URL, solo filtro por barrio (sin ubicación, radio ni orden por cercanía), respuestas tardías, error y "Quitar filtros", texto de una letra |
 | `pages/chat` | Historial de seis turnos, modo básico, barrio como filtro, sin botón de ubicación ni distancias, aviso de privacidad bajo el campo, envíos dobles, máximo de 500 caracteres |
 | `pages/admin` | Panel de la tienda (datos solo como texto y sin sección de ubicación, totales, filtro, tienda no asociada, error y reintento, borrar con confirmación, fallo al borrar, formulario nuevo por producto), formulario de producto, sugerencias de descuento |
-| `pages/account` | Recuperar y cambiar la contraseña, confirmar el correo (cierra la sesión vieja), cambiar nombre y correo, errores de cada formulario |
+| `pages/account` | Recuperar la contraseña (correo válido, mensaje genérico, pedir otro enlace, 503 sin correo configurado), restablecerla (contraseña nueva y repetida, enlace incompleto o cortado, enlace vencido o usado con botón para pedir otro, token fuera de la URL, aviso en el login), confirmar el correo, cambiar nombre y correo, errores de cada formulario |
 | `components/product-card`, `services/notifications.service.spec.ts`, `pages/alerts` | Tarjeta de producto y la parte de alertas (pausada) |
 
 ## Resultado actual
 
-134 pruebas, todas en verde (unos 2 s de ejecución en Chrome headless, más la compilación).
+141 pruebas, todas en verde (unos 2 s de ejecución en Chrome headless, más la compilación).
 
-| Métrica | Ronda de pruebas | Ahora (tras simplificar) |
+| Métrica | Tras simplificar | Ahora (correo) |
 | --- | --- | --- |
-| Líneas | 94,6 % | 95,0 % |
-| Sentencias | 92,7 % | 93,0 % |
-| Ramas | 80,6 % | 79,9 % |
-| Funciones | 89,4 % | 88,7 % |
+| Líneas | 95,0 % | 95,3 % |
+| Ramas | 79,9 % | 81,2 % |
 
 Lo que queda sin cubrir es sobre todo:
 
