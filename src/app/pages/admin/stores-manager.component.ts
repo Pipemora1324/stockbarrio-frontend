@@ -7,14 +7,14 @@ import * as rules from '../../validation/rules';
 
 type StoreField = keyof StoreInput;
 
-// Deleting a store also removes all its products from Stock Barrio, so the question says it.
+// Eliminar un local también quita todos sus productos de Stock Barrio, así que la pregunta lo dice.
 export const deleteStoreQuestion = (store: OwnedStore) => {
   const products = store.productCount === 1 ? 'su producto' : store.productCount ? `sus ${store.productCount} productos` : 'todos sus productos';
   return `¿Eliminar el local «${store.name}»? También se quitarán ${products} de Stock Barrio (ofertas, catálogo y asistente).`;
 };
 const emptyStore = (): StoreInput => ({ name: '', neighborhood: '', address: '', phone: '' });
 
-// The seller's stores (Local 1, Local 2...): pick one, create, rename or delete it (with confirmation).
+// Los locales del vendedor (Local 1, Local 2...): elegir uno, crear, renombrar o eliminar (con confirmación).
 @Component({
   selector: 'app-stores-manager',
   imports: [FormsModule, IconComponent],
@@ -92,7 +92,7 @@ export class StoresManagerComponent {
   readonly selectedId = input<string | null>(null);
   readonly max = input(10);
   readonly selected = output<string>();
-  // After a create, rename or delete: the message to show and the store to select (null: the first one).
+  // Después de crear, renombrar o eliminar: el mensaje a mostrar y el local a elegir (null: el primero).
   readonly changed = output<{ message: string; selectId: string | null }>();
   protected readonly fields: ReadonlyArray<{ key: StoreField; label: string; max: number; placeholder: string }> = [
     { key: 'name', label: 'Nombre del local', max: 80, placeholder: 'Ej. Tienda La Esquina' },
@@ -101,7 +101,7 @@ export class StoresManagerComponent {
     { key: 'phone', label: 'Teléfono (opcional)', max: 20, placeholder: 'Ej. 3001234567' },
   ];
   readonly creatingRequested = signal(false);
-  // With no stores the form is always open: it is the empty state of the panel.
+  // Sin locales el formulario siempre está abierto: es el estado vacío del panel.
   readonly creating = computed(() => this.creatingRequested() || !this.stores().length);
   readonly renaming = signal(false);
   readonly newName = signal('');

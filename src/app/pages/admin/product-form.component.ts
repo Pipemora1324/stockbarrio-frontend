@@ -96,7 +96,7 @@ export class ProductFormComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   readonly product = input<Product | null>(null);
-  // Store where a new product is saved (the API uses the main store without it).
+  // Local donde se guarda un producto nuevo (sin él, la API usa el principal).
   readonly storeId = input<string | undefined>(undefined);
   readonly saved = output<string>();
   readonly cancelled = output<void>();
@@ -109,12 +109,12 @@ export class ProductFormComponent implements OnInit {
   readonly saving = signal(false);
   readonly error = signal('');
   readonly hasOffer = computed(() => Number(this.values().discountPercent) > 0);
-  // A running offer keeps its start even if it is already in the past.
+  // Una oferta que ya empezó conserva su inicio aunque esté en el pasado.
   private readonly savedStart = computed(() => this.product()?.offerStartsOn ?? null);
   private readonly savedEnd = computed(() => this.product()?.offerEndsOn ?? null);
   readonly startMin = computed(() => (this.savedStart() && this.savedStart()! < this.today ? this.savedStart()! : this.today));
 
-  // A product saved before the list existed keeps its old category as a valid option.
+  // Un producto guardado antes de que existiera la lista conserva su categoría vieja como opción válida.
   readonly categories = computed<readonly string[]>(() => {
     const current = this.product()?.category;
     return current && !rules.productCategories.includes(current as never) ? [...rules.productCategories, current] : rules.productCategories;
@@ -138,7 +138,7 @@ export class ProductFormComponent implements OnInit {
   readonly invalid = computed(() => rules.hasErrors(this.errors()));
 
   constructor() {
-    // On small screens the form opens below the table: bring it into view and focus the first field.
+    // En pantallas pequeñas el formulario abre debajo de la tabla: se lleva a la vista y se enfoca el primer campo.
     afterNextRender(() => {
       this.host.nativeElement.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
       this.host.nativeElement.querySelector<HTMLInputElement>('#product-name')?.focus({ preventScroll: true });
@@ -166,7 +166,7 @@ export class ProductFormComponent implements OnInit {
     this.values.update((current) => ({ ...current, [field]: value }));
   }
 
-  // Turning a discount on proposes the range: from today until the expiration date (both editable).
+  // Al poner un descuento se propone el rango: de hoy al vencimiento (las dos fechas se pueden cambiar).
   setDiscount(value: number) {
     this.values.update((current) => {
       const next = { ...current, discountPercent: value };

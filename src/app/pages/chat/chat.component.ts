@@ -8,8 +8,8 @@ import type { ChatTurn } from '../../models';
 import { CopCurrencyPipe } from '../../pipes/cop-currency.pipe';
 import { ChatSessionService, type ConversationMessage } from '../../services/chat-session.service';
 
-// Quick buttons. "Tiendas cercanas" makes the bot ask for the neighborhood inside the chat (there is no location
-// nor picker) and then use it for the rest of the conversation.
+// Botones rápidos. "Tiendas cercanas" hace que el bot pregunte el barrio dentro del chat (no hay ubicación
+// ni selector) y lo use el resto de la conversación.
 export const quickActions: ReadonlyArray<{ label: string; message: string; icon: IconName }> = [
   { label: 'Ofertas de hoy', message: 'Ofertas de hoy', icon: 'tag' },
   { label: 'Tiendas cercanas', message: 'Tiendas cercanas', icon: 'store' },
@@ -18,7 +18,7 @@ export const historyTurns = 6;
 export const maxMessageLength = 500;
 export const privacyNotice = 'Tu mensaje se procesa con un servicio de IA externo; no escribas datos personales.';
 
-// Only real exchanges go back to the API as history: errors are local messages.
+// Solo los intercambios reales vuelven a la API como historial: los errores son mensajes locales.
 export const buildHistory = (messages: ConversationMessage[]): ChatTurn[] =>
   messages.filter((message) => !message.isError).slice(-historyTurns).map((message) => ({ role: message.role, content: message.content.slice(0, maxMessageLength) }));
 

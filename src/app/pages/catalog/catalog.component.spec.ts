@@ -39,7 +39,7 @@ describe('CatalogComponent', () => {
     expect(sections[0].querySelectorAll('app-product-card').length).toBe(2);
     expect(sections[0].querySelector('.count')?.textContent).toBe('2 productos');
     expect(page.querySelector('#catalog-count')?.textContent).toContain('3 productos en 2 locales');
-    // The store is already in the header, so the cards do not repeat it.
+    // El local ya está en el encabezado, así que las tarjetas no lo repiten.
     expect(sections[0].querySelector('.price-tag .store')).toBeNull();
   });
 

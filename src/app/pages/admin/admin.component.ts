@@ -11,7 +11,7 @@ import { ProductFormComponent } from './product-form.component';
 import { StoresManagerComponent } from './stores-manager.component';
 import { SuggestionsPanelComponent } from './suggestions-panel.component';
 
-// What the panel says about each product today.
+// Lo que dice el panel de cada producto hoy.
 export type ProductState = OfferStatus | 'expired';
 export const stateLabels: Record<ProductState, string> = {
   active: 'Oferta activa',
@@ -132,7 +132,7 @@ export class AdminComponent implements OnInit {
   readonly notice = signal('');
   readonly formOpen = signal(false);
   readonly editing = signal<InventoryProduct | null>(null);
-  // Suggestions depend on the inventory, so they are refreshed after every product change.
+  // Las sugerencias dependen del inventario, así que se recargan después de cada cambio de producto.
   private readonly suggestionsPanel = viewChild(SuggestionsPanelComponent);
   readonly current = computed(() => this.stores().find((store) => store.id === this.selectedId()) ?? null);
   readonly filteredProducts = computed(() => {
@@ -150,7 +150,7 @@ export class AdminComponent implements OnInit {
     return productState(product);
   }
 
-  // Loads the stores and the inventory of the chosen one (or of the first one).
+  // Carga los locales y el inventario del elegido (o del primero).
   async load(preferredId: string | null = this.selectedId()) {
     this.state.set('loading');
     this.loadError.set('');
@@ -217,7 +217,7 @@ export class AdminComponent implements OnInit {
     void this.suggestionsPanel()?.load();
   }
 
-  // A new key recreates the form, so switching from one product to another never keeps old values.
+  // Una clave nueva vuelve a crear el formulario, así pasar de un producto a otro nunca conserva valores viejos.
   private openForm(product: InventoryProduct | null) {
     this.notice.set('');
     this.editing.set(product);

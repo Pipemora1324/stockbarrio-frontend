@@ -138,7 +138,7 @@ export class ProfileComponent implements OnInit {
     if (this.newEmailError() || !this.emailPassword()) return;
     await this.run(this.emailState, async () => {
       const email = rules.normalizeEmail(this.newEmail());
-      // In the Supabase mode the change goes straight to Supabase, so the API checks the mailbox first.
+      // En el modo supabase el cambio va directo a Supabase, así que antes la API revisa el buzón.
       const check = await this.api.checkEmail(email);
       if (!check.available) throw new Error(check.message ?? rules.emailTakenMessage);
       const message = await this.auth.requestEmailChange(email, this.emailPassword());

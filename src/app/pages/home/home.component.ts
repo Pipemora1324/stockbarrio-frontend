@@ -127,7 +127,7 @@ export class HomeComponent implements OnInit {
     return load.state === 'error' ? load.message : '';
   }
 
-  // "Tienda La Esquina" -> "TL", for the round mark of each store.
+  // "Tienda La Esquina" -> "TL", para la marca redonda de cada local.
   initials(name: string) {
     return name
       .split(/\s+/)

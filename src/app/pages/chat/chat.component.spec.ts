@@ -100,7 +100,7 @@ describe('ChatComponent', () => {
     expect(page.querySelector('.store-result strong')?.textContent).toBe('Tienda La Esquina');
     expect(page.querySelector('.store-result .ribbon')?.textContent).toContain('2 ofertas');
 
-    // The remembered neighborhood goes with the next questions, until the person changes it.
+    // El barrio recordado va con las siguientes preguntas, hasta que la persona lo cambia.
     api.chat.and.resolveTo(answer());
     fixture.componentInstance.ask('leche');
     await settle(fixture);

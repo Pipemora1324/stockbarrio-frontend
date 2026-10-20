@@ -6,7 +6,7 @@ import { ApiError, ApiService } from '../../api.service';
 import { AuthService } from '../../auth.service';
 import * as rules from '../../validation/rules';
 
-// Tokens are 43 characters; a shorter one was cut by the mail client.
+// Los tokens tienen 43 caracteres; uno más corto lo cortó el cliente de correo.
 const minTokenLength = 20;
 
 @Component({
@@ -54,13 +54,13 @@ export class ResetPasswordComponent implements OnInit {
   readonly confirmTouched = signal(false);
   readonly loading = signal(false);
   readonly failure = signal('');
-  // The link was already used, replaced by a newer one or expired: the form cannot work anymore.
+  // El enlace ya se usó, lo reemplazó uno más nuevo o venció: el formulario ya no puede funcionar.
   readonly linkExpired = signal(false);
   readonly passwordError = computed(() => rules.password(this.password()));
   readonly confirmError = computed(() => (this.confirm() === this.password() ? '' : 'Las contraseñas no coinciden.'));
   readonly invalid = computed(() => Boolean(this.passwordError() || this.confirmError()));
 
-  // The token stays in memory only: it is removed from the address bar, the history and the Referer header.
+  // El token se queda solo en memoria: se quita de la barra de direcciones, del historial y de la cabecera Referer.
   ngOnInit() {
     if (this.rawToken) void this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
   }

@@ -40,7 +40,7 @@ export class ConfirmEmailComponent implements OnInit {
     }
     try {
       this.message.set((await this.api.confirmEmailChange(this.token)).message);
-      // The email changed, so the old session is no longer valid on the server.
+      // El correo cambió, así que la sesión vieja ya no es válida en el servidor.
       this.auth.endSession();
     } catch (caught) {
       this.failure.set(caught instanceof Error ? caught.message : 'No se pudo confirmar el correo.');

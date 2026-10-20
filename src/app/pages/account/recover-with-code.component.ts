@@ -5,13 +5,13 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../auth.service';
 import * as rules from '../../validation/rules';
 
-// The code is valid for this long (Supabase setting "Email OTP Expiration"; see the README).
+// El código sirve durante este tiempo (configuración "Email OTP Expiration" de Supabase; ver el README).
 const codeMinutes = 60;
-// Waiting time before another code can be requested, to stay under Supabase's sending limits.
+// Tiempo de espera antes de pedir otro código, para no pasar los límites de envío de Supabase.
 const resendSeconds = 60;
 export const genericCodeMessage = 'Si el correo está registrado, te enviamos un código de 6 dígitos. Revisa tu bandeja de entrada y la carpeta de spam.';
 
-// Supabase mode of "¿Olvidaste tu contraseña?": the email brings a 6 digit code that is typed here.
+// Modo supabase de "¿Olvidaste tu contraseña?": el correo trae un código de 6 dígitos que se escribe aquí.
 @Component({
   selector: 'app-recover-with-code',
   imports: [PasswordFieldComponent, FormsModule, RouterLink],
@@ -88,7 +88,7 @@ export class RecoverWithCodeComponent {
   readonly confirmError = computed(() => (this.confirm() === this.password() ? '' : 'Las contraseñas no coinciden.'));
   readonly invalid = computed(() => Boolean(this.codeError() || this.passwordError() || this.confirmError()));
 
-  // Only digits: a code pasted with spaces ("123 456") still works.
+  // Solo dígitos: un código pegado con espacios ("123 456") igual funciona.
   setCode(value: string) {
     this.code.set((value ?? '').replace(/\D/g, '').slice(0, 6));
   }

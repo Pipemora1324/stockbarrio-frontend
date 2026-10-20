@@ -8,7 +8,7 @@ import { ProductCardComponent } from '../../components/product-card/product-card
 import { RevealDirective } from '../../components/reveal.directive';
 import type { CatalogGroup } from '../../models';
 
-// Every product of the stores, grouped by store, with one filter: the category. Offers show their discounted price.
+// Todos los productos de los locales, agrupados por local, con un solo filtro: la categoría. Las ofertas muestran su precio con descuento.
 @Component({
   selector: 'app-catalog',
   imports: [RouterLink, ProductCardComponent, CategoryFilterComponent, IconComponent, IllustrationComponent, RevealDirective],
@@ -108,7 +108,7 @@ export class CatalogComponent implements OnInit {
     }
   }
 
-  // Links from the home page point to one store (#local-<id>); the groups arrive after the navigation.
+  // Los enlaces del inicio apuntan a un local (#local-<id>); los grupos llegan después de la navegación.
   private scrollToStore() {
     const fragment = this.route.snapshot.fragment;
     if (!fragment) return;

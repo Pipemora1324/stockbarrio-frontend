@@ -7,7 +7,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../auth.service';
 import { SupabaseAuthFailure } from '../../services/supabase.service';
 
-// Messages for the links that Supabase sends back to /login.
+// Mensajes para los enlaces con los que Supabase vuelve a /login.
 const linkNotices: Record<string, string> = {
   confirmado: 'Tu correo quedó confirmado. Ya puedes iniciar sesión.',
   correo: 'Tu correo nuevo quedó confirmado. Inicia sesión con él.',
@@ -58,17 +58,17 @@ export class LoginComponent implements OnInit {
   readonly password = signal('');
   readonly loading = signal(false);
   readonly error = signal('');
-  // Login only checks that both fields are filled: older accounts may not follow the current password rules.
+  // El login solo revisa que los dos campos estén llenos: las cuentas viejas pueden no cumplir las reglas actuales de contraseña.
   readonly canSubmit = computed(() => this.email().trim().length > 3 && this.password().length > 0);
 
-  // Supabase comes back with ?confirmado=1, ?correo=1 or, when the link failed, #error_code=otp_expired.
+  // Supabase vuelve con ?confirmado=1, ?correo=1 o, cuando el enlace falló, #error_code=otp_expired.
   ngOnInit() {
     const query = this.route.snapshot.queryParamMap;
     const hash = new URLSearchParams(globalThis.location?.hash.slice(1) ?? '');
     const key = hash.get('error_code') || hash.get('error') ? 'vencido' : query.get('confirmado') ? 'confirmado' : query.get('correo') ? 'correo' : '';
     if (!key) return;
     this.linkNotice.set(linkNotices[key]);
-    // The address keeps no tokens or error codes after reading them.
+    // La dirección no conserva tokens ni códigos de error después de leerlos.
     void this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
   }
 

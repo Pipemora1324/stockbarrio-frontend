@@ -81,9 +81,9 @@ export class RegisterComponent {
   private readonly touched = signal<ReadonlySet<Field>>(new Set());
   readonly loading = signal(false);
   readonly error = signal('');
-  // Supabase mode: the account is ready after the person opens the confirmation link sent to this address.
+  // Modo supabase: la cuenta queda lista cuando la persona abre el enlace de confirmación enviado a esta dirección.
   readonly confirmEmail = signal('');
-  // Supabase mode: the account already existed without a confirmed email.
+  // Modo supabase: la cuenta ya existía sin el correo confirmado.
   readonly pendingEmail = signal('');
   readonly emailTaken = signal(false);
   readonly resending = signal(false);
@@ -113,7 +113,7 @@ export class RegisterComponent {
     this.touched.update((current) => new Set(current).add(field));
   }
 
-  // A field shows its message once the user has left it and it still has a problem.
+  // Un campo muestra su mensaje cuando la persona ya salió de él y todavía tiene un problema.
   show(field: Field) {
     return this.touched().has(field) && Boolean(this.errors()[field]);
   }
@@ -126,7 +126,7 @@ export class RegisterComponent {
     const value = this.values();
     const account = { name: value.name.trim(), email: rules.normalizeEmail(value.email), password: value.password };
     try {
-      // One mailbox, one account: the API also catches Gmail variants with dots that Supabase would accept.
+      // Un buzón, una cuenta: la API también detecta las variantes de Gmail con puntos que Supabase aceptaría.
       const check = await this.api.checkEmail(account.email);
       if (!check.available) {
         this.emailTaken.set(true);
