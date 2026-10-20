@@ -19,6 +19,7 @@ import { iconForCategory } from './category-icon';
     <span class="stamp" [attr.data-tone]="icon().tone"><app-icon [name]="icon().icon" /></span>
     <span class="category">{{ product().category }}</span>
   </div>
+  @if (onOffer() && offerTag()) { <span class="offer-tag">En oferta</span> }
   <h3>{{ product().name }}</h3>
   @if (showStore() && product().storeName) { <p class="store"><app-icon name="store" />{{ product().storeName }} · {{ product().neighborhood }}</p> }
   <p class="price">
@@ -40,6 +41,8 @@ export class ProductCardComponent {
   // Bigger and brighter: used for the biggest discounts.
   readonly featured = input(false);
   readonly showStore = input(true);
+  // "En oferta" label, for lists that mix products with and without an offer (the catalog).
+  readonly offerTag = input(false);
   protected readonly icon = computed(() => iconForCategory(this.product().category));
   protected readonly onOffer = computed(() => this.product().discountPercent > 0);
   protected readonly days = computed(() => daysUntil(this.product().expirationDate));
