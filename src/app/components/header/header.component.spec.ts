@@ -3,7 +3,6 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { AuthService } from '../../auth.service';
 import type { AuthUser } from '../../models';
-import { NotificationsService } from '../../services/notifications.service';
 import { themeStorageKey } from '../../services/theme.service';
 import { compactAfterPx, HeaderComponent } from './header.component';
 
@@ -21,7 +20,6 @@ describe('HeaderComponent', () => {
           provide: AuthService,
           useValue: { user, isStore: () => user()?.role === 'store', isCustomer: () => user()?.role === 'customer', logout },
         },
-        { provide: NotificationsService, useValue: { unread: signal(0) } },
       ],
     });
     const fixture = TestBed.createComponent(HeaderComponent);
