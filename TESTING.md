@@ -18,10 +18,7 @@ Necesitas Chrome o Chromium instalado. Si no está en la ruta habitual, indica d
 
 Karma solo mide los archivos que alguna prueba importa. Un archivo sin ninguna prueba no sale en la tabla con 0 %: simplemente no aparece. Por eso la cobertura "de antes" estaba inflada: login, registro, catálogo, el panel de la tienda, la ubicación de la tienda y la confirmación de correo no tenían pruebas y ni aparecían. La prueba de rutas (`app.routes.spec.ts`) carga todas las páginas perezosas, así que ahora todas entran en la medición.
 
-Hay dos archivos que no se miden:
-
-- `app.config.ts`, que solo es configuración;
-- `notifications.component.ts`, porque su ruta no existe mientras las alertas están pausadas.
+`app.config.ts` no se mide: solo es configuración.
 
 ## Qué cubre cada suite
 
@@ -31,39 +28,39 @@ Hay dos archivos que no se miden:
 | `supabase-auth.spec.ts` | Modo `AUTH_PROVIDER=supabase` con supabase-js simulado (nada llama a Supabase): login con el token de Supabase hacia `/api/auth/me`, credenciales incorrectas, perfil rechazado por la API (cierra la sesión de Supabase), correo sin confirmar con reenvío, aviso al volver del enlace, registro con metadata y estado "Revisa tu correo", errores en español, recuperación con código correcto, incorrecto o vencido, validación del código y de la contraseña, espera de 60 s para pedir otro código, sesión expirada, token renovado, cierre de sesión, cambio de contraseña, correo y nombre desde el perfil |
 | `session.storage.spec.ts` | Sesión guardada válida, JSON dañado, rol desconocido y almacenamiento que falla |
 | `app.routes.spec.ts` | Guards en `/admin` y `/perfil`, carga de cada página y su título, redirecciones de visitantes y clientes, direcciones desconocidas |
-| `alerts-flag.spec.ts` | Con `enableAlerts` apagada: sin campana, sin rutas de alertas y el cliente entra a Ofertas |
 | `api.service.spec.ts` | Contrato con la API: método, ruta y cuerpo de cada llamada (locales, catálogo agrupado, fechas de oferta, rango al aprobar); `storeId` en la query y en el producto nuevo; ofertas y chat nunca envían coordenadas; errores con mensaje en español, mensaje por defecto y sin conexión |
 | `services/theme.service.spec.ts` | Tema del sistema por defecto, elección guardada y aplicada, alternar, valor guardado roto, almacenamiento bloqueado; **contraste AA** de los pares de texto y fondo en los dos temas, leído de los estilos reales, y sin verde como color principal |
 | `components/header` | Solo "SB" y "Stock Barrio" (sin "Inicio" ni "IA"), Mi tienda o Mi cuenta según el rol, salir, menú móvil con Escape, botón de tema con su etiqueta, compacto al hacer scroll |
 | `validation/rules.spec.ts` | Todas las reglas de los formularios, con sus bordes: precios, stock, descuento, fechas reales (no 30 de febrero), calendario de Bogotá a medianoche, bisiestos, teléfonos fijos, contraseñas con tildes contadas en bytes, y el rango de la oferta (inicio desde hoy, fin hasta el vencimiento, producto vencido) |
 | `pipes/format.pipes.spec.ts` | Pesos sin decimales (y vacío cuando falta el valor), fechas sin correrse de día, etiquetas de vencimiento |
-| `pages/login` | Botón deshabilitado, error de la API, estado de carga, aviso de sesión vencida, sin textos de alertas |
-| `pages/register` | Cliente y tienda (`?tipo=tienda`), datos recortados y en minúscula, teléfono opcional, mensajes al salir del campo, contraseña igual al correo, error 409 |
+| `pages/login` | Botón deshabilitado, error de la API, estado de carga, aviso de sesión vencida |
+| `components/password-field` | Botón que no envía el formulario, `aria-label`, `aria-pressed` y `aria-controls`, mostrar y ocultar, foco y cursor conservados (también cuando Chrome los mueve tras un clic real), alcanzable con Tab; y en cada pantalla (login, registro, recuperación con código y con enlace, perfil) todos los campos tienen el ojo y el `autocomplete` correcto |
+| `pages/register` | Cliente y tienda (`?tipo=tienda`), datos recortados y en minúscula, teléfono opcional, mensajes al salir del campo, contraseña igual al correo, error 409; revisión del correo antes de registrar (ya vinculado con enlaces a iniciar sesión y recuperar), alias con `+`, correo normalizado al salir del campo, cuenta sin confirmar con reenvío |
 | `pages/home` | Mensaje de la app, locales afiliados con sus ofertas y enlace a su grupo del catálogo, las 4 ofertas de mayor descuento (la primera destacada), estados vacíos con llamadas a la acción, error con reintento por sección; directiva de entrada (movimiento reducido y `IntersectionObserver`) e ilustraciones decorativas |
-| `pages/catalog` | Agrupado por local con encabezado y ancla, un único filtro por categoría desde y hacia la URL, sin ofertas, estados vacíos, error con reintento, una respuesta vieja no pisa a la nueva |
+| `pages/catalog` | Agrupado por local con encabezado y ancla, un único filtro por categoría desde y hacia la URL, productos en oferta con "En oferta", precio con descuento y original tachado, estados vacíos, error con reintento, una respuesta vieja no pisa a la nueva |
 | `pages/offers` | Un único filtro por categoría (sin barrio, búsqueda ni orden), mayor descuento primero, los más rebajados destacados, "Oferta hasta…", estados vacíos, error con reintento, respuestas tardías; filtro de categorías con radios y leyenda |
 | `pages/chat` | Sin selector de barrio, botones "Ofertas de hoy" y "Tiendas cercanas", el bot pregunta el barrio y la app lo recuerda en memoria (y se puede cambiar), tarjetas de tiendas y de productos, indicador de "escribiendo", historial al volver a la página, errores locales fuera del historial, línea de privacidad |
 | `pages/admin` | Locales como Local 1, Local 2 (elegir, `?local=`, crear con validación, renombrar, eliminar con confirmación, máximo, sin locales), inventario en tabla con descripción, precio, rango de la oferta, estado y stock, sin imágenes y con etiquetas para el celular, filtro, borrar con confirmación, sugerencias por local con rango editable y aviso de perecederos, formulario con fechas de inicio y fin validadas |
 | `pages/account` | Recuperar la contraseña (correo válido, mensaje genérico, pedir otro enlace, 503 sin correo configurado), restablecerla (contraseña nueva y repetida, enlace incompleto o cortado, enlace vencido o usado con botón para pedir otro, token fuera de la URL, aviso en el login), confirmar el correo, cambiar nombre y correo, errores de cada formulario |
 | `components/product-card` | Etiqueta de precio: cinta, precios, "Oferta hasta…", vencimiento, agotado, destacada, íconos SVG propios por categoría (nunca emojis) |
-| `services/notifications.service.spec.ts`, `pages/alerts` | La parte de alertas (pausada) |
 
 ## Resultado actual
 
-208 pruebas, todas en verde (unos 2 s de ejecución en Chrome headless, más la compilación).
+215 pruebas, todas en verde (unos 2 s de ejecución en Chrome headless, más la compilación).
 
-| Métrica | Supabase Auth | Ahora (rediseño) |
+| Métrica | Rediseño | Ahora (ajustes) |
 | --- | --- | --- |
-| Pruebas | 158 | 208 |
-| Líneas | 95,2 % | 96,65 % |
-| Ramas | 79,1 % | 80,66 % |
-| Funciones | | 90,32 % |
+| Pruebas | 208 | 215 |
+| Líneas | 96,65 % | 98,22 % |
+| Ramas | 80,66 % | 82,6 % |
+| Funciones | 90,32 % | 94,54 % |
+
+Se quitaron las pruebas de alertas y notificaciones (ya no existen) y se agregaron las del campo de contraseña, el correo en el registro y el perfil, el catálogo completo y el aviso al eliminar un local.
 
 Además del recorrido automático de responsive (320 a 1920 px, claro y oscuro, todas las rutas y la base vacía), que no es parte de `npm test` porque necesita la API y un navegador real; ver las pruebas manuales del README.
 
 Lo que queda sin cubrir es sobre todo:
 
-- la parte de alertas, que está pausada;
 - algunas ramas de mensajes por defecto, cuando un error no trae texto.
 
 ## Integración continua
