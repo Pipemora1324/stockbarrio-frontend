@@ -85,7 +85,8 @@ export class ApiService {
     return (await this.request(this.http.get<{ data: AccountProfile }>(`${this.baseUrl}/account`), 'No se pudo cargar tu perfil.')).data;
   }
 
-  updateName(name: string): Promise<SessionUpdate> {
+  // In the supabase mode the answer has no token: the session token does not change.
+  updateName(name: string): Promise<SessionUpdate | Omit<SessionUpdate, 'token'>> {
     return this.request(this.http.patch<SessionUpdate>(`${this.baseUrl}/account/name`, { name }), 'No se pudo actualizar el nombre.');
   }
 
@@ -101,8 +102,10 @@ export class ApiService {
     return this.request(this.http.post<{ message: string }>(`${this.baseUrl}/account/email/confirm`, { token }), 'No se pudo confirmar el correo.');
   }
 
-  async me(): Promise<AuthUser> {
-    return (await this.request(this.http.get<{ user: AuthUser }>(`${this.baseUrl}/auth/me`), 'No se pudo validar la sesión.')).user;
+  // With a token (Supabase mode, before the session is saved) it is sent as is; otherwise the interceptor adds it.
+  async me(token?: string): Promise<AuthUser> {
+    const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+    return (await this.request(this.http.get<{ user: AuthUser }>(`${this.baseUrl}/auth/me`, { headers }), 'No se pudo validar la sesión.')).user;
   }
 
   async getMyInventory(): Promise<{ products: Product[]; store: Store }> {
