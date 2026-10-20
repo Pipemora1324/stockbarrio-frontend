@@ -13,9 +13,11 @@ import * as rules from '../../validation/rules';
   <section class="auth-card">
     <span class="eyebrow">Recuperar acceso</span>
     <h1>¿Olvidaste tu contraseña?</h1>
-    <p>Escribe el correo de tu cuenta y te enviaremos un enlace para crear una nueva. El enlace sirve una sola vez y vence en 30 minutos.</p>
+    <p>Escribe el correo con el que creaste tu cuenta y te enviaremos un enlace para crear una nueva. El enlace sirve una sola vez y vence en 30 minutos.</p>
     @if (sent()) {
       <p class="form-message success" role="status">{{ sent() }}</p>
+      <p>Usa el correo con el que creaste tu cuenta. Si en unos minutos no te llega, revisa la carpeta de spam o pide otro enlace: el anterior deja de servir.</p>
+      <button class="button button-light" type="button" (click)="sent.set('')">Pedir otro enlace</button>
       <a routerLink="/login">Volver a iniciar sesión</a>
     } @else {
       <form (ngSubmit)="submit()" novalidate>
